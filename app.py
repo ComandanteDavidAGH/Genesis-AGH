@@ -170,6 +170,18 @@ with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2231/2231644.png", width=70)
     nombre_mostrar = st.session_state.nombre_completo_usuario if st.session_state.nombre_completo_usuario else st.session_state.usuario_actual.upper()
     st.markdown(f"<h3 style='color:white; margin-top:0;'>👤 {nombre_mostrar}</h3><p style='color:#d4af37; font-weight:bold; margin-top:-15px;'>Rango: {st.session_state.rol}</p>", unsafe_allow_html=True)
+    
+    # -------------------------------------------------------------------------
+    # ESTE ES EL ÚNICO BLOQUE NUEVO (EL RELOJ) QUE SE AÑADIÓ A SU CÓDIGO
+    # -------------------------------------------------------------------------
+    st.markdown(f"""
+        <div style='background:rgba(212, 175, 55, 0.1); border:1px solid #d4af37; padding:10px; border-radius:5px; text-align:center; margin-bottom:15px;'>
+            <p style='color:#d4af37; font-size:12px; margin:0;'>🕒 HORA DE INICIO</p>
+            <p style='color:white; font-size:18px; font-weight:bold; margin:0;'>{st.session_state.hora_inicio}</p>
+        </div>
+    """, unsafe_allow_html=True)
+    # -------------------------------------------------------------------------
+
     st.markdown("---")
     
     opciones_menu = ["🏠 Inicio", "📊 Inteligencia Académica", "📈 Dashboard Estudiantil", "🚦 Semáforo Académico", "✍️ Digitar Notas", "📚 Logros", "📝 Asistencias y Reportes", "📜 Boletines", "📖 Manual de Usuario", "📸 Eventos Institucionales"]
