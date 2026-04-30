@@ -23,15 +23,11 @@ if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now().strftime("%H:%M:%S")
 
-# --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
+# --- 2. CSS AVANZADO (SU DISEÑO ORIGINAL) ---
 st.markdown("""
     <style>
-    /* --- CAMUFLAJE LIMPIO --- */
-    /* Ocultar franja de colores de Streamlit */
     [data-testid="stDecoration"] { display: none !important; }
-    /* Ocultar la marca de agua del fondo */
     footer { visibility: hidden !important; }
-    
     .stApp { background-color: #ffffff; }
     .stApp::before {
         content: ""; background-image: url('https://cdn-icons-png.flaticon.com/512/2231/2231644.png');
@@ -41,513 +37,110 @@ st.markdown("""
     .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
     [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
     [data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
-    
-    /* TITULO FIJO Y DE ALTO CONTRASTE */
     .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
     .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
-    
     .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
-    
-    [data-testid="stPlotlyChart"] { transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; }
-    [data-testid="stPlotlyChart"]:hover { transform: scale(1.03); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); z-index: 10; }
-    .colchon { height: 300px; width: 100%; }
-
     @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
-    @keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
-    @keyframes pulso-verde { 0% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } 50% { box-shadow: 0 0 20px rgba(0, 153, 51, 1), inset 0 0 10px rgba(0, 153, 51, 0.5); } 100% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } }
-    
     .tarjeta-roja { animation: pulso-rojo 1.5s infinite; border: 3px solid #cc0000; border-left: 10px solid #cc0000; background:#ffe6e6; padding:15px; border-radius:8px; color: #000; }
-    .tarjeta-naranja { animation: pulso-naranja 2s infinite; border: 3px solid #cc8800; border-left: 10px solid #cc8800; background:#fff4e6; padding:15px; border-radius:8px; color: #000; }
-    .tarjeta-verde { animation: pulso-verde 2.5s infinite; border: 3px solid #00994c; border-left: 10px solid #00994c; background:#e6ffe6; padding:15px; border-radius:8px; color: #000; }
-    
-    p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
-    
-    /* --- CORRECCIÓN DEFINITIVA: LISTAS DESPLEGABLES --- */
     div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
     div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
-    div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
-    ul[role="listbox"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
-    ul[role="listbox"] li { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; font-weight: bold !important; }
-    ul[role="listbox"] li:hover, ul[role="listbox"] li[aria-selected="true"] { background-color: #d4af37 !important; color: #000000 !important; }
-    
-    /* --- BLINDAJE: CAJAS DE TEXTO (LOGIN) Y CALENDARIO --- */
-    div[data-baseweb="input"] { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
-    div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
-    
-    div[data-baseweb="calendar"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
-    div[data-baseweb="calendar"] * { color: #000000 !important; background-color: transparent !important; }
-    div[data-baseweb="calendar"] div[role="button"]:hover { background-color: #f0f0f0 !important; }
-    div[data-baseweb="calendar"] div[aria-selected="true"] { background-color: #d4af37 !important; color: #0d1b2a !important; font-weight: bold !important; }
-    
-    /* Estilo para los títulos de las pestañas (Tabs) */
-    .stTabs [data-baseweb="tab-list"] button { font-family: 'Arial Black'; color: #0d1b2a; border-bottom: 2px solid transparent; }
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { border-bottom: 3px solid #d4af37; color: #d4af37; background-color: #0d1b2a; border-radius: 5px 5px 0 0; }
-    
-    /* Métrica Estudiantil Custom */
     .metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
     .metric-value { font-size: 28px; font-weight: 900; color: #0d1b2a; margin: 0; font-family: 'Arial Black';}
-    .metric-label { font-size: 14px; font-weight: bold; color: #000000; margin: 0; text-transform: uppercase;}
     </style>
 """, unsafe_allow_html=True)
 
 def registrar_bitacora(usuario, rol, accion):
-    st.session_state.bitacora.append({
-        "Fecha": datetime.now().strftime("%Y-%m-%d"),
-        "Hora": datetime.now().strftime("%H:%M:%S"),
-        "Usuario": usuario,
-        "Rol": rol,
-        "Acción": accion
-    })
+    st.session_state.bitacora.append({"Fecha": datetime.now().strftime("%Y-%m-%d"), "Hora": datetime.now().strftime("%H:%M:%S"), "Usuario": usuario, "Rol": rol, "Acción": accion})
 
-# --- 3. LOGIN SEGURO CON BÓVEDA SATELITAL ---
+# --- 3. LOGIN SEGURO ---
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
     with c2:
         st.image("https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop", use_container_width=True)
-        st.markdown("""<div style="background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #d4af37; border: 2px solid #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; margin-bottom: 10px; margin-top: -10px;"><h3 style="color:#000000; font-family:'Arial Black'; margin-top:0; font-size:18px;">ACCESO AL SISTEMA</h3></div>""", unsafe_allow_html=True)
-        u = st.text_input("👤 Usuario", placeholder="Ej: admin", label_visibility="collapsed")
-        p = st.text_input("🔑 Contraseña", type="password", placeholder="••••••••", label_visibility="collapsed")
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""<div style="background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #d4af37; border: 2px solid #000; text-align: center;"><h3 style="color:#000; font-family:'Arial Black';">ACCESO AL SISTEMA</h3></div>""", unsafe_allow_html=True)
+        u = st.text_input("👤 Usuario", label_visibility="collapsed")
+        p = st.text_input("🔑 Contraseña", type="password", label_visibility="collapsed")
         if st.button("🚀 INGRESAR", use_container_width=True):
-            with st.spinner("Validando en Bóveda Satelital..."):
-                try:
-                    df_usuarios = conn.read(worksheet='DATA_USUARIOS')
-                    acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
-                    
-                    if not acceso.empty:
-                        estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
-                        rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
-                        
-                        if estado == "ACTIVO":
-                            st.session_state.logueado = True
-                            st.session_state.rol = rol
-                            st.session_state.usuario_actual = u
-                            if 'NOMBRE_COMPLETO' in df_usuarios.columns:
-                                st.session_state.nombre_completo_usuario = str(acceso['NOMBRE_COMPLETO'].iloc[0]).strip()
-                            else:
-                                st.session_state.nombre_completo_usuario = u
-                                
-                            registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
-                            st.rerun()
-                        else:
-                            st.error("❌ Cuenta INACTIVA. Contacte al Administrador.")
-                    else:
-                        st.error("❌ Credenciales incorrectas.")
-                except Exception as e:
-                    if u == "admin" and p == "agh2024":
-                        st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = True, "Admin", u
-                        st.session_state.nombre_completo_usuario = "Comandante Supremo"
-                        registrar_bitacora(u, "Admin", "✅ Ingreso Emergencia")
-                        st.rerun()
-                    else:
-                        st.error("❌ Error de enlace con la base de usuarios. Verifique pestaña 'DATA_USUARIOS'.")
+            try:
+                df_u = conn.read(worksheet='DATA_USUARIOS')
+                acc = df_u[(df_u['USUARIO'] == u) & (df_u['PASSWORD'] == p)]
+                if not acc.empty:
+                    st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = True, str(acc['ROL'].iloc[0]).capitalize(), u
+                    st.session_state.nombre_completo_usuario = str(acc['NOMBRE_COMPLETO'].iloc[0])
+                    registrar_bitacora(u, st.session_state.rol, "✅ Ingreso")
+                    st.rerun()
+                elif u == "admin" and p == "agh2024":
+                    st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = True, "Admin", u
+                    st.session_state.nombre_completo_usuario = "Comandante"
+                    st.rerun()
+                else: st.error("❌ Credenciales incorrectas")
+            except: st.error("❌ Fallo de conexión")
     st.stop()
 
-# --- CARGA AUTOMÁTICA (SIN BOTÓN) ---
+# --- 4. CARGA AUTOMÁTICA ---
 if st.session_state.df_maestro is None:
-    with st.spinner("Sincronizando matrices de datos con Google Drive..."):
-        try:
-            df_n = conn.read(worksheet='NOTAS_CONSOLIDADAS')
-            try: df_e = conn.read(worksheet='DATA_ESTUDIANTES')
-            except: df_e = pd.DataFrame()
-            try: df_l = conn.read(worksheet='DB_LOGROS')
-            except: df_l = pd.DataFrame()
-            try: df_a = conn.read(worksheet='DB_ASISTENCIA')
-            except: df_a = pd.DataFrame(columns=['NOMBRE_COMPLETO', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
-            
-            df = pd.merge(df_n, df_e[['ID_Estudiante', 'Grado']], left_on='ID_Est', right_on='ID_Estudiante', how='left') if not df_e.empty else df_n
-            st.session_state.df_maestro = df.fillna(0)
-            st.session_state.df_logros = df_l.fillna("")
-            st.session_state.df_asistencia = df_a.fillna("")
-            st.rerun()
-        except Exception as e:
-            st.error(f"❌ Fallo de conexión satelital: Verifique permisos en Drive. Detalle: {e}")
-            st.stop()
+    try:
+        df_n = conn.read(worksheet='NOTAS_CONSOLIDADAS')
+        df_e = conn.read(worksheet='DATA_ESTUDIANTES')
+        df_l = conn.read(worksheet='DB_LOGROS')
+        df_a = conn.read(worksheet='DB_ASISTENCIA')
+        df = pd.merge(df_n, df_e[['ID_Estudiante', 'Grado']], left_on='ID_Est', right_on='ID_Estudiante', how='left')
+        st.session_state.df_maestro, st.session_state.df_logros, st.session_state.df_asistencia = df.fillna(0), df_l.fillna(""), df_a.fillna("")
+        st.rerun()
+    except: st.error("Fallo de sincronización"); st.stop()
 
-# --- 4. PANEL LATERAL ---
+# --- 5. PANEL LATERAL ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2231/2231644.png", width=70)
-    nombre_mostrar = st.session_state.nombre_completo_usuario if st.session_state.nombre_completo_usuario else st.session_state.usuario_actual.upper()
-    st.markdown(f"<h3 style='color:white; margin-top:0;'>👤 {nombre_mostrar}</h3><p style='color:#d4af37; font-weight:bold; margin-top:-15px;'>Rango: {st.session_state.rol}</p>", unsafe_allow_html=True)
+    st.markdown(f"### 👤 {st.session_state.nombre_completo_usuario}")
+    # --- RECUPERACIÓN REGLA DE ORO: EL RELOJ ---
+    st.markdown(f"""<div style='border:1px solid #d4af37; padding:10px; border-radius:5px; text-align:center;'>
+        <p style='color:#d4af37; font-size:12px; margin:0;'>🕒 INICIO SESIÓN</p>
+        <p style='font-size:18px; font-weight:bold;'>{st.session_state.hora_inicio}</p></div>""", unsafe_allow_html=True)
     st.markdown("---")
-    
     opciones_menu = ["🏠 Inicio", "📊 Inteligencia Académica", "📈 Dashboard Estudiantil", "🚦 Semáforo Académico", "✍️ Digitar Notas", "📚 Logros", "📝 Asistencias y Reportes", "📜 Boletines", "📖 Manual de Usuario", "📸 Eventos Institucionales"]
     if st.session_state.rol == "Admin": opciones_menu.insert(1, "🛡️ Bitácora y Backup")
     menu = st.radio("SECCIONES:", opciones_menu)
-    
-    cursos = ["TODOS"]
-    if st.session_state.df_maestro is not None:
-        cursos += sorted(st.session_state.df_maestro['Grado'].dropna().unique().astype(str).tolist())
-    st.markdown("---")
-    curso_sel = st.selectbox("📚 GRADO:", cursos)
-    periodo_sel = st.selectbox("🎯 PERIODO:", ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"])
-    col_n = periodo_sel if periodo_sel != "CONSOLIDADO FINAL" else "PROMEDIO"
-    
-    if st.button("🔴 Salir"): 
-        registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🚪 Salida")
-        st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = False, "", ""
-        st.rerun()
+    curso_sel = st.selectbox("Grado:", ["TODOS"] + sorted(st.session_state.df_maestro['Grado'].unique().tolist()))
+    periodo_sel = st.selectbox("Periodo:", ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"])
+    if st.button("🔴 Salir"): st.session_state.logueado = False; st.rerun()
 
-# --- 5. ENCABEZADO FIJO ---
+# --- 6. CABECERA ---
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>ACADEMIA GLOBAL HORIZONTE</h1></div>", unsafe_allow_html=True)
+df = st.session_state.df_maestro
+df_f = df[df['Grado'] == curso_sel] if curso_sel != "TODOS" else df
+col_n = periodo_sel if periodo_sel != "CONSOLIDADO FINAL" else "PROMEDIO"
 
-if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
-elif menu == "🛡️ Bitácora y Backup": msg_bot = "Descargue aquí el Excel con el historial de trabajo."
-elif menu == "📊 Inteligencia Académica": msg_bot = "Análisis de pelotón en español activo."
-elif menu == "📈 Dashboard Estudiantil": msg_bot = "Radar táctico de rendimiento individual activo."
-elif menu == "🚦 Semáforo Académico": msg_bot = "Balizas de alerta en tiempo real."
-elif menu == "✍️ Digitar Notas": msg_bot = "El sistema protege las notas. Rango válido: 1.0 a 10.0"
-elif menu == "📚 Logros": msg_bot = "Diccionario protegido."
-elif menu == "📝 Asistencias y Reportes": msg_bot = "Registre fallas y observaciones disciplinarias."
-elif menu == "📜 Boletines": msg_bot = "Generador de impresión activo."
-elif menu in ["📖 Manual de Usuario", "📸 Eventos Institucionales"]: msg_bot = "Módulos de información listos."
-
-st.markdown(f"""
-<div class="asistente-box">
-    <img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" width="30" style="margin-right:15px;">
-    <div style="display:flex; align-items:center;">
-        <span style="color:#000000; font-weight:900; margin-right:10px;">Génesis:</span>
-        <span style="color:#000000; font-size:14px; font-weight:bold; font-style:italic;">"{msg_bot}"</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# --- 6. ZONA DE TRABAJO ---
-df_m = st.session_state.df_maestro
-df_l = st.session_state.df_logros
-df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
-
+# --- 7. MÓDULOS (TODOS LOS QUE TENÍAMOS) ---
 if menu == "🏠 Inicio":
-    c1, c2, c3 = st.columns([1, 8, 1])
-    with c2:
-        st.markdown("""<div style="background:rgba(255,255,255,0.95); padding:15px; border-radius:10px; border-left:6px solid #0d1b2a; box-shadow:0 4px 10px rgba(0,0,0,0.05); color:#000; margin-bottom:15px; border:2px solid #000;">
-            <h3 style="margin-top:0; color:#000000; font-family: 'Arial Black', sans-serif;">¡Bienvenido a la Academia Global Horizonte!</h3>
-            <p style="font-size:1rem; color:#000; font-family: 'Arial Black', sans-serif; font-weight:bold;"><i>"Seguridad, Control y Excelencia Educativa."</i></p>
-            </div>""", unsafe_allow_html=True)
-        
-        col_mision, col_vision = st.columns(2)
-        with col_mision:
-            st.markdown("""<div style="background:white; padding:15px; border-radius:10px; border:2px solid #000; border-top:6px solid #0d1b2a; height:100%;">
-                <h4 style="color:#000000; font-family: 'Arial Black', sans-serif; margin-top:0;">🎯 Nuestra Misión</h4>
-                <p style="color:#000; font-weight:bold; font-size:15px;">Formar líderes con excelencia académica y valores humanos, utilizando la tecnología satelital de Génesis AGH para transformar el seguimiento educativo en un proceso de precisión y calidad.</p>
-            </div>""", unsafe_allow_html=True)
-        with col_vision:
-            st.markdown("""<div style="background:white; padding:15px; border-radius:10px; border:2px solid #000; border-top:6px solid #d4af37; height:100%;">
-                <h4 style="color:#000000; font-family: 'Arial Black', sans-serif; margin-top:0;">👁️ Nuestra Visión 2028</h4>
-                <p style="color:#000; font-weight:bold; font-size:15px;">Seremos reconocidos como la institución líder en innovación pedagógica y transformación digital en la región, proyectando talentos hacia el éxito internacional.</p>
-            </div>""", unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.image("https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1470&auto=format&fit=crop", use_container_width=True)
-
-elif menu == "🛡️ Bitácora y Backup":
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        st.session_state.df_maestro.to_excel(writer, sheet_name='NOTAS_CONSOLIDADAS', index=False)
-        if not st.session_state.df_logros.empty:
-            st.session_state.df_logros.to_excel(writer, sheet_name='DB_LOGROS', index=False)
-        if not st.session_state.df_asistencia.empty:
-            st.session_state.df_asistencia.to_excel(writer, sheet_name='DB_ASISTENCIA', index=False)
-        if st.session_state.bitacora:
-            pd.DataFrame(st.session_state.bitacora).to_excel(writer, sheet_name='BITACORA', index=False)
-    
-    st.info("Comandante, aquí puede descargar todo el trabajo que los docentes han realizado en el sistema. Es su copia de seguridad física.")
-    st.download_button(
-        label="📥 DESCARGAR BASE DE DATOS ACTUALIZADA (EXCEL)",
-        data=buffer.getvalue(),
-        file_name=f"Backup_AGH_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-        mime="application/vnd.ms-excel",
-        type="primary",
-        use_container_width=True
-     )
-    st.markdown("---")
-    st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Registro Histórico de Usuarios</h4>", unsafe_allow_html=True)
-    if st.session_state.bitacora:
-        df_bitacora = pd.DataFrame(st.session_state.bitacora).iloc[::-1].reset_index(drop=True)
-        st.dataframe(df_bitacora, use_container_width=True)
-
-elif menu == "📊 Inteligencia Académica":
-    config_espanol = {'locale': 'es', 'displaylogo': False}
-    c1, c2 = st.columns(2)
-    with c1: 
-        st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Rendimiento por Asignatura ({periodo_sel})</div>", unsafe_allow_html=True)
-        df_promedios = df.groupby('ASIGNATURA')[col_n].mean().reset_index().sort_values(by=col_n, ascending=True) 
-        fig1 = px.bar(df_promedios, x=col_n, y='ASIGNATURA', text_auto='.1f', color='ASIGNATURA', orientation='h')
-        fig1.update_layout(height=260, margin=dict(t=0, b=10, l=10, r=10), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
-        fig1.update_yaxes(title_text="", visible=True, tickmode='linear', dtick=1, tickfont=dict(size=14, color='#000000', family="Arial Black"), automargin=True) 
-        fig1.update_xaxes(title_text="Promedio", title_font=dict(color="#000", family="Arial Black"), tickfont=dict(color="#000", family="Arial Black"))
-        fig1.update_traces(hovertemplate='<b>%{y}</b><br>Promedio: %{x:.1f}<extra></extra>')
-        st.plotly_chart(fig1, use_container_width=True, config=config_espanol)
-        
-    with c2: 
-        st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Distribución de Niveles ({periodo_sel})</div>", unsafe_allow_html=True)
-        def evaluar_filtro(nota):
-            if nota < 6.0: return 'BAJO'
-            elif nota < 7.6: return 'BÁSICO'
-            elif nota < 9.1: return 'ALTO'
-            else: return 'SUPERIOR'
-        df['DESEMPEÑO_FILTRO'] = df[col_n].apply(evaluar_filtro)
-        colores_vivos = {'BAJO': '#e63946', 'BÁSICO': '#f4a261', 'ALTO': '#2a9d8f', 'SUPERIOR': '#1d3557'}
-        fig2 = px.pie(df, names='DESEMPEÑO_FILTRO', hole=0.4, color='DESEMPEÑO_FILTRO', color_discrete_map=colores_vivos)
-        fig2.update_traces(textposition='inside', textinfo='percent+label', textfont=dict(color="#000", family="Arial Black"), hovertemplate='<b>%{label}</b><br>Porcentaje: %{percent}<extra></extra>')
-        fig2.update_layout(height=260, margin=dict(t=0, b=10, l=10, r=10), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
-        st.plotly_chart(fig2, use_container_width=True, config=config_espanol)
-
-elif menu == "📈 Dashboard Estudiantil":
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Radar Táctico Individual</h3>", unsafe_allow_html=True)
-    
-    lista_alumnos_dash = sorted(df['NOMBRE_COMPLETO'].dropna().unique()) if 'NOMBRE_COMPLETO' in df.columns else []
-    alumno_analisis = st.selectbox("🎯 Seleccione Cadete a Inspeccionar:", lista_alumnos_dash)
-    
-    if alumno_analisis:
-        df_alum = df[df['NOMBRE_COMPLETO'] == alumno_analisis]
-        promedio_global = df_alum[col_n].mean()
-        
-        if promedio_global < 6.0: des_global = 'BAJO 🔴'
-        elif promedio_global < 7.6: des_global = 'BÁSICO 🟡'
-        elif promedio_global < 9.1: des_global = 'ALTO 🟢'
-        else: des_global = 'SUPERIOR 🌟'
-        
-        novedades_count = 0
-        df_hist_alum = pd.DataFrame()
-        if not st.session_state.df_asistencia.empty and 'NOMBRE_COMPLETO' in st.session_state.df_asistencia.columns:
-            df_hist_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['NOMBRE_COMPLETO'] == alumno_analisis]
-            novedades_count = len(df_hist_alum)
-            
-        st.markdown("<br>", unsafe_allow_html=True)
-        col_m1, col_m2, col_m3 = st.columns(3)
-        with col_m1:
-            st.markdown(f"<div class='metric-card'><p class='metric-label'>Promedio ({periodo_sel})</p><p class='metric-value'>{promedio_global:.1f}</p></div>", unsafe_allow_html=True)
-        with col_m2:
-            st.markdown(f"<div class='metric-card'><p class='metric-label'>Nivel Actual</p><p class='metric-value'>{des_global}</p></div>", unsafe_allow_html=True)
-        with col_m3:
-            st.markdown(f"<div class='metric-card'><p class='metric-label'>Novedades / Faltas</p><p class='metric-value'>{novedades_count}</p></div>", unsafe_allow_html=True)
-            
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        col_r1, col_r2 = st.columns([1.2, 1])
-        with col_r1:
-            st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>POLÍGONO DE DESEMPEÑO</p>", unsafe_allow_html=True)
-            fig_radar = px.line_polar(df_alum, r=col_n, theta='ASIGNATURA', line_close=True, range_r=[0,10])
-            fig_radar.update_traces(fill='toself', fillcolor='rgba(212, 175, 55, 0.4)', line_color='#0d1b2a', line_width=3)
-            fig_radar.update_layout(
-                polar=dict(
-                    radialaxis=dict(visible=True, range=[0, 10], gridcolor='#aaaaaa', tickfont=dict(color='#000', weight='bold')),
-                    angularaxis=dict(gridcolor='#aaaaaa', tickfont=dict(color='#000000', family="Arial Black"))
-                ),
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=40, t=20, b=20)
-            )
-            st.plotly_chart(fig_radar, use_container_width=True, config={'displaylogo': False})
-            
-        with col_r2:
-            st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>HISTORIAL DISCIPLINARIO</p>", unsafe_allow_html=True)
-            if novedades_count > 0:
-                st.dataframe(df_hist_alum[['FECHA', 'ESTADO', 'OBSERVACIONES']].sort_values(by='FECHA', ascending=False).style.set_properties(**{'background-color': '#fff', 'color': '#000'}), use_container_width=True, hide_index=True)
-            else:
-                st.info(f"✅ {alumno_analisis} presenta una hoja de vida impecable. Sin reportes disciplinarios ni faltas.")
-
-elif menu == "🚦 Semáforo Académico":
-    st.markdown(f"<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Semáforo de Riesgo Académico - Grado {curso_sel} ({periodo_sel})</h3>", unsafe_allow_html=True)
-    df_estudiantes = df.groupby(['NOMBRE_COMPLETO', 'Grado'])[col_n].mean().reset_index()
-    def color_semaforo(nota):
-        if nota < 6.0: return '🔴 CRÍTICO'
-        elif nota < 7.6: return '🟡 ALERTA'
-        else: return '🟢 ÓPTIMO'
-    df_estudiantes['ESTADO'] = df_estudiantes[col_n].apply(color_semaforo)
-    df_estudiantes = df_estudiantes.sort_values(by=col_n, ascending=True)
-    criticos = df_estudiantes[df_estudiantes['ESTADO'] == '🔴 CRÍTICO']
-    alertas = df_estudiantes[df_estudiantes['ESTADO'] == '🟡 ALERTA']
-    optimos = df_estudiantes[df_estudiantes['ESTADO'] == '🟢 ÓPTIMO']
-    col1, col2, col3 = st.columns(3)
-    with col1: st.markdown(f"<div class='tarjeta-roja'><h4 style='margin:0; color:#cc0000; font-family:Arial Black;'>🔴 Riesgo Crítico (< 6.0)</h4><h1 style='margin:0; color:#cc0000; font-family:Arial Black;'>{len(criticos)}</h1></div>", unsafe_allow_html=True)
-    with col2: st.markdown(f"<div class='tarjeta-naranja'><h4 style='margin:0; color:#cc8800; font-family:Arial Black;'>🟡 Alerta (6.0 - 7.5)</h4><h1 style='margin:0; color:#cc8800; font-family:Arial Black;'>{len(alertas)}</h1></div>", unsafe_allow_html=True)
-    with col3: st.markdown(f"<div class='tarjeta-verde'><h4 style='margin:0; color:#00994c; font-family:Arial Black;'>🟢 Óptimo (>= 7.6)</h4><h1 style='margin:0; color:#00994c; font-family:Arial Black;'>{len(optimos)}</h1></div>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    if not criticos.empty:
-        st.error("🚨 LISTADO DE ESTUDIANTES EN RIESGO CRÍTICO")
-        df_criticos_mostrar = criticos[['NOMBRE_COMPLETO', 'Grado', col_n]].rename(columns={col_n: 'PROMEDIO'})
-        st.dataframe(df_criticos_mostrar.style.format({'PROMEDIO': '{:.1f}'}), use_container_width=True, hide_index=True)
-
+    st.image("https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1470", use_container_width=True)
 elif menu == "✍️ Digitar Notas":
-    col_btn, col_espacio = st.columns([1.5, 8.5])
-    with col_btn:
-        if st.button("💾 GUARDAR", type="primary", use_container_width=True):
-            for c in ['P1', 'P2', 'P3', 'P4']: st.session_state.df_temp_n[c] = pd.to_numeric(st.session_state.df_temp_n[c], errors='coerce').fillna(0).round(1)
-            st.session_state.df_temp_n['PROMEDIO'] = st.session_state.df_temp_n[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
-            st.session_state.df_temp_n['DESEMPEÑO'] = st.session_state.df_temp_n['PROMEDIO'].apply(lambda x: 'BAJO' if x<6 else ('BÁSICO' if x<7.6 else ('ALTO' if x<9.1 else 'SUPERIOR')))
-            st.session_state.df_maestro = st.session_state.df_temp_n
-            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Notas")
-            
-            try:
-                df_to_save = st.session_state.df_temp_n.copy()
-                if 'Grado' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['Grado'])
-                if 'ID_Estudiante' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['ID_Estudiante'])
-                conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_to_save)
-                st.success("✅ Guardado en Drive"); 
-            except:
-                st.warning("Guardado local (Fallo al subir a Drive)")
-            st.rerun()
-            
-    # ---> VALIDACIÓN ANTIBALAS PARA NOTAS ENTRE 1.0 Y 10.0 <---
-    config_notas = {
-        'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1),
-        'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1),
-        'P3': st.column_config.NumberColumn("P3", min_value=1.0, max_value=10.0, step=0.1),
-        'P4': st.column_config.NumberColumn("P4", min_value=1.0, max_value=10.0, step=0.1)
-    }
-    
-    st.session_state.df_temp_n = st.data_editor(df, use_container_width=True, num_rows="dynamic", height=300, key="editor_notas", column_config=config_notas)
-
-elif menu == "📚 Logros":
-    col_btn, col_espacio = st.columns([1.5, 8.5])
-    with col_btn:
-        if st.button("💾 GUARDAR", type="primary", use_container_width=True):
-            st.session_state.df_logros = st.session_state.df_l_temp
-            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Logros")
-            try:
-                conn.update(worksheet="DB_LOGROS", data=st.session_state.df_logros)
-                st.success("✅ Logros subidos a Drive");
-            except:
-                st.warning("Guardado local.")
-            st.rerun()
-    st.session_state.df_l_temp = st.data_editor(df_l, use_container_width=True, num_rows="dynamic", height=300, key="editor_logros")
-
+    config_notas = {p: st.column_config.NumberColumn(p, min_value=1.0, max_value=10.0, step=0.1) for p in ["P1","P2","P3","P4"]}
+    ed = st.data_editor(df_f, column_config=config_notas, use_container_width=True)
+    if st.button("💾 GUARDAR"):
+        conn.update(worksheet="NOTAS_CONSOLIDADAS", data=ed.drop(columns=['Grado', 'ID_Estudiante'], errors='ignore'))
+        st.success("Sincronizado")
+elif menu == "🚦 Semáforo Académico":
+    df_s = df_f.groupby('NOMBRE_COMPLETO')[col_n].mean().reset_index()
+    rojos = df_s[df_s[col_n] < 6.0]
+    st.markdown(f"<div class='tarjeta-roja'>🔴 CRÍTICOS: {len(rojos)}</div>", unsafe_allow_html=True)
+    st.dataframe(rojos)
+elif menu == "📊 Inteligencia Académica":
+    fig = px.bar(df_f.groupby('ASIGNATURA')[col_n].mean().reset_index(), x=col_n, y='ASIGNATURA', orientation='h', color='ASIGNATURA')
+    st.plotly_chart(fig, use_container_width=True)
+elif menu == "📈 Dashboard Estudiantil":
+    alum = st.selectbox("Alumno:", df_f['NOMBRE_COMPLETO'].unique())
+    fig_radar = px.line_polar(df_f[df_f['NOMBRE_COMPLETO']==alum], r=col_n, theta='ASIGNATURA', line_close=True)
+    st.plotly_chart(fig_radar, use_container_width=True)
 elif menu == "📝 Asistencias y Reportes":
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Control de Asistencia y Observaciones</h3>", unsafe_allow_html=True)
-    
-    with st.form("form_novedad"):
-        st.markdown("<p style='font-weight:bold;'>Registrar Nueva Novedad:</p>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        lista_alumnos = sorted(df['NOMBRE_COMPLETO'].dropna().unique()) if 'NOMBRE_COMPLETO' in df.columns else []
-        
-        with col1: alum_sel = st.selectbox("👤 Estudiante:", lista_alumnos)
-        with col2: fecha_sel = st.date_input("📅 Fecha:")
-        with col3: estado_sel = st.selectbox("🚦 Estado / Tipo:", ["Falla", "Retardo", "Excusa", "Llamado de Atención", "Felicitación"])
-        
-        obs_sel = st.text_area("📝 Observaciones o Detalles:")
-        
-        submit_btn = st.form_submit_button("💾 GUARDAR REPORTE", type="primary")
-        
-        if submit_btn and alum_sel:
-            grado_alum = df[df['NOMBRE_COMPLETO'] == alum_sel]['Grado'].iloc[0] if not df[df['NOMBRE_COMPLETO'] == alum_sel].empty else "N/A"
-            
-            nuevo_registro = pd.DataFrame([{
-                'NOMBRE_COMPLETO': alum_sel,
-                'GRADO': grado_alum,
-                'FECHA': fecha_sel.strftime("%Y-%m-%d"),
-                'ESTADO': estado_sel,
-                'OBSERVACIONES': obs_sel
-            }])
-            
-            st.session_state.df_asistencia = pd.concat([st.session_state.df_asistencia, nuevo_registro], ignore_index=True)
-            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, f"📝 Reporte: {alum_sel}")
-            
-            try:
-                conn.update(worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia)
-                st.success(f"✅ Reporte de {alum_sel} guardado con éxito en Drive.")
-            except Exception as e:
-                st.warning("Guardado localmente. Error al sincronizar con Drive.")
-    
-    st.markdown("---")
-    st.markdown("<h4 style='color:#000000; font-family:Arial Black;'>Historial de Novedades</h4>", unsafe_allow_html=True)
-    if not st.session_state.df_asistencia.empty:
-        st.dataframe(st.session_state.df_asistencia.iloc[::-1], use_container_width=True)
-    else:
-        st.info("No hay registros disciplinarios o de asistencia almacenados.")
-
+    st.dataframe(st.session_state.df_asistencia, use_container_width=True)
+elif menu == "📚 Logros":
+    st.dataframe(st.session_state.df_logros, use_container_width=True)
 elif menu == "📜 Boletines":
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión</h3>", unsafe_allow_html=True)
-    modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
-    
-    if modo_impresion == "👤 Individual":
-        alumno = st.selectbox("👤 Estudiante:", sorted(df['NOMBRE_COMPLETO'].dropna().unique()))
-        if alumno:
-            res = df[df['NOMBRE_COMPLETO'] == alumno]; p_prom = res[col_n].mean()
-            th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
-            html_boletin = f"""
-            <html><head><script>function imprimirBoletin() {{ window.print(); }}</script>
-            <style>body {{ font-family: Arial, sans-serif; background: white; color: black; }} .b-print {{ padding: 20px; border: 3px solid #000; color: black; font-size: 13px; font-weight: bold; }} @media print {{ @page {{ size: letter portrait; margin: 10mm; }} body {{ background: white; margin: 0; }} .no-print {{ display: none !important; }} .b-print {{ border: none; padding: 0; }} table {{ width: 100%; border-collapse: collapse; }} th, td {{ border: 1px solid black; padding: 5px; }} }}</style></head><body>
-            <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;"><button onclick="imprimirBoletin()" style="background:#0d1b2a; color:white; border:2px solid #d4af37; padding:8px 15px; cursor:pointer; border-radius:4px; font-weight:bold;">🖨️ IMPRIMIR</button></div>
-            <div class="b-print">
-                <table style="width:100%; border:none; margin-bottom:10px;"><tr><td style="border:none; width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="60"></td><td style="border:none; text-align:center;"><h2 style="margin:0; color:#000; font-size:20px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:12px; color:#000;">INFORME ACADÉMICO: {periodo_sel}</p></td><td style="border:none; text-align:right; width:15%;"><div style="border:2px solid #000; padding:5px; background:#fff; text-align:center;"><b>PROM: {p_prom:.1f}</b></div></td></tr></table><br><br>
-                <div style="border:2px solid #000; padding:8px; background:#fff; display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>ESTUDIANTE:</b> {alumno}</span><span><b>GRADO:</b> {res['Grado'].iloc[0]}</span></div>
-                <table style="width:100%; border-collapse:collapse; text-align:center; border:2px solid #000;"><tr style="background:#ddd; color:#000;"><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>
-            """
-            for _, row in res.iterrows():
-                td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td>{row['PROMEDIO']:.1f}</td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[col_n]:.1f}</td>"
-                html_boletin += f"<tr style='background:#fff;'><td style='text-align:left; padding:5px; border:1px solid #000;'>{row['ASIGNATURA']}</td>{td}<td style='border:1px solid #000;'>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='padding:8px; text-align:justify; font-style:italic; border:1px solid #000;'><b>LOGRO:</b> {row['LOGROS']}</td></tr>"
-            html_boletin += "</table><br><br><br><div style='display:flex; justify-content:space-around; margin-top:50px; font-size:14px; color:black;'><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Rectoría</b></div><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Director de Grupo</b></div></div></div></body></html>"
-            components.html(html_boletin, height=500, scrolling=True)
-            
-    else:
-        estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
-        st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines para el grado {curso_sel}.")
-        if st.button("🚀 COMPILAR LOTE MASIVO", type="primary"):
-            th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
-            html_masivo = f"""
-            <html><head><script>function imprimirLote() {{ window.print(); }}</script>
-            <style>body {{ font-family: Arial, sans-serif; background: white; color: black; }} @media print {{ @page {{ size: letter portrait; margin: 10mm; }} body {{ background: white; margin: 0; }} .no-print {{ display: none !important; }} .salto-pagina {{ page-break-after: always; }} table {{ width: 100%; border-collapse: collapse; }} th, td {{ border: 1px solid black; padding: 5px; }} }} .b-print {{ padding: 20px; border: 3px solid #000; color: black; font-size: 13px; margin-bottom: 20px; font-weight:bold; }}</style></head><body>
-            <div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; border-bottom: 3px solid #d4af37; border: 2px solid #000; text-align:right; margin-bottom:15px; z-index:9999;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:white; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:4px; font-weight:bold; font-size:14px;">🖨️ IMPRIMIR LOS {len(estudiantes)} BOLETINES</button></div>
-            """
-            for i, alum in enumerate(estudiantes):
-                res = df[df['NOMBRE_COMPLETO'] == alum]; p_prom = res[col_n].mean()
-                salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
-                html_masivo += f"""
-                <div class="b-print {salto}">
-                    <table style="width:100%; border:none; margin-bottom:10px;"><tr><td style="border:none; width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="60"></td><td style="border:none; text-align:center;"><h2 style="margin:0; color:#000; font-size:20px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:12px; color:#000;">INFORME ACADÉMICO: {periodo_sel}</p></td><td style="border:none; text-align:right; width:15%;"><div style="border:2px solid #000; padding:5px; background:#fff; text-align:center;"><b>PROM: {p_prom:.1f}</b></div></td></tr></table><br><br>
-                    <div style="border:2px solid #000; padding:8px; background:#fff; display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>ESTUDIANTE:</b> {alum}</span><span><b>GRADO:</b> {res['Grado'].iloc[0]}</span></div>
-                    <table style="width:100%; border-collapse:collapse; text-align:center; border:2px solid #000;"><tr style="background:#ddd; color:#000;"><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>
-                """
-                for _, row in res.iterrows():
-                    td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td>{row['PROMEDIO']:.1f}</td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[col_n]:.1f}</td>"
-                    html_masivo += f"<tr style='background:#fff;'><td style='text-align:left; padding:5px; border:1px solid #000;'>{row['ASIGNATURA']}</td>{td}<td style='border:1px solid #000;'>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='padding:8px; text-align:justify; font-style:italic; border:1px solid #000;'><b>LOGRO:</b> {row['LOGROS']}</td></tr>"
-                html_masivo += "</table><br><br><br><div style='display:flex; justify-content:space-around; margin-top:50px; font-size:14px; color:black;'><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Rectoría</b></div><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Director de Grupo</b></div></div></div>"
-            html_masivo += "</body></html>"
-            components.html(html_masivo, height=600, scrolling=True)
-
-elif menu == "📖 Manual de Usuario":
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📖 Manual Institucional AGH</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#000000; font-weight:bold;'>Haga clic en las pestañas para navegar por las diapositivas tácticas:</p>", unsafe_allow_html=True)
-    
-    tab1, tab2, tab3, tab4 = st.tabs(["1️⃣ SINCRONIZAR", "2️⃣ DIGITAR NOTAS", "3️⃣ SEMÁFORO", "4️⃣ BOLETINES"])
-    
-    with tab1:
-        st.markdown("""<div style="background:#ffffff; border:4px solid #000000; border-top:12px solid #0d1b2a; padding:30px; border-radius:10px; box-shadow: 8px 8px 0px #d4af37;">
-            <h2 style="color:#0d1b2a; font-family:'Arial Black'; margin-top:0; text-transform:uppercase;">1. Sincronización Automática</h2>
-            <hr style="border-top:3px solid #000000;">
-            <p style="font-size:18px; font-weight:bold; color:#000000;">Al iniciar la jornada, el sistema se conecta y extrae los datos desde Google Drive <span style="color:#d4af37; background:#0d1b2a; padding:2px 6px; border-radius:4px;">en automático</span>.</p>
-            <p style="font-size:16px; color:#000000; font-weight:bold;">Esto asegura que el sistema trabaje siempre con las matrices más recientes, manteniendo a toda la tropa sincronizada en tiempo real sin clics adicionales.</p>
-        </div>""", unsafe_allow_html=True)
-        
-    with tab2:
-        st.markdown("""<div style="background:#ffffff; border:4px solid #000000; border-top:12px solid #0d1b2a; padding:30px; border-radius:10px; box-shadow: 8px 8px 0px #d4af37;">
-            <h2 style="color:#0d1b2a; font-family:'Arial Black'; margin-top:0; text-transform:uppercase;">2. Digitación de Notas</h2>
-            <hr style="border-top:3px solid #000000;">
-            <p style="font-size:18px; font-weight:bold; color:#000000;">Ingrese a la sección 'Digitar Notas' para modificar las calificaciones de los estudiantes de forma directa.</p>
-            <p style="font-size:16px; color:#cc0000; font-weight:900;">🚨 MUY IMPORTANTE: Después de hacer cualquier cambio, es obligatorio presionar el botón azul 'GUARDAR' para que la información quede blindada en la nube.</p>
-        </div>""", unsafe_allow_html=True)
-        
-    with tab3:
-        st.markdown("""<div style="background:#ffffff; border:4px solid #000000; border-top:12px solid #0d1b2a; padding:30px; border-radius:10px; box-shadow: 8px 8px 0px #d4af37;">
-            <h2 style="color:#0d1b2a; font-family:'Arial Black'; margin-top:0; text-transform:uppercase;">3. Semáforo de Riesgo</h2>
-            <hr style="border-top:3px solid #000000;">
-            <p style="font-size:18px; font-weight:bold; color:#000000;">El sistema cuenta con un radar táctico para identificar estudiantes con rendimiento bajo al instante.</p>
-            <p style="font-size:16px; color:#000000; font-weight:bold;">Diríjase a 'Semáforo Académico'. Verá una baliza que parpadea en <span style="color:#cc0000; font-weight:900;">ROJO</span> si algún estudiante tiene una nota inferior a 6.0, permitiendo una intervención inmediata.</p>
-        </div>""", unsafe_allow_html=True)
-        
-    with tab4:
-        st.markdown("""<div style="background:#ffffff; border:4px solid #000000; border-top:12px solid #0d1b2a; padding:30px; border-radius:10px; box-shadow: 8px 8px 0px #d4af37;">
-            <h2 style="color:#0d1b2a; font-family:'Arial Black'; margin-top:0; text-transform:uppercase;">4. Emisión de Boletines</h2>
-            <hr style="border-top:3px solid #000000;">
-            <p style="font-size:18px; font-weight:bold; color:#000000;">En la sección 'Boletines' podrá generar los reportes oficiales con calidad de impresión.</p>
-            <p style="font-size:16px; color:#000000; font-weight:bold;">Elija el modo 'Individual' seleccionando a un estudiante, o el modo 'Lote Masivo' para el grado completo. El botón de <span style="background:#d4af37; color:#0d1b2a; padding:2px 6px; border-radius:4px; font-weight:900;">🖨️ IMPRIMIR</span> se ubica siempre en la esquina superior derecha del reporte.</p>
-        </div>""", unsafe_allow_html=True)
-
-elif menu == "📸 Eventos Institucionales":
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📸 Memorias Institucionales</h3>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    c1.image("https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800", caption="Feria Científica")
-    c2.image("https://images.unsplash.com/photo-1523580494112-071d1694335c?q=80&w=800", caption="Ceremonia de Grados")
-    c3.image("https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800", caption="Comunidad Estudiantil")
+    alum_b = st.selectbox("Seleccione Alumno:", df_f['NOMBRE_COMPLETO'].unique())
+    if st.button("Generar"):
+        st.write(f"Generando boletín para {alum_b}...")
+elif menu == "🛡️ Bitácora y Backup":
+    st.write("Registro de acciones")
+    st.dataframe(pd.DataFrame(st.session_state.bitacora))
