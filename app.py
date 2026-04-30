@@ -207,7 +207,7 @@ with st.sidebar:
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>ACADEMIA GLOBAL HORIZONTE</h1></div>", unsafe_allow_html=True)
 
 if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
-    elif menu == "👑 Centro de Mando":
+elif menu == "👑 Centro de Mando":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
     st.info("Visión satelital activada. Estos datos son confidenciales y exclusivos para el perfil de Administrador.")
     
