@@ -26,11 +26,11 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
-    /* --- BLOQUEO DE BOTONES INTRUSOS (GATITO Y DEPLOY) --- */
-    /* Mantiene los tres puntitos pero bloquea los demás íconos */
-    .stDeployButton { display: none !important; pointer-events: none; }
-    [data-testid="stHeaderActionElements"] a { display: none !important; pointer-events: none; }
-    [data-testid="stDecoration"] { display: none !important; }
+    /* --- FRANCOTIRADOR: ELIMINA DEPLOY Y GATITO, SALVA LOS 3 PUNTITOS --- */
+    .stDeployButton { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    button[title="View app source code"] { display: none !important; }
+    button[title="View source"] { display: none !important; }
     footer { visibility: hidden !important; }
     
     .stApp { background-color: #ffffff; }
