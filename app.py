@@ -25,7 +25,7 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 # 🛡️ CAMUFLAJE INTELIGENTE: Oculta la barra superior a todos, EXCEPTO al Admin
-    if st.session_state.rol != "Admin":
+if st.session_state.rol != "Admin":
         st.markdown("<style> header {visibility: hidden !important; display: none !important;} [data-testid='stHeader'] {display: none !important;} </style>", unsafe_allow_html=True)
 st.markdown("""
     <style>
