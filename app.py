@@ -185,7 +185,9 @@ with st.sidebar:
     st.markdown("---")
     
     opciones_menu = ["🏠 Inicio", "📊 Inteligencia Académica", "📈 Dashboard Estudiantil", "🚦 Semáforo Académico", "✍️ Digitar Notas", "📚 Logros", "📝 Asistencias y Reportes", "📜 Boletines", "📖 Manual de Usuario", "📸 Eventos Institucionales"]
-    if st.session_state.rol == "Admin": opciones_menu.insert(1, "🛡️ Bitácora y Backup")
+    if st.session_state.rol == "Admin": 
+        opciones_menu.insert(1, "🛡️ Bitácora y Backup")
+        opciones_menu.insert(1, "👑 Centro de Mando")
     menu = st.radio("SECCIONES:", opciones_menu)
     
     cursos = ["TODOS"]
@@ -205,6 +207,40 @@ with st.sidebar:
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>ACADEMIA GLOBAL HORIZONTE</h1></div>", unsafe_allow_html=True)
 
 if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
+    elif menu == "👑 Centro de Mando":
+    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
+    st.info("Visión satelital activada. Estos datos son confidenciales y exclusivos para el perfil de Administrador.")
+    
+    # Cálculos de Inteligencia
+    total_estudiantes = len(df['NOMBRE_COMPLETO'].dropna().unique()) if 'NOMBRE_COMPLETO' in df.columns else 0
+    promedio_colegio = df[col_n].mean() if not df.empty else 0
+    total_novedades = len(st.session_state.df_asistencia) if not st.session_state.df_asistencia.empty else 0
+    
+    # Tarjetas de Mando
+    col1, col2, col3 = st.columns(3)
+    with col1: st.markdown(f"<div class='metric-card'><p class='metric-label'>Total Cadetes Activos</p><p class='metric-value'>{total_estudiantes}</p></div>", unsafe_allow_html=True)
+    with col2: st.markdown(f"<div class='metric-card'><p class='metric-label'>Promedio Institucional</p><p class='metric-value'>{promedio_colegio:.1f}</p></div>", unsafe_allow_html=True)
+    with col3: st.markdown(f"<div class='metric-card'><p class='metric-label'>Novedades Disciplinarias</p><p class='metric-value'>{total_novedades}</p></div>", unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Radares visuales
+    c1, c2 = st.columns([1.5, 1])
+    with c1:
+        st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Rendimiento por Grado</h4>", unsafe_allow_html=True)
+        if not df.empty and 'Grado' in df.columns:
+            df_grados = df.groupby('Grado')[col_n].mean().reset_index()
+            fig_g = px.bar(df_grados, x='Grado', y=col_n, text_auto='.1f', color='Grado', color_discrete_sequence=px.colors.sequential.Oryel)
+            fig_g.update_layout(height=320, margin=dict(t=10, b=10, l=10, r=10), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
+            st.plotly_chart(fig_g, use_container_width=True)
+    with c2:
+        st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Últimos Movimientos</h4>", unsafe_allow_html=True)
+        if st.session_state.bitacora:
+            # Mostrar solo los últimos 6 registros de la bitácora invertidos (los más nuevos arriba)
+            df_bit = pd.DataFrame(st.session_state.bitacora).tail(6).iloc[::-1]
+            st.dataframe(df_bit[['Usuario', 'Acción', 'Hora']], hide_index=True, use_container_width=True)
+        else:
+            st.warning("No hay actividad reciente en el radar.")
 elif menu == "🛡️ Bitácora y Backup": msg_bot = "Descargue aquí el Excel con el historial de trabajo."
 elif menu == "📊 Inteligencia Académica": msg_bot = "Análisis de pelotón en español activo."
 elif menu == "📈 Dashboard Estudiantil": msg_bot = "Radar táctico de rendimiento individual activo."
