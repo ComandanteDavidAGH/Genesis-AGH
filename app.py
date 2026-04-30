@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import io
 import streamlit.components.v1 as components
 from streamlit_gsheets import GSheetsConnection
@@ -12,6 +12,9 @@ st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide",
 # Conexión Satelital a Drive
 conn = st.connection("gsheets", type=GSheetsConnection)
 
+# Ajuste de Zona Horaria (Colombia UTC-5)
+zona_colombia = timezone(timedelta(hours=-5))
+
 # Inicialización de Estados
 if 'logueado' not in st.session_state: st.session_state.logueado = False
 if 'rol' not in st.session_state: st.session_state.rol = ""
@@ -21,27 +24,14 @@ if 'bitacora' not in st.session_state: st.session_state.bitacora = []
 if 'df_maestro' not in st.session_state: st.session_state.df_maestro = None
 if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
-if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now().strftime("%H:%M:%S")
+if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
-    /* --- FRANCOTIRADOR: SALVAR 3 PUNTITOS, BLOQUEAR GATITO Y DEPLOY --- */
+    /* --- SE ELIMINÓ EL BLOQUEO DE LA BARRA SUPERIOR PARA GARANTIZAR EL MENÚ MÓVIL --- */
     
-    /* 1. Ocultar el botón de Deploy por completo */
-    .stDeployButton { display: none !important; }
-    
-    /* 2. Bloquear y desvanecer el Gatito de GitHub (Enlace en la cabecera) */
-    [data-testid="stHeaderActionElements"] a { 
-        pointer-events: none !important; /* Nadie puede hacerle clic */
-        opacity: 0 !important; /* Lo vuelve invisible */
-        cursor: default !important;
-    }
-    
-    /* 3. Por si Streamlit Cloud usa la etiqueta "Viewer Badge" para el gatito */
-    .viewerBadge_container__1QSob { display: none !important; pointer-events: none !important; }
-    
-    /* 4. Ocultar la marca de agua de Streamlit abajo */
+    /* Ocultar la marca de agua del fondo */
     footer { visibility: hidden !important; }
     
     .stApp { background-color: #ffffff; }
@@ -62,7 +52,6 @@ st.markdown("""
     
     [data-testid="stPlotlyChart"] { transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; }
     [data-testid="stPlotlyChart"]:hover { transform: scale(1.03); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); z-index: 10; }
-    .colchon { height: 300px; width: 100%; }
 
     @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
     @keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
@@ -74,7 +63,6 @@ st.markdown("""
     
     p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
     
-    /* --- CORRECCIÓN DEFINITIVA: LISTAS DESPLEGABLES --- */
     div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
     div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
     div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
@@ -82,20 +70,9 @@ st.markdown("""
     ul[role="listbox"] li { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; font-weight: bold !important; }
     ul[role="listbox"] li:hover, ul[role="listbox"] li[aria-selected="true"] { background-color: #d4af37 !important; color: #000000 !important; }
     
-    /* --- BLINDAJE: CAJAS DE TEXTO (LOGIN) Y CALENDARIO --- */
     div[data-baseweb="input"] { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
     div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
     
-    div[data-baseweb="calendar"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
-    div[data-baseweb="calendar"] * { color: #000000 !important; background-color: transparent !important; }
-    div[data-baseweb="calendar"] div[role="button"]:hover { background-color: #f0f0f0 !important; }
-    div[data-baseweb="calendar"] div[aria-selected="true"] { background-color: #d4af37 !important; color: #0d1b2a !important; font-weight: bold !important; }
-    
-    /* Estilo para los títulos de las pestañas (Tabs) */
-    .stTabs [data-baseweb="tab-list"] button { font-family: 'Arial Black'; color: #0d1b2a; border-bottom: 2px solid transparent; }
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { border-bottom: 3px solid #d4af37; color: #d4af37; background-color: #0d1b2a; border-radius: 5px 5px 0 0; }
-    
-    /* Métrica Estudiantil Custom */
     .metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
     .metric-value { font-size: 28px; font-weight: 900; color: #0d1b2a; margin: 0; font-family: 'Arial Black';}
     .metric-label { font-size: 14px; font-weight: bold; color: #000000; margin: 0; text-transform: uppercase;}
@@ -104,8 +81,8 @@ st.markdown("""
 
 def registrar_bitacora(usuario, rol, accion):
     st.session_state.bitacora.append({
-        "Fecha": datetime.now().strftime("%Y-%m-%d"),
-        "Hora": datetime.now().strftime("%H:%M:%S"),
+        "Fecha": datetime.now(zona_colombia).strftime("%Y-%m-%d"),
+        "Hora": datetime.now(zona_colombia).strftime("%I:%M:%S %p"),
         "Usuario": usuario,
         "Rol": rol,
         "Acción": accion
@@ -185,11 +162,10 @@ with st.sidebar:
     
     st.markdown(f"""
         <div style='background:rgba(212, 175, 55, 0.1); border:1px solid #d4af37; padding:10px; border-radius:5px; text-align:center; margin-bottom:15px;'>
-            <p style='color:#d4af37; font-size:12px; margin:0;'>🕒 HORA DE INICIO</p>
+            <p style='color:#d4af37; font-size:12px; margin:0;'>🕒 HORA DE INGRESO (COL)</p>
             <p style='color:white; font-size:18px; font-weight:bold; margin:0;'>{st.session_state.hora_inicio}</p>
         </div>
     """, unsafe_allow_html=True)
-
     st.markdown("---")
     
     opciones_menu = ["🏠 Inicio", "📊 Inteligencia Académica", "📈 Dashboard Estudiantil", "🚦 Semáforo Académico", "✍️ Digitar Notas", "📚 Logros", "📝 Asistencias y Reportes", "📜 Boletines", "📖 Manual de Usuario", "📸 Eventos Institucionales"]
@@ -293,7 +269,7 @@ elif menu == "👑 Centro de Mando":
             df_bit = pd.DataFrame(st.session_state.bitacora).tail(6).iloc[::-1]
             st.dataframe(df_bit[['Usuario', 'Acción', 'Hora']], hide_index=True, use_container_width=True)
         else:
-            st.warning("No hay actividad reciente.")
+            st.warning("No hay actividad reciente en el radar.")
 
 elif menu == "🛡️ Bitácora y Backup":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
@@ -307,11 +283,11 @@ elif menu == "🛡️ Bitácora y Backup":
         if st.session_state.bitacora:
             pd.DataFrame(st.session_state.bitacora).to_excel(writer, sheet_name='BITACORA', index=False)
     
-    st.info("Comandante, aquí puede descargar todo el trabajo. Es su copia de seguridad física.")
+    st.info("Comandante, aquí puede descargar todo el trabajo que los docentes han realizado en el sistema. Es su copia de seguridad física.")
     st.download_button(
         label="📥 DESCARGAR BASE DE DATOS ACTUALIZADA (EXCEL)",
         data=buffer.getvalue(),
-        file_name=f"Backup_AGH_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+        file_name=f"Backup_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d_%H%M')}.xlsx",
         mime="application/vnd.ms-excel",
         type="primary",
         use_container_width=True
