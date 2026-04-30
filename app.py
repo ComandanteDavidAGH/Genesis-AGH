@@ -26,11 +26,22 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
-    /* --- FRANCOTIRADOR: ELIMINA DEPLOY Y GATITO, SALVA LOS 3 PUNTITOS --- */
+    /* --- FRANCOTIRADOR: SALVAR 3 PUNTITOS, BLOQUEAR GATITO Y DEPLOY --- */
+    
+    /* 1. Ocultar el botón de Deploy por completo */
     .stDeployButton { display: none !important; }
-    [data-testid="stToolbar"] { display: none !important; }
-    button[title="View app source code"] { display: none !important; }
-    button[title="View source"] { display: none !important; }
+    
+    /* 2. Bloquear y desvanecer el Gatito de GitHub (Enlace en la cabecera) */
+    [data-testid="stHeaderActionElements"] a { 
+        pointer-events: none !important; /* Nadie puede hacerle clic */
+        opacity: 0 !important; /* Lo vuelve invisible */
+        cursor: default !important;
+    }
+    
+    /* 3. Por si Streamlit Cloud usa la etiqueta "Viewer Badge" para el gatito */
+    .viewerBadge_container__1QSob { display: none !important; pointer-events: none !important; }
+    
+    /* 4. Ocultar la marca de agua de Streamlit abajo */
     footer { visibility: hidden !important; }
     
     .stApp { background-color: #ffffff; }
