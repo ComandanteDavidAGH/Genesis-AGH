@@ -26,9 +26,12 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
-    /* --- CAMUFLAJE LIMPIO --- */
+    /* --- CAMUFLAJE TOTAL (ADIÓS GATITO Y MENÚ) --- */
     [data-testid="stDecoration"] { display: none !important; }
     footer { visibility: hidden !important; }
+    header { visibility: hidden !important; }
+    #MainMenu { visibility: hidden !important; }
+    [data-testid="stToolbar"] { visibility: hidden !important; }
     
     .stApp { background-color: #ffffff; }
     .stApp::before {
