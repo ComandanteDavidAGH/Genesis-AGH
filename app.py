@@ -470,8 +470,30 @@ elif menu == "📝 Asistencias y Reportes":
         st.info("No hay registros disciplinarios o de asistencia almacenados.")
 
 elif menu == "📜 Boletines":
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
     modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
+    
+    css_vip = """
+    <style>
+        body { font-family: Arial, sans-serif; background: white; color: black; }
+        .b-print { position: relative; padding: 30px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: -1; pointer-events: none; }
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; }
+        .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; }
+        .table-custom td { border: 1px solid #000; padding: 8px; background-color: rgba(255, 255, 255, 0.85); }
+        .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; }
+        .header-table td { border: none; }
+        .firmas-container { display: flex; justify-content: space-around; margin-top: 60px; font-size: 14px; z-index: 2; position: relative; }
+        .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
+        @media print { 
+            @page { size: letter portrait; margin: 10mm; } 
+            body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+            .no-print { display: none !important; } 
+            .b-print { border: none; box-shadow: none; padding: 0; } 
+            .salto-pagina { page-break-after: always; } 
+        }
+    </style>
+    """
     
     if modo_impresion == "👤 Individual":
         alumno = st.selectbox("👤 Estudiante:", sorted(df['NOMBRE_COMPLETO'].dropna().unique()))
@@ -479,46 +501,45 @@ elif menu == "📜 Boletines":
             res = df[df['NOMBRE_COMPLETO'] == alumno]; p_prom = res[col_n].mean()
             th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
             html_boletin = f"""
-            <html><head><script>function imprimirBoletin() {{ window.print(); }}</script>
-            <style>body {{ font-family: Arial, sans-serif; background: white; color: black; }} .b-print {{ padding: 20px; border: 3px solid #000; color: black; font-size: 13px; font-weight: bold; }} @media print {{ @page {{ size: letter portrait; margin: 10mm; }} body {{ background: white; margin: 0; }} .no-print {{ display: none !important; }} .b-print {{ border: none; padding: 0; }} table {{ width: 100%; border-collapse: collapse; }} th, td {{ border: 1px solid black; padding: 5px; }} }}</style></head><body>
-            <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;"><button onclick="imprimirBoletin()" style="background:#0d1b2a; color:white; border:2px solid #d4af37; padding:8px 15px; cursor:pointer; border-radius:4px; font-weight:bold;">🖨️ IMPRIMIR</button></div>
+            <html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
+            <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;"><button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black'; box-shadow: 2px 2px 5px rgba(0,0,0,0.3);">🖨️ IMPRIMIR REPORTE OFICIAL</button></div>
             <div class="b-print">
-                <table style="width:100%; border:none; margin-bottom:10px;"><tr><td style="border:none; width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="60"></td><td style="border:none; text-align:center;"><h2 style="margin:0; color:#000; font-size:20px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:12px; color:#000;">INFORME ACADÉMICO: {periodo_sel}</p></td><td style="border:none; text-align:right; width:15%;"><div style="border:2px solid #000; padding:5px; background:#fff; text-align:center;"><b>PROM: {p_prom:.1f}</b></div></td></tr></table><br><br>
-                <div style="border:2px solid #000; padding:8px; background:#fff; display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>ESTUDIANTE:</b> {alumno}</span><span><b>GRADO:</b> {res['Grado'].iloc[0]}</span></div>
-                <table style="width:100%; border-collapse:collapse; text-align:center; border:2px solid #000;"><tr style="background:#ddd; color:#000;"><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>
+                <img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" class="watermark">
+                <table class="header-table"><tr><td style="width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="70"></td><td style="text-align:center;"><h2 style="margin:0; color:#0d1b2a; font-size:22px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p></td><td style="text-align:right; width:15%;"><div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;"><b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b></div></td></tr></table>
+                <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;"><span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alumno}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0]}</span></div>
+                <table class="table-custom"><tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>
             """
             for _, row in res.iterrows():
-                td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td>{row['PROMEDIO']:.1f}</td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[col_n]:.1f}</td>"
-                html_boletin += f"<tr style='background:#fff;'><td style='text-align:left; padding:5px; border:1px solid #000;'>{row['ASIGNATURA']}</td>{td}<td style='border:1px solid #000;'>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='padding:8px; text-align:justify; font-style:italic; border:1px solid #000;'><b>LOGRO:</b> {row['LOGROS']}</td></tr>"
-            html_boletin += "</table><br><br><br><div style='display:flex; justify-content:space-around; margin-top:50px; font-size:14px; color:black;'><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Rectoría</b></div><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Director de Grupo</b></div></div></div></body></html>"
-            components.html(html_boletin, height=500, scrolling=True)
+                td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td><b style='color:#0d1b2a;'>{row[col_n]:.1f}</b></td>"
+                html_boletin += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='text-align:justify; font-style:italic; font-weight:normal; font-size:12px;'><b style='color:#0d1b2a;'>LOGRO:</b> {row['LOGROS']}</td></tr>"
+            html_boletin += "</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo<br><span style='font-size:10px; font-weight:normal;'>Génesis AGH System</span></div></div></div></body></html>"
+            components.html(html_boletin, height=600, scrolling=True)
             
     else:
         estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
-        st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines para el grado {curso_sel}.")
-        if st.button("🚀 COMPILAR LOTE MASIVO", type="primary"):
+        st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
+        if st.button("🚀 COMPILAR LOTE MASIVO VIP", type="primary"):
             th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
             html_masivo = f"""
-            <html><head><script>function imprimirLote() {{ window.print(); }}</script>
-            <style>body {{ font-family: Arial, sans-serif; background: white; color: black; }} @media print {{ @page {{ size: letter portrait; margin: 10mm; }} body {{ background: white; margin: 0; }} .no-print {{ display: none !important; }} .salto-pagina {{ page-break-after: always; }} table {{ width: 100%; border-collapse: collapse; }} th, td {{ border: 1px solid black; padding: 5px; }} }} .b-print {{ padding: 20px; border: 3px solid #000; color: black; font-size: 13px; margin-bottom: 20px; font-weight:bold; }}</style></head><body>
-            <div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; border-bottom: 3px solid #d4af37; border: 2px solid #000; text-align:right; margin-bottom:15px; z-index:9999;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:white; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:4px; font-weight:bold; font-size:14px;">🖨️ IMPRIMIR LOS {len(estudiantes)} BOLETINES</button></div>
+            <html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body>
+            <div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; border-bottom: 3px solid #d4af37; border: 2px solid #000; text-align:right; margin-bottom:15px; z-index:9999;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:12px 25px; cursor:pointer; border-radius:6px; font-weight:bold; font-size:16px; font-family:'Arial Black';">🖨️ IMPRIMIR LOS {len(estudiantes)} BOLETINES OFICIALES</button></div>
             """
             for i, alum in enumerate(estudiantes):
                 res = df[df['NOMBRE_COMPLETO'] == alum]; p_prom = res[col_n].mean()
                 salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
                 html_masivo += f"""
                 <div class="b-print {salto}">
-                    <table style="width:100%; border:none; margin-bottom:10px;"><tr><td style="border:none; width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="60"></td><td style="border:none; text-align:center;"><h2 style="margin:0; color:#000; font-size:20px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:12px; color:#000;">INFORME ACADÉMICO: {periodo_sel}</p></td><td style="border:none; text-align:right; width:15%;"><div style="border:2px solid #000; padding:5px; background:#fff; text-align:center;"><b>PROM: {p_prom:.1f}</b></div></td></tr></table><br><br>
-                    <div style="border:2px solid #000; padding:8px; background:#fff; display:flex; justify-content:space-between; margin-bottom:10px;"><span><b>ESTUDIANTE:</b> {alum}</span><span><b>GRADO:</b> {res['Grado'].iloc[0]}</span></div>
-                    <table style="width:100%; border-collapse:collapse; text-align:center; border:2px solid #000;"><tr style="background:#ddd; color:#000;"><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>
+                    <img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" class="watermark">
+                    <table class="header-table"><tr><td style="width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="70"></td><td style="text-align:center;"><h2 style="margin:0; color:#0d1b2a; font-size:22px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p></td><td style="text-align:right; width:15%;"><div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;"><b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b></div></td></tr></table>
+                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;"><span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0]}</span></div>
+                    <table class="table-custom"><tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>
                 """
                 for _, row in res.iterrows():
-                    td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td>{row['PROMEDIO']:.1f}</td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[col_n]:.1f}</td>"
-                    html_masivo += f"<tr style='background:#fff;'><td style='text-align:left; padding:5px; border:1px solid #000;'>{row['ASIGNATURA']}</td>{td}<td style='border:1px solid #000;'>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='padding:8px; text-align:justify; font-style:italic; border:1px solid #000;'><b>LOGRO:</b> {row['LOGROS']}</td></tr>"
-                html_masivo += "</table><br><br><br><div style='display:flex; justify-content:space-around; margin-top:50px; font-size:14px; color:black;'><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Rectoría</b></div><div style='text-align:center; width:40%; border-top:2px solid black; padding-top:5px;'><b>Firma Director de Grupo</b></div></div></div>"
+                    td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td><b style='color:#0d1b2a;'>{row[col_n]:.1f}</b></td>"
+                    html_masivo += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='text-align:justify; font-style:italic; font-weight:normal; font-size:12px;'><b style='color:#0d1b2a;'>LOGRO:</b> {row['LOGROS']}</td></tr>"
+                html_masivo += "</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo<br><span style='font-size:10px; font-weight:normal;'>Génesis AGH System</span></div></div></div>"
             html_masivo += "</body></html>"
             components.html(html_masivo, height=600, scrolling=True)
-
 elif menu == "📖 Manual de Usuario":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📖 Manual Institucional AGH</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color:#000000; font-weight:bold;'>Haga clic en las pestañas para navegar por las diapositivas tácticas:</p>", unsafe_allow_html=True)
