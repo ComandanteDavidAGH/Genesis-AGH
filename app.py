@@ -29,11 +29,12 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
-    /* --- SE ELIMINÓ EL BLOQUEO DE LA BARRA SUPERIOR PARA GARANTIZAR EL MENÚ MÓVIL --- */
+    /* --- FRANCOTIRADOR: BLOQUEO DEL GATITO Y DEPLOY (MANTIENE MENÚ MÓVIL Y 3 PUNTITOS) --- */
+    .stDeployButton { display: none !important; }
+    [data-testid="stHeaderActionElements"] a { display: none !important; pointer-events: none !important; }
     
     /* Ocultar la marca de agua del fondo */
-    footer { visibility: hidden !important; }
-    
+    footer { visibility: hidden !important; }    
     .stApp { background-color: #ffffff; }
     .stApp::before {
         content: ""; background-image: url('https://cdn-icons-png.flaticon.com/512/2231/2231644.png');
