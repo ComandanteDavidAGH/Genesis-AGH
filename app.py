@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import io
 import streamlit.components.v1 as components
 from streamlit_gsheets import GSheetsConnection
@@ -9,8 +9,9 @@ from streamlit_gsheets import GSheetsConnection
 # --- 1. CONFIGURACIÓN DE NÚCLEO ---
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
 
-# Conexión Satelital a Drive
+# Conexión Satelital y Reloj de Colombia (UTC-5)
 conn = st.connection("gsheets", type=GSheetsConnection)
+zona_colombia = timezone(timedelta(hours=-5))
 
 # Inicialización de Estados
 if 'logueado' not in st.session_state: st.session_state.logueado = False
@@ -21,8 +22,7 @@ if 'bitacora' not in st.session_state: st.session_state.bitacora = []
 if 'df_maestro' not in st.session_state: st.session_state.df_maestro = None
 if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
-if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now().strftime("%H:%M:%S")
-
+if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
    <style>
@@ -94,13 +94,12 @@ st.markdown("""
 
 def registrar_bitacora(usuario, rol, accion):
    st.session_state.bitacora.append({
-       "Fecha": datetime.now().strftime("%Y-%m-%d"),
-       "Hora": datetime.now().strftime("%H:%M:%S"),
+       "Fecha": datetime.now(zona_colombia).strftime("%Y-%m-%d"),
+       "Hora": datetime.now(zona_colombia).strftime("%I:%M:%S %p"),
        "Usuario": usuario,
        "Rol": rol,
        "Acción": accion
    })
-
 # --- 3. LOGIN SEGURO ---
 if not st.session_state.logueado:
    st.markdown("<br><br>", unsafe_allow_html=True)
