@@ -59,7 +59,38 @@ st.markdown("""
     [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
     [data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
     
-    /* TITULO FIJO Y DE ALTO CONTRASTE */
+    # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
+
+# 🛡️ ESCUDO DEFINITIVO: Ocultar según dispositivo, SOLO a los que NO son Admin
+if st.session_state.rol != "Admin":
+    st.markdown("""
+        <style>
+        /* En computadoras: Oculta TODA la barra superior (el menú lateral ya está visible) */
+        @media (min-width: 768px) {
+            [data-testid="stHeader"] { display: none !important; }
+        }
+        /* En celulares: Oculta solo la derecha (Gatito y Puntos), salva las 3 rayitas de la izquierda */
+        @media (max-width: 767px) {
+            [data-testid="stHeaderActionElements"] { display: none !important; }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+    <style>
+    /* Ocultar la marca de agua del fondo */
+    footer { visibility: hidden !important; }
+    
+    .stApp { background-color: #ffffff; }
+    .stApp::before {
+        content: ""; background-image: url('https://cdn-icons-png.flaticon.com/512/2231/2231644.png');
+        background-size: 350px; background-repeat: no-repeat; background-position: center;
+        opacity: 0.04; position: fixed; top: 0; left: 0; bottom: 0; right: 0; z-index: 0; pointer-events: none;
+    }
+    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
+    [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
+    [data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
+    
     .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
     .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
     
