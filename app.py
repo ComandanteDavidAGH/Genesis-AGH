@@ -157,9 +157,8 @@ if st.session_state.df_maestro is None:
            st.session_state.df_logros = df_l.fillna("")
            st.session_state.df_asistencia = df_a.fillna("")
            st.rerun()
-       except Exception as e:
-           st.error("❌ Error Crítico: No se pudo conectar al archivo Excel en Google Drive.")
-           st.stop()
+       except except Exception as e:
+           st.error(f"❌ El sistema reporta este fallo exacto: {e}")
  
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
