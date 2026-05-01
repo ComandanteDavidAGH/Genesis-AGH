@@ -273,6 +273,8 @@ elif menu == "👑 Centro de Mando":
        st.warning(f"⚠️ Alerta de Rectoría: El {porcentaje_riesgo:.1f}% de la población estudiantil presenta riesgo de reprobación.")
 elif menu == "🛡️ Bitácora y Backup":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
+   
+   # --- 1. BACKUP GENERAL ---
    buffer = io.BytesIO()
    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
        st.session_state.df_maestro.to_excel(writer, sheet_name='NOTAS_CONSOLIDADAS', index=False)
@@ -281,11 +283,31 @@ elif menu == "🛡️ Bitácora y Backup":
        if st.session_state.bitacora: pd.DataFrame(st.session_state.bitacora).to_excel(writer, sheet_name='BITACORA', index=False)
    
    st.info("Comandante, aquí puede descargar todo el trabajo. Es su copia de seguridad física.")
-   st.download_button(label="📥 DESCARGAR BASE DE DATOS ACTUALIZADA (EXCEL)", data=buffer.getvalue(), file_name=f"Backup_AGH_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx", mime="application/vnd.ms-excel", type="primary", use_container_width=True)
+   st.download_button(label="📥 DESCARGAR BASE DE DATOS ACTUALIZADA (EXCEL)", data=buffer.getvalue(), file_name=f"Backup_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d_%H%M')}.xlsx", mime="application/vnd.ms-excel", type="primary", use_container_width=True)
    st.markdown("---")
+
+   # --- 2. EXPORTACIÓN SIMAT (MEN) ---
+   st.markdown("<h4 style='color:#000; font-family:Arial Black;'>🇨🇴 Módulo de Exportación SIMAT (MEN)</h4>", unsafe_allow_html=True)
+   st.write("Genera la plantilla estructurada con los estudiantes activos para reportar al Ministerio de Educación Nacional.")
+   
+   if not df_m.empty and 'NOMBRE_COMPLETO' in df_m.columns:
+       columnas_simat = [c for c in ['ID_Est', 'NOMBRE_COMPLETO', 'Grado'] if c in df_m.columns]
+       df_simat = df_m[columnas_simat].drop_duplicates().copy()
+       df_simat['ESTADO_MATRICULA'] = "MATRICULADO"
+       df_simat['FECHA_REPORTE'] = datetime.now(zona_colombia).strftime("%Y-%m-%d")
+       
+       buffer_simat = io.BytesIO()
+       with pd.ExcelWriter(buffer_simat, engine='xlsxwriter') as writer:
+           df_simat.to_excel(writer, sheet_name='REPORTE_SIMAT', index=False)
+           
+       st.download_button(label="📄 DESCARGAR PLANTILLA SIMAT OFICIAL", data=buffer_simat.getvalue(), file_name=f"SIMAT_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d')}.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
+   else:
+       st.warning("No hay datos de estudiantes para generar el SIMAT.")
+   st.markdown("---")
+   
+   # --- 3. BITÁCORA HISTÓRICA ---
    st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Registro Histórico de Usuarios</h4>", unsafe_allow_html=True)
    if st.session_state.bitacora: st.dataframe(pd.DataFrame(st.session_state.bitacora).iloc[::-1].reset_index(drop=True), use_container_width=True)
-
 elif menu == "📊 Inteligencia Académica":
    config_espanol = {'locale': 'es', 'displaylogo': False}
    c1, c2 = st.columns(2)
