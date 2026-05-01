@@ -143,12 +143,13 @@ if not st.session_state.logueado:
 if st.session_state.df_maestro is None:
    with st.spinner("Sincronizando matrices de datos con Google Drive..."):
        try:
-           df_n = conn.read(worksheet='NOTAS_CONSOLIDADAS')
-           try: df_e = conn.read(worksheet='DATA_ESTUDIANTES')
+           # La orden ttl=0 destruye la caché y obliga a leer en vivo
+           df_n = conn.read(worksheet='NOTAS_CONSOLIDADAS', ttl=0)
+           try: df_e = conn.read(worksheet='DATA_ESTUDIANTES', ttl=0)
            except: df_e = pd.DataFrame()
-           try: df_l = conn.read(worksheet='DB_LOGROS')
+           try: df_l = conn.read(worksheet='DB_LOGROS', ttl=0)
            except: df_l = pd.DataFrame()
-           try: df_a = conn.read(worksheet='DB_ASISTENCIA')
+           try: df_a = conn.read(worksheet='DB_ASISTENCIA', ttl=0)
            except: df_a = pd.DataFrame(columns=['NOMBRE_COMPLETO', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
            
            df = pd.merge(df_n, df_e[['ID_Estudiante', 'Grado']], left_on='ID_Est', right_on='ID_Estudiante', how='left') if not df_e.empty else df_n
@@ -157,9 +158,8 @@ if st.session_state.df_maestro is None:
            st.session_state.df_asistencia = df_a.fillna("")
            st.rerun()
        except Exception as e:
-           st.error("❌ Error Crítico: No se pudo conectar al archivo Excel en Google Drive.")
-           st.stop()
- 
+           st.error(f"❌ FALLA TÉCNICA EXACTA DEL SATÉLITE: {str(e)}")
+           st.stop() 
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
    st.image("https://cdn-icons-png.flaticon.com/512/2231/2231644.png", width=70)
