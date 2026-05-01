@@ -157,7 +157,7 @@ if st.session_state.df_maestro is None:
            st.session_state.df_logros = df_l.fillna("")
            st.session_state.df_asistencia = df_a.fillna("")
            st.rerun()
-       except except Exception as e:
+       except Exception as e:
            st.error(f"❌ El sistema reporta este fallo exacto: {e}")
  
 # --- 4. PANEL LATERAL ---
