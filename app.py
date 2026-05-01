@@ -9,6 +9,9 @@ from streamlit_gsheets import GSheetsConnection
 # --- 1. CONFIGURACIÓN DE NÚCLEO ---
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
  
+# 🚀 OPERACIÓN BYPASS: ENLACE DIRECTO AL NÚCLEO (ADIÓS A LOS SECRETS)
+URL_SECRETA = "https://docs.google.com/spreadsheets/d/1vtgojCFVEbM6QysxJM933nKXJxml9fShtNt76ZoaiEE/edit"
+
 # Conexión Satelital a Drive
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -113,9 +116,9 @@ if not st.session_state.logueado:
                registrar_bitacora(u, "Admin", "✅ Ingreso Emergencia")
                st.rerun()
            else:
-               with st.spinner("Validando en Bóveda Satelital..."):
+               with st.spinner("Validando con Bypass activo..."):
                    try:
-                       df_usuarios = conn.read(worksheet='DATA_USUARIOS')
+                       df_usuarios = conn.read(spreadsheet=URL_SECRETA, worksheet='DATA_USUARIOS')
                        acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
                        
                        if not acceso.empty:
@@ -136,33 +139,19 @@ if not st.session_state.logueado:
                        else:
                            st.error("❌ Credenciales incorrectas.")
                    except Exception as e:
-                       st.error("❌ Error 404: No se detecta el Excel. Faltan los Secrets en Streamlit.")
+                       st.error(f"❌ Error de Conexión: {str(e)}")
    st.stop()
  
-# --- CARGA AUTOMÁTICA ---
+# --- CARGA AUTOMÁTICA (CON BYPASS) ---
 if st.session_state.df_maestro is None:
-   with st.spinner("Escaneando el Excel en Google Drive..."):
-       # PRUEBA 1: Verificar si el enlace (Secrets) funciona
+   with st.spinner("Sincronizando matrices directo desde Drive..."):
        try:
-           test_conexion = conn.read(ttl=0)
-       except Exception as e:
-           st.error("❌ ALERTA 1: El enlace de su Excel en los 'Secrets' está mal escrito, incompleto o en blanco en la nueva aplicación de Streamlit.")
-           st.stop()
-           
-       # PRUEBA 2: Verificar Pestaña Principal
-       try:
-           df_n = conn.read(worksheet='NOTAS_CONSOLIDADAS', ttl=0)
-       except Exception as e:
-           st.error("❌ ALERTA 2: Error 404 en la pestaña 'NOTAS_CONSOLIDADAS'. Vaya a su Excel, haga doble clic en el nombre de la pestaña abajo y asegúrese de BORRAR CUALQUIER ESPACIO EN BLANCO al final del nombre.")
-           st.stop()
-           
-       # SI PASA LAS 2 PRUEBAS, CARGA TODO EL TANQUE
-       try:
-           try: df_e = conn.read(worksheet='DATA_ESTUDIANTES', ttl=0)
+           df_n = conn.read(spreadsheet=URL_SECRETA, worksheet='NOTAS_CONSOLIDADAS', ttl=0)
+           try: df_e = conn.read(spreadsheet=URL_SECRETA, worksheet='DATA_ESTUDIANTES', ttl=0)
            except: df_e = pd.DataFrame()
-           try: df_l = conn.read(worksheet='DB_LOGROS', ttl=0)
+           try: df_l = conn.read(spreadsheet=URL_SECRETA, worksheet='DB_LOGROS', ttl=0)
            except: df_l = pd.DataFrame()
-           try: df_a = conn.read(worksheet='DB_ASISTENCIA', ttl=0)
+           try: df_a = conn.read(spreadsheet=URL_SECRETA, worksheet='DB_ASISTENCIA', ttl=0)
            except: df_a = pd.DataFrame(columns=['NOMBRE_COMPLETO', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
            
            df = pd.merge(df_n, df_e[['ID_Estudiante', 'Grado']], left_on='ID_Est', right_on='ID_Estudiante', how='left') if not df_e.empty else df_n
@@ -171,8 +160,10 @@ if st.session_state.df_maestro is None:
            st.session_state.df_asistencia = df_a.fillna("")
            st.rerun()
        except Exception as e:
-           st.error(f"❌ FALLA DESCONOCIDA: {str(e)}")
-           st.stop()# --- 4. PANEL LATERAL ---
+           st.error(f"❌ Error al cargar pestaña de Excel: {str(e)}")
+           st.stop()
+ 
+# --- 4. PANEL LATERAL ---
 with st.sidebar:
    st.image("https://cdn-icons-png.flaticon.com/512/2231/2231644.png", width=70)
    nombre_mostrar = st.session_state.nombre_completo_usuario if st.session_state.nombre_completo_usuario else st.session_state.usuario_actual.upper()
@@ -234,8 +225,6 @@ st.markdown(f"""
 # --- 6. ZONA DE TRABAJO ---
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
-
-# ¡AQUI ESTA LA LINEA CORREGIDA DEFINITIVA!
 df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
  
 if menu == "🏠 Inicio":
@@ -396,7 +385,7 @@ elif menu == "✍️ Digitar Notas":
                df_to_save = st.session_state.df_temp_n.copy()
                if 'Grado' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['Grado'])
                if 'ID_Estudiante' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['ID_Estudiante'])
-               conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_to_save)
+               conn.update(spreadsheet=URL_SECRETA, worksheet="NOTAS_CONSOLIDADAS", data=df_to_save)
                st.success("✅ Guardado en Drive"); 
            except: st.warning("Guardado local")
            st.rerun()
@@ -409,7 +398,7 @@ elif menu == "📚 Logros":
        if st.button("💾 GUARDAR", type="primary", use_container_width=True):
            st.session_state.df_logros = st.session_state.df_l_temp
            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Logros")
-           try: conn.update(worksheet="DB_LOGROS", data=st.session_state.df_logros); st.success("✅ Logros subidos a Drive");
+           try: conn.update(spreadsheet=URL_SECRETA, worksheet="DB_LOGROS", data=st.session_state.df_logros); st.success("✅ Logros subidos a Drive");
            except: st.warning("Guardado local.")
            st.rerun()
    st.session_state.df_l_temp = st.data_editor(df_l, use_container_width=True, num_rows="dynamic", height=300, key="editor_logros")
@@ -430,7 +419,7 @@ elif menu == "📝 Asistencias y Reportes":
            nuevo_registro = pd.DataFrame([{'NOMBRE_COMPLETO': alum_sel, 'GRADO': grado_alum, 'FECHA': fecha_sel.strftime("%Y-%m-%d"), 'ESTADO': estado_sel, 'OBSERVACIONES': obs_sel}])
            st.session_state.df_asistencia = pd.concat([st.session_state.df_asistencia, nuevo_registro], ignore_index=True)
            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, f"📝 Reporte: {alum_sel}")
-           try: conn.update(worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia); st.success(f"✅ Reporte guardado.");
+           try: conn.update(spreadsheet=URL_SECRETA, worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia); st.success(f"✅ Reporte guardado.");
            except: st.warning("Guardado localmente.")
    st.markdown("---")
    st.markdown("<h4 style='color:#000000; font-family:Arial Black;'>Historial de Novedades</h4>", unsafe_allow_html=True)
