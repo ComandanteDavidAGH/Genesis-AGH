@@ -107,7 +107,6 @@ if not st.session_state.logueado:
        st.markdown("<br>", unsafe_allow_html=True)
        
        if st.button("🚀 INGRESAR", use_container_width=True):
-           # LLAVE MAESTRA INYECTADA AQUI:
            if u == "admin" and p == "agh2024":
                st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = True, "Admin", u
                st.session_state.nombre_completo_usuario = "Comandante Supremo"
@@ -158,7 +157,8 @@ if st.session_state.df_maestro is None:
            st.session_state.df_asistencia = df_a.fillna("")
            st.rerun()
        except Exception as e:
-           st.error(f"❌ El sistema reporta este fallo exacto: {e}")
+           st.error("❌ Error Crítico: No se pudo conectar al archivo Excel en Google Drive.")
+           st.stop()
  
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
@@ -222,6 +222,8 @@ st.markdown(f"""
 # --- 6. ZONA DE TRABAJO ---
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
+
+# ¡AQUI ESTA LA LINEA CORREGIDA DEFINITIVA!
 df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
  
 if menu == "🏠 Inicio":
