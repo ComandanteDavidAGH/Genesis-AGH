@@ -530,7 +530,7 @@ elif menu == "📜 Boletines":
            for _, row in res.iterrows():
                    td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td><b style='color:#0d1b2a;'>{row[col_n]:.1f}</b></td>"
                    html_masivo += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='text-align:justify; font-style:italic; font-weight:normal; font-size:12px;'><b style='color:#0d1b2a;'>LOGRO:</b> {row['LOGROS']}</td></tr>"
-               html_masivo += "</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo<br><span style='font-size:10px; font-weight:normal;'>Génesis AGH System</span></div></div></div>"
+           html_masivo += "</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo<br><span style='font-size:10px; font-weight:normal;'>Génesis AGH System</span></div></div></div>"
            html_masivo += "</body></html>"
            components.html(html_masivo, height=600, scrolling=True)
 
