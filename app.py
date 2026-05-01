@@ -66,8 +66,12 @@ st.markdown("""
    ul[role="listbox"] li { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; font-weight: bold !important; }
    ul[role="listbox"] li:hover, ul[role="listbox"] li[aria-selected="true"] { background-color: #d4af37 !important; color: #000000 !important; }
    
-   div[data-baseweb="input"] { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
-   div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
+   /* --- CURSOR RADAR Y CAJAS DE TEXTO --- */
+   div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial', sans-serif !important; caret-color: #cc0000 !important; font-weight: bold; }
+   
+   /* --- BOTONES Y PESTAÑAS VISIBLES --- */
+   .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] * { color: #ffffff !important; }
+   button[kind="primary"] * { color: #ffffff !important; }
    
    div[data-baseweb="calendar"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
    div[data-baseweb="calendar"] * { color: #000000 !important; background-color: transparent !important; }
@@ -442,9 +446,26 @@ elif menu == "📝 Asistencias y Reportes":
                try: conn.update(worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia); st.success(f"✅ Reporte guardado.")
                except: st.warning("Guardado localmente.")
        
-       st.markdown("<h4 style='color:#000000; font-family:Arial Black;'>Historial de Novedades</h4>", unsafe_allow_html=True)
-       if not st.session_state.df_asistencia.empty: st.dataframe(st.session_state.df_asistencia.iloc[::-1], use_container_width=True, hide_index=True)
-       else: st.info("No hay registros disciplinarios almacenados.")
+       st.markdown("---")
+       col_h1, col_h2 = st.columns([7, 3])
+       with col_h1:
+           st.markdown("<h4 style='color:#000000; font-family:Arial Black;'>Historial de Novedades</h4>", unsafe_allow_html=True)
+       with col_h2:
+           # BOTÓN DE EMERGENCIA: DESHACER
+           if not st.session_state.df_asistencia.empty:
+               if st.button("↩️ DESHACER ÚLTIMO REPORTE", help="Elimina el último registro guardado por error"):
+                   st.session_state.df_asistencia = st.session_state.df_asistencia.iloc[:-1] # Borra la última fila
+                   try: 
+                       conn.update(worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia)
+                       registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "↩️ Revirtió último reporte")
+                       st.rerun()
+                   except: 
+                       st.warning("No se pudo conectar con el satélite.")
+                       
+       if not st.session_state.df_asistencia.empty: 
+           st.dataframe(st.session_state.df_asistencia.iloc[::-1], use_container_width=True, hide_index=True)
+       else: 
+           st.info("No hay registros disciplinarios almacenados.")
 
    with tab2:
        st.markdown("<p style='font-weight:bold;'>Seleccione un estudiante para imprimir su hoja de vida disciplinaria:</p>", unsafe_allow_html=True)
