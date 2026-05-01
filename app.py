@@ -29,10 +29,24 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
-    /* --- FRANCOTIRADOR: BLOQUEO DEL GATITO Y DEPLOY (MANTIENE MENÚ MÓVIL Y 3 PUNTITOS) --- */
-    .stDeployButton { display: none !important; }
-    [data-testid="stHeaderActionElements"] a { display: none !important; pointer-events: none !important; }
+    /* --- FRANCOTIRADOR ÉLITE: ELIMINACIÓN TOTAL DEL GATITO Y DEPLOY --- */
     
+    /* 1. Elimina el botón de Deploy por su código interno oficial */
+    [data-testid="stDeployButton"] { display: none !important; }
+    
+    /* 2. Elimina cualquier enlace que lleve a GitHub (El Gatito) */
+    a[href^="https://github.com"] { display: none !important; pointer-events: none !important; }
+    
+    /* 3. Elimina el botón si Streamlit intenta esconderlo bajo un título */
+    button[title="View app source code"] { display: none !important; }
+    div[title="View app source code"] { display: none !important; }
+    
+    /* 4. Elimina la insignia flotante de Streamlit Cloud (por si acaso) */
+    .viewerBadge_container__1QSob { display: none !important; }
+    .viewerBadge_link__1S137 { display: none !important; }
+    
+    /* 5. Ocultar la marca de agua del fondo (Footer) */
+    footer { visibility: hidden !important; }    
     /* Ocultar la marca de agua del fondo */
     footer { visibility: hidden !important; }    
     .stApp { background-color: #ffffff; }
