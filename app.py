@@ -1,24 +1,3 @@
-import os
-# --- 🚀 OPERACIÓN BYPASS: INYECCIÓN DE LLAVE MAESTRA ---
-# Esto crea los secretos automáticamente sin usar el panel de Streamlit. ¡Nunca más dará error 404!
-os.makedirs(".streamlit", exist_ok=True)
-with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
-    f.write("""
-[connections.gsheets]
-spreadsheet = "https://docs.google.com/spreadsheets/d/1vtgojCFVEbM6QysxJM933nKXJxml9fShtNt76ZoaiEE/edit"
-type = "service_account"
-project_id = "genesis-agh"
-private_key_id = "3ed7bb836eed323366fa603299dd0d134ef35473"
-private_key = "-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDqg7H9BUHnZdJ6\\nIdz61A8Jl0knCraw4gCEQxkcVuYB9g/f9SJF0uKoCXRpkalwiC84LqTrsrqJR8R6\\n8CZ0NV7ZyMJDDnVUFlPsuQIMyNjv7vtnEJ+cR2tRMALLPqxUjBuf7kNC6mTwTFfX\\nczSxsm81xc669ib4ht42jxd5zX0WEq3tKVa9Nq702/snnuEGW/phFACcVS9OoiNU\\nhh0C/COcNynVZBhFX2MS/C4fLTfI98OdfbsBPcemJn98jV3OI4LUMa4ASq4Wj5iF\\ngQNVUgyvGp6Ambt1Jn6w9zXjiKfBp3pPnK+DWZC8RUDZrU2uJtJo8wjEU6MgNrOw\\n1djQqzsjAgMBAAECggEAZh9hU9iFQXoStQKoE0ZjIf8SaQD+W3qfVPlPJwskcDgx\\n44oBGbzi3N/5JLu8uHdlcKbHRKh5GKz6/7oyVKqlGluVVNQn/a0XcN+D6ANSjPFZ\\n4yDXEJv9PMaWgOFS9CJrKTL9cVdXC1mDaxwNF1Cnoxf3lWz5vYIlpEadp3n3fbNh\\nGPVTTLthtqhlLqXcljk605PTozagSxbtWwqR9Tjlac2yioJyu5ljEFbW+DyAcMOM\\n469ePV4CDbOK42Rj8mpx7Wgdi/7AIQ2PFSo3zehMnlEt34l4Dz9s1x9GqJEzqpDv\\nv+CWwncWjmc1lp1aEaa4U/SAFOfc6bvh4o8UdIC64QKBgQD/mHZlABRqZTmHR7nu\\n2nfzPrnExVyfcfss0NBVyelGf1WU02EpfdQnyX7P4LNLl6uw6OdHkQJCtDNzmC4C\\nBbs6x8c+AT+cjIDm8XdRv6of4TT1/Ao0AVsRAX2mvErllZiNocqLSfwVpaIF911d\\nILzlaDdncAxTq6XB85ElziSaswKBgQDq4rFz8w51KUHGAVNnFojM+SfRxFizJzXa\\nm8llYMk2fETjSeztPHXLvs14FiIUnmkYPzOb8zsVwNv1/Mu5aAc4k4Y1pzj1duHH\\nXD/mmOSs4t8HEOn87/SeZcikbEk2GIilpVK0lKo/V7WcKINwt+O0hUKKmFqP37Lq\\n9DO6QKbV0QKBgHb9VXDjvp1hjoyqGadW0azOMNGoR9x6xcIxXCv0GcOWGBN27K7S\\nQ2haZ80DALVaYLW1V6Z7nZ/MIH/aAuEyJd3Rj7IQBrsstf3NwAywu9SnlW5G7cEU\\nOH8MQKDU29FR+XlGLvL1eIPjXjCE3lQyn331LIXdJf/10u8eIx6Ef4n9AoGAU1mO\\nTu75OmohhPoDdplwggwILU/XiftoCOMvXGI0BLmkWGNrR+QkiOB0WSDBhz+PW6NR\\n1Q1C8j010NycDnbz2QfAoFluxOwiwnPh2Rp4S0FWk1NVNQSRcYP85xvl/uRF2UIJ\\nTztSDpg5Qei+e8lFbFG9gyD9QgDHpMhzcqxuh4ECgYEA/Cgx9iD1vc2kzkCqB6zq\\n4H+XLnP+UxMorpCv9iv3I7jTFG7yHWa4kd00ppIE5CHov3JaVOb8huDbc7ZZP5ve\\n9Zgg5Zcbxz7b9gHmx+gtURQ8CJ03judENAfABnLW41zNOBFlZIf3wF57LHy58H17\\ni7F644jQO/3zBnbB6qMJxaY=\\n-----END PRIVATE KEY-----\\n"
-client_email = "operador-genesis@genesis-agh.iam.gserviceaccount.com"
-client_id = "114802112230084716509"
-auth_uri = "https://accounts.google.com/o/oauth2/auth"
-token_uri = "https://oauth2.googleapis.com/token"
-auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
-client_x509_cert_url = "https://www.googleapis.com/robot/v1/metadata/x509/operador-genesis%40genesis-agh.iam.gserviceaccount.com"
-""")
-# -------------------------------------------------------------------
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -106,11 +85,11 @@ st.markdown("""
 
 def registrar_bitacora(usuario, rol, accion):
    st.session_state.bitacora.append({
-        "Fecha": datetime.now().strftime("%Y-%m-%d"),
-        "Hora": datetime.now().strftime("%H:%M:%S"),
-        "Usuario": usuario,
-        "Rol": rol,
-        "Acción": accion
+       "Fecha": datetime.now().strftime("%Y-%m-%d"),
+       "Hora": datetime.now().strftime("%H:%M:%S"),
+       "Usuario": usuario,
+       "Rol": rol,
+       "Acción": accion
    })
 
 # --- 3. LOGIN SEGURO ---
@@ -128,11 +107,9 @@ if not st.session_state.logueado:
                try:
                    df_usuarios = conn.read(worksheet='DATA_USUARIOS')
                    acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
-                   
                    if not acceso.empty:
                        estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
                        rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
-                       
                        if estado == "ACTIVO":
                            st.session_state.logueado = True
                            st.session_state.rol = rol
