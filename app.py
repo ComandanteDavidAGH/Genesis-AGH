@@ -29,8 +29,9 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
-    /* Ocultar barra de colores superior y pie de página de Streamlit */
-    [data-testid="stDecoration"] { display: none !important; }
+    /* --- SE ELIMINÓ EL BLOQUEO DE LA BARRA SUPERIOR PARA GARANTIZAR EL MENÚ MÓVIL --- */
+    
+    /* Ocultar la marca de agua del fondo */
     footer { visibility: hidden !important; }
     
     .stApp { background-color: #ffffff; }
@@ -51,7 +52,6 @@ st.markdown("""
     
     [data-testid="stPlotlyChart"] { transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; }
     [data-testid="stPlotlyChart"]:hover { transform: scale(1.03); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); z-index: 10; }
-    .colchon { height: 300px; width: 100%; }
 
     @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
     @keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
