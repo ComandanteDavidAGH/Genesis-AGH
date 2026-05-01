@@ -32,7 +32,7 @@ st.markdown("""
    
    .stApp { background-color: #ffffff; }
    .stApp::before {
-        content: ""; background-image: url('https://cdn-icons-png.flaticon.com/512/2231/2231644.png');
+        content: ""; content: ""; background-image: url('https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png');
         background-size: 350px; background-repeat: no-repeat; background-position: center;
         opacity: 0.04; position: fixed; top: 0; left: 0; bottom: 0; right: 0; z-index: 0; pointer-events: none;
    }
@@ -109,7 +109,7 @@ if not st.session_state.logueado:
    st.markdown("<br><br>", unsafe_allow_html=True)
    c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
    with c2:
-       st.image("https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop", use_container_width=True)
+       st.image("logo.png", width=250)
        st.markdown("""<div style="background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #d4af37; border: 2px solid #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; margin-bottom: 10px; margin-top: -10px;"><h3 style="color:#000000; font-family:'Arial Black'; margin-top:0; font-size:18px;">ACCESO AL SISTEMA</h3></div>""", unsafe_allow_html=True)
        u = st.text_input("👤 Usuario", placeholder="Ej: admin", label_visibility="collapsed")
        p = st.text_input("🔑 Contraseña", type="password", placeholder="••••••••", label_visibility="collapsed")
@@ -169,7 +169,7 @@ if st.session_state.df_maestro is None:
 
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
-   st.image("https://cdn-icons-png.flaticon.com/512/2231/2231644.png", width=70)
+   st.image("logo.png", width=120)
    nombre_mostrar = st.session_state.nombre_completo_usuario if st.session_state.nombre_completo_usuario else st.session_state.usuario_actual.upper()
    st.markdown(f"<h3 style='color:white; margin-top:0;'>👤 {nombre_mostrar}</h3><p style='color:#d4af37; font-weight:bold; margin-top:-15px;'>Rango: {st.session_state.rol}</p>", unsafe_allow_html=True)
    
@@ -218,7 +218,7 @@ elif menu in ["📖 Manual de Usuario", "📸 Eventos Institucionales"]: msg_bot
 
 st.markdown(f"""
 <div class="asistente-box">
-   <img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" width="30" style="margin-right:15px;">
+   <img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png" width="30" style="margin-right:15px;">
    <div style="display:flex; align-items:center;">
        <span style="color:#000000; font-weight:900; margin-right:10px;">Génesis:</span>
        <span style="color:#000000; font-size:14px; font-weight:bold; font-style:italic;">"{msg_bot}"</span>
@@ -250,7 +250,7 @@ if menu == "🏠 Inicio":
                <p style="color:#000; font-weight:bold; font-size:15px;">Seremos reconocidos como la institución líder en innovación pedagógica y transformación digital en la región, proyectando talentos hacia el éxito internacional.</p>
            </div>""", unsafe_allow_html=True)
        st.markdown("<br>", unsafe_allow_html=True)
-       st.image("https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1470&auto=format&fit=crop", use_container_width=True)
+       st.image("logo.png", width=400)
 
 elif menu == "👑 Centro de Mando":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
@@ -512,7 +512,7 @@ elif menu == "📜 Boletines":
        if alumno:
            res = df[df['NOMBRE_COMPLETO'] == alumno]; p_prom = res[col_n].mean()
            th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
-           html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;"><button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black'; box-shadow: 2px 2px 5px rgba(0,0,0,0.3);">🖨️ IMPRIMIR REPORTE OFICIAL</button></div><div class="b-print"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" class="watermark"><table class="header-table"><tr><td style="width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="70"></td><td style="text-align:center;"><h2 style="margin:0; color:#0d1b2a; font-size:22px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p></td><td style="text-align:right; width:15%;"><div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;"><b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b></div></td></tr></table><div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;"><span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alumno}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0]}</span></div><table class="table-custom"><tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
+           html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;"><button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black'; box-shadow: 2px 2px 5px rgba(0,0,0,0.3);">🖨️ IMPRIMIR REPORTE OFICIAL</button></div><div class="b-print"><img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png" class="watermark"><table class="header-table"><tr><td style="width:15%;"><img src="https://cdn-icons-png.flaticon.com/512/2231/2231644.png" width="70"></td><td style="text-align:center;"><h2 style="margin:0; color:#0d1b2a; font-size:22px; font-family:'Arial Black';">ACADEMIA GLOBAL HORIZONTE</h2><p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p></td><td style="text-align:right; width:15%;"><div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;"><b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b></div></td></tr></table><div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;"><span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alumno}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0]}</span></div><table class="table-custom"><tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
            for _, row in res.iterrows():
                td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td><b style='color:#0d1b2a;'>{row[col_n]:.1f}</b></td>"
                html_boletin += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='text-align:justify; font-style:italic; font-weight:normal; font-size:12px;'><b style='color:#0d1b2a;'>LOGRO:</b> {row['LOGROS']}</td></tr>"
