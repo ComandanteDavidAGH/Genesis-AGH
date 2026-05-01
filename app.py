@@ -141,10 +141,23 @@ if not st.session_state.logueado:
  
 # --- CARGA AUTOMÁTICA ---
 if st.session_state.df_maestro is None:
-   with st.spinner("Sincronizando matrices de datos con Google Drive..."):
+   with st.spinner("Escaneando el Excel en Google Drive..."):
+       # PRUEBA 1: Verificar si el enlace (Secrets) funciona
        try:
-           # La orden ttl=0 destruye la caché y obliga a leer en vivo
+           test_conexion = conn.read(ttl=0)
+       except Exception as e:
+           st.error("❌ ALERTA 1: El enlace de su Excel en los 'Secrets' está mal escrito, incompleto o en blanco en la nueva aplicación de Streamlit.")
+           st.stop()
+           
+       # PRUEBA 2: Verificar Pestaña Principal
+       try:
            df_n = conn.read(worksheet='NOTAS_CONSOLIDADAS', ttl=0)
+       except Exception as e:
+           st.error("❌ ALERTA 2: Error 404 en la pestaña 'NOTAS_CONSOLIDADAS'. Vaya a su Excel, haga doble clic en el nombre de la pestaña abajo y asegúrese de BORRAR CUALQUIER ESPACIO EN BLANCO al final del nombre.")
+           st.stop()
+           
+       # SI PASA LAS 2 PRUEBAS, CARGA TODO EL TANQUE
+       try:
            try: df_e = conn.read(worksheet='DATA_ESTUDIANTES', ttl=0)
            except: df_e = pd.DataFrame()
            try: df_l = conn.read(worksheet='DB_LOGROS', ttl=0)
@@ -158,9 +171,8 @@ if st.session_state.df_maestro is None:
            st.session_state.df_asistencia = df_a.fillna("")
            st.rerun()
        except Exception as e:
-           st.error(f"❌ FALLA TÉCNICA EXACTA DEL SATÉLITE: {str(e)}")
-           st.stop() 
-# --- 4. PANEL LATERAL ---
+           st.error(f"❌ FALLA DESCONOCIDA: {str(e)}")
+           st.stop()# --- 4. PANEL LATERAL ---
 with st.sidebar:
    st.image("https://cdn-icons-png.flaticon.com/512/2231/2231644.png", width=70)
    nombre_mostrar = st.session_state.nombre_completo_usuario if st.session_state.nombre_completo_usuario else st.session_state.usuario_actual.upper()
