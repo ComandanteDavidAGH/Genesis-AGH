@@ -26,56 +26,24 @@ if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
-# --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
-st.markdown("""
-    <style>
-    /* --- FRANCOTIRADOR ÉLITE: ELIMINACIÓN TOTAL DEL GATITO Y DEPLOY --- */
-    
-    /* 1. Elimina el botón de Deploy por su código interno oficial */
-    [data-testid="stDeployButton"] { display: none !important; }
-    
-    /* 2. Elimina cualquier enlace que lleve a GitHub (El Gatito) */
-    a[href^="https://github.com"] { display: none !important; pointer-events: none !important; }
-    
-    /* 3. Elimina el botón si Streamlit intenta esconderlo bajo un título */
-    button[title="View app source code"] { display: none !important; }
-    div[title="View app source code"] { display: none !important; }
-    
-    /* 4. Elimina la insignia flotante de Streamlit Cloud (por si acaso) */
-    .viewerBadge_container__1QSob { display: none !important; }
-    .viewerBadge_link__1S137 { display: none !important; }
-    
-    /* 5. Ocultar la marca de agua del fondo (Footer) */
-    footer { visibility: hidden !important; }    
-    /* Ocultar la marca de agua del fondo */
-    footer { visibility: hidden !important; }    
-    .stApp { background-color: #ffffff; }
-    .stApp::before {
-        content: ""; background-image: url('https://cdn-icons-png.flaticon.com/512/2231/2231644.png');
-        background-size: 350px; background-repeat: no-repeat; background-position: center;
-        opacity: 0.04; position: fixed; top: 0; left: 0; bottom: 0; right: 0; z-index: 0; pointer-events: none;
-    }
-    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
-    [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
-    [data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
-    
-    # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
-
-# 🛡️ ESCUDO DEFINITIVO: Ocultar según dispositivo, SOLO a los que NO son Admin
+# --- 2. ESCUDO TÁCTICO CONTRA INTRUSOS (GATITO Y DEPLOY) ---
+# Si NO es Admin, ocultamos las barras de arriba estratégicamente
 if st.session_state.rol != "Admin":
-    st.markdown("""
-        <style>
-        /* En computadoras: Oculta TODA la barra superior (el menú lateral ya está visible) */
-        @media (min-width: 768px) {
-            [data-testid="stHeader"] { display: none !important; }
-        }
-        /* En celulares: Oculta solo la derecha (Gatito y Puntos), salva las 3 rayitas de la izquierda */
-        @media (max-width: 767px) {
-            [data-testid="stHeaderActionElements"] { display: none !important; }
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    css_oculto = """
+    <style>
+    /* En PC: Oculta TODA la barra superior blanca */
+    @media (min-width: 768px) {
+        [data-testid="stHeader"] { display: none !important; }
+    }
+    /* En Celulares: Oculta la parte derecha (gatito), salva las 3 rayitas de la izquierda */
+    @media (max-width: 767px) {
+        [data-testid="stHeaderActionElements"] { display: none !important; }
+    }
+    </style>
+    """
+    st.markdown(css_oculto, unsafe_allow_html=True)
 
+# --- 3. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
     <style>
     /* Ocultar la marca de agua del fondo */
@@ -91,6 +59,7 @@ st.markdown("""
     [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
     [data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
     
+    /* TITULO FIJO Y DE ALTO CONTRASTE */
     .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
     .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
     
@@ -134,7 +103,7 @@ def registrar_bitacora(usuario, rol, accion):
         "Acción": accion
     })
 
-# --- 3. LOGIN SEGURO CON BÓVEDA SATELITAL ---
+# --- 4. LOGIN SEGURO CON BÓVEDA SATELITAL ---
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
@@ -197,10 +166,10 @@ if st.session_state.df_maestro is None:
             st.session_state.df_asistencia = df_a.fillna("")
             st.rerun()
         except Exception as e:
-            st.error(f"❌ Fallo de conexión satelital: Verifique permisos en Drive. Detalle: {e}")
+            st.error(f"❌ Fallo de conexión satelital: Verifique permisos en Drive.")
             st.stop()
 
-# --- 4. PANEL LATERAL ---
+# --- 5. PANEL LATERAL ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2231/2231644.png", width=70)
     nombre_mostrar = st.session_state.nombre_completo_usuario if st.session_state.nombre_completo_usuario else st.session_state.usuario_actual.upper()
@@ -234,7 +203,7 @@ with st.sidebar:
         st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = False, "", ""
         st.rerun()
 
-# --- 5. ENCABEZADO FIJO ---
+# --- 6. ENCABEZADO FIJO ---
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>ACADEMIA GLOBAL HORIZONTE</h1></div>", unsafe_allow_html=True)
 
 if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
@@ -259,7 +228,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 6. ZONA DE TRABAJO ---
+# --- 7. ZONA DE TRABAJO ---
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
 df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
@@ -271,7 +240,6 @@ if menu == "🏠 Inicio":
             <h3 style="margin-top:0; color:#000000; font-family: 'Arial Black', sans-serif;">¡Bienvenido a la Academia Global Horizonte!</h3>
             <p style="font-size:1rem; color:#000; font-family: 'Arial Black', sans-serif; font-weight:bold;"><i>"Seguridad, Control y Excelencia Educativa."</i></p>
             </div>""", unsafe_allow_html=True)
-        
         col_mision, col_vision = st.columns(2)
         with col_mision:
             st.markdown("""<div style="background:white; padding:15px; border-radius:10px; border:2px solid #000; border-top:6px solid #0d1b2a; height:100%;">
@@ -283,7 +251,6 @@ if menu == "🏠 Inicio":
                 <h4 style="color:#000000; font-family: 'Arial Black', sans-serif; margin-top:0;">👁️ Nuestra Visión 2028</h4>
                 <p style="color:#000; font-weight:bold; font-size:15px;">Seremos reconocidos como la institución líder en innovación pedagógica y transformación digital en la región, proyectando talentos hacia el éxito internacional.</p>
             </div>""", unsafe_allow_html=True)
-        
         st.markdown("<br>", unsafe_allow_html=True)
         st.image("https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1470&auto=format&fit=crop", use_container_width=True)
 
