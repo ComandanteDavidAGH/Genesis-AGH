@@ -80,6 +80,15 @@ st.markdown("""
    .metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
    .metric-value { font-size: 28px; font-weight: 900; color: #0d1b2a; margin: 0; font-family: 'Arial Black';}
    .metric-label { font-size: 14px; font-weight: bold; color: #000000; margin: 0; text-transform: uppercase;}
+   .footer-legal { 
+    font-size: 10px; 
+    color: #888888; 
+    text-align: center; 
+    margin-top: 50px; 
+    border-top: 1px solid #eeeeee; 
+    padding-top: 10px; 
+    font-family: 'Arial', sans-serif;
+}
    </style>
 """, unsafe_allow_html=True)
 
@@ -245,30 +254,24 @@ elif menu == "👑 Centro de Mando":
    
    total_estudiantes = len(df['NOMBRE_COMPLETO'].dropna().unique()) if 'NOMBRE_COMPLETO' in df.columns else 0
    promedio_colegio = df[col_n].mean() if not df.empty else 0
-   total_novedades = len(st.session_state.df_asistencia) if not st.session_state.df_asistencia.empty else 0
+   
+   # --- NUEVO CÁLCULO DE EFICIENCIA ---
+   est_en_riesgo = df[df[col_n] < 6.0]['NOMBRE_COMPLETO'].nunique()
+   porcentaje_riesgo = (est_en_riesgo / total_estudiantes * 100) if total_estudiantes > 0 else 0
+   eficiencia_interna = 100 - porcentaje_riesgo
    
    col1, col2, col3 = st.columns(3)
-   with col1: st.markdown(f"<div class='metric-card'><p class='metric-label'>Total Estudiantes Activos</p><p class='metric-value'>{total_estudiantes}</p></div>", unsafe_allow_html=True)
+   with col1: st.markdown(f"<div class='metric-card'><p class='metric-label'>Total Estudiantes</p><p class='metric-value'>{total_estudiantes}</p></div>", unsafe_allow_html=True)
    with col2: st.markdown(f"<div class='metric-card'><p class='metric-label'>Promedio Institucional</p><p class='metric-value'>{promedio_colegio:.1f}</p></div>", unsafe_allow_html=True)
-   with col3: st.markdown(f"<div class='metric-card'><p class='metric-label'>Novedades Disciplinarias</p><p class='metric-value'>{total_novedades}</p></div>", unsafe_allow_html=True)
+   with col3: 
+       color_e = "#00994c" if eficiencia_interna > 85 else "#cc8800"
+       st.markdown(f"<div class='metric-card' style='border-top-color:{color_e}'><p class='metric-label'>Índice de Eficiencia</p><p class='metric-value' style='color:{color_e}'>{eficiencia_interna:.1f}%</p></div>", unsafe_allow_html=True)
+   
    st.markdown("<br>", unsafe_allow_html=True)
    
-   c1, c2 = st.columns([1.5, 1])
-   with c1:
-       st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Rendimiento por Grado</h4>", unsafe_allow_html=True)
-       if not df.empty and 'Grado' in df.columns:
-           df_grados = df.groupby('Grado')[col_n].mean().reset_index()
-           fig_g = px.bar(df_grados, x='Grado', y=col_n, text_auto='.1f', color='Grado', color_discrete_sequence=px.colors.sequential.Oryel)
-           fig_g.update_layout(height=320, margin=dict(t=10, b=10, l=10, r=10), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
-           st.plotly_chart(fig_g, use_container_width=True)
-   with c2:
-       st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Últimos Movimientos</h4>", unsafe_allow_html=True)
-       if st.session_state.bitacora:
-           df_bit = pd.DataFrame(st.session_state.bitacora).tail(6).iloc[::-1]
-           st.dataframe(df_bit[['Usuario', 'Acción', 'Hora']], hide_index=True, use_container_width=True)
-       else:
-           st.warning("No hay actividad reciente.")
-
+   # Alerta de Rectoría si la eficiencia baja de 80%
+   if eficiencia_interna < 80:
+       st.warning(f"⚠️ Alerta de Rectoría: El {porcentaje_riesgo:.1f}% de la población estudiantil presenta riesgo de reprobación.")
 elif menu == "🛡️ Bitácora y Backup":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
    buffer = io.BytesIO()
@@ -461,5 +464,13 @@ elif menu == "📸 Eventos Institucionales":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📸 Memorias Institucionales</h3>", unsafe_allow_html=True)
    c1, c2, c3 = st.columns(3)
    c1.image("https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800", caption="Feria Científica")
+                                                                                                                                                                                                                                             # --- PIE DE PÁGINA LEGAL (Habeas Data) ---
+st.markdown(f"""
+    <div class='footer-legal'>
+        Academia Global Horizonte - Sistema Génesis AGH © {datetime.now().year}<br>
+        Protección de Datos Personales: En cumplimiento de la Ley 1581 de 2012, 
+        el tratamiento de la información aquí registrada es de carácter estrictamente institucional y confidencial.
+    </div>
+""", unsafe_allow_html=True)
    c2.image("https://images.unsplash.com/photo-1523580494112-071d1694335c?q=80&w=800", caption="Ceremonia de Grados")
    c3.image("https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800", caption="Comunidad Estudiantil")
