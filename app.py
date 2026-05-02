@@ -384,11 +384,26 @@ elif menu == "📈 Dashboard Estudiantil":
        col_r1, col_r2 = st.columns([1.2, 1])
        with col_r1:
            st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>POLÍGONO DE DESEMPEÑO</p>", unsafe_allow_html=True)
-           fig_radar = px.line_polar(df_alum, r=col_n, theta='Materia', line_close=True, range_r=[0,10], text=col_n)
-           fig_radar.update_traces(fill='toself', fillcolor='rgba(212, 175, 55, 0.4)', line_color='#0d1b2a', line_width=3, mode='lines+markers+text', textfont=dict(color='#000000', size=13, family='Arial Black'), textposition='top center')
-           fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 10], gridcolor='#aaaaaa', tickfont=dict(color='#000000', size=11)), angularaxis=dict(gridcolor='#aaaaaa', tickfont=dict(color='#000000', size=12, family='Arial Black'))), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=60, r=60, t=30, b=30))
-           st.plotly_chart(fig_radar, use_container_width=True, config={'displaylogo': False})
-       with col_r2:
+            
+            # 🛡️ Verificamos que el estudiante sí tenga datos antes de dibujar
+            if not df_alum.empty:
+                fig_radar = px.line_polar(df_alum, r=col_n, theta='Materia', line_close=True, range_r=[0,10], text=col_n)
+                fig_radar.update_traces(fill='toself', fillcolor='rgba(212, 175, 55, 0.4)', line_color='#0d1b2a', line_width=3, mode='lines+markers+text', textfont=dict(color='#000000', size=13, family='Arial Black'), textposition='top center')
+                
+                # ⚠️ ORDEN DIRECTA: type='category' obliga al radar a mostrar los nombres de las materias
+                fig_radar.update_layout(
+                    polar=dict(
+                        radialaxis=dict(visible=True, range=[0, 10], gridcolor='#aaaaaa', tickfont=dict(color='#000000', size=11)), 
+                        angularaxis=dict(type='category', gridcolor='#aaaaaa', tickfont=dict(color='#000000', size=12, family='Arial Black'))
+                    ), 
+                    paper_bgcolor='rgba(0,0,0,0)', 
+                    plot_bgcolor='rgba(0,0,0,0)', 
+                    margin=dict(l=60, r=60, t=30, b=30)
+                )
+                st.plotly_chart(fig_radar, use_container_width=True, config={'displaylogo': False})
+            else:
+                st.info("📡 No hay datos suficientes para graficar el polígono.")
+            with col_r2:
            st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>HISTORIAL DISCIPLINARIO</p>", unsafe_allow_html=True)
            if novedades_count > 0: st.dataframe(df_hist_alum[['FECHA', 'ESTADO', 'OBSERVACIONES']].sort_values(by='FECHA', ascending=False), use_container_width=True, hide_index=True)
            else: st.info(f"✅ Sin reportes disciplinarios ni faltas.")
