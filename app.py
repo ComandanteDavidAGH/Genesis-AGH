@@ -150,8 +150,8 @@ if not st.session_state.logueado:
                             st.session_state.logueado = True
                             st.session_state.rol = rol
                             st.session_state.usuario_actual = u
-                            if 'NOMBRE_COMPLETO' in df_usuarios.columns:
-                                st.session_state.nombre_completo_usuario = str(acceso['NOMBRE_COMPLETO'].iloc[0]).strip()
+                            if 'Nombre_Completo' in df_usuarios.columns:
+                                st.session_state.nombre_completo_usuario = str(acceso['Nombre_Completo'].iloc[0]).strip()
                             else:
                                 st.session_state.nombre_completo_usuario = u
                             registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
@@ -277,7 +277,9 @@ if menu == "🏠 Inicio":
 elif menu == "👑 Centro de Mando":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
    
-   total_estudiantes = len(df['NOMBRE_COMPLETO'].dropna().unique()) if 'NOMBRE_COMPLETO' in df.columns else 0
+   total_estudiantes = len(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo
+   
+   ' in df.columns else 0
    promedio_colegio = df[col_n].mean() if not df.empty else 0
    
    # --- NUEVO CÁLCULO DE EFICIENCIA ---
@@ -316,8 +318,8 @@ elif menu == "🛡️ Bitácora y Backup":
    st.markdown("<h4 style='color:#000; font-family:Arial Black;'>🇨🇴 Módulo de Exportación SIMAT (MEN)</h4>", unsafe_allow_html=True)
    st.write("Genera la plantilla estructurada con los estudiantes activos para reportar al Ministerio de Educación Nacional.")
    
-   if not df_m.empty and 'NOMBRE_COMPLETO' in df_m.columns:
-       columnas_simat = [c for c in ['ID_Est', 'NOMBRE_COMPLETO', 'Grado'] if c in df_m.columns]
+   if not df_m.empty and 'Nombre_Completo' in df_m.columns:
+       columnas_simat = [c for c in ['ID_Est', 'Nombre_Completo', 'Grado'] if c in df_m.columns]
        df_simat = df_m[columnas_simat].drop_duplicates().copy()
        df_simat['ESTADO_MATRICULA'] = "MATRICULADO"
        df_simat['FECHA_REPORTE'] = datetime.now(zona_colombia).strftime("%Y-%m-%d")
@@ -361,10 +363,10 @@ elif menu == "📊 Inteligencia Académica":
 
 elif menu == "📈 Dashboard Estudiantil":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Radar Táctico Individual</h3>", unsafe_allow_html=True)
-   lista_alumnos_dash = sorted(df['NOMBRE_COMPLETO'].dropna().unique()) if 'NOMBRE_COMPLETO' in df.columns else []
+   lista_alumnos_dash = sorted(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else []
    alumno_analisis = st.selectbox("🎯 Seleccione Estudiante a Inspeccionar:", lista_alumnos_dash)
    if alumno_analisis:
-       df_alum = df[df['NOMBRE_COMPLETO'] == alumno_analisis]
+       df_alum = df[df['Nombre_Completo'] == alumno_analisis]
        promedio_global = df_alum[col_n].mean()
        if promedio_global < 6.0: des_global = 'BAJO 🔴'
        elif promedio_global < 7.6: des_global = 'BÁSICO 🟡'
@@ -372,8 +374,8 @@ elif menu == "📈 Dashboard Estudiantil":
        else: des_global = 'SUPERIOR 🌟'
        novedades_count = 0
        df_hist_alum = pd.DataFrame()
-       if not st.session_state.df_asistencia.empty and 'NOMBRE_COMPLETO' in st.session_state.df_asistencia.columns:
-           df_hist_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['NOMBRE_COMPLETO'] == alumno_analisis]
+       if not st.session_state.df_asistencia.empty and 'Nombre_Completo' in st.session_state.df_asistencia.columns:
+           df_hist_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['Nombre_Completo'] == alumno_analisis]
            novedades_count = len(df_hist_alum)
        st.markdown("<br>", unsafe_allow_html=True)
        col_m1, col_m2, col_m3 = st.columns(3)
@@ -412,7 +414,7 @@ elif menu == "🚦 Semáforo Académico":
    st.markdown("<br>", unsafe_allow_html=True)
    if not criticos.empty:
        st.error("🚨 LISTADO DE ESTUDIANTES EN RIESGO CRÍTICO")
-       st.dataframe(criticos[['NOMBRE_COMPLETO', 'Grado', col_n]].rename(columns={col_n: 'PROMEDIO'}).style.format({'PROMEDIO': '{:.1f}'}), use_container_width=True, hide_index=True)
+       st.dataframe(criticos[['Nombre_Completo', 'Grado', col_n]].rename(columns={col_n: 'PROMEDIO'}).style.format({'PROMEDIO': '{:.1f}'}), use_container_width=True, hide_index=True)
 
 elif menu == "✍️ Digitar Notas":
    col_btn, col_espacio = st.columns([1.5, 8.5])
@@ -454,15 +456,15 @@ elif menu == "📝 Asistencias y Reportes":
        with st.form("form_novedad"):
            st.markdown("<p style='font-weight:bold;'>Registrar Nueva Novedad:</p>", unsafe_allow_html=True)
            col1, col2, col3 = st.columns(3)
-           lista_alumnos = sorted(df['NOMBRE_COMPLETO'].dropna().unique()) if 'NOMBRE_COMPLETO' in df.columns else []
+           lista_alumnos = sorted(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else []
            with col1: alum_sel = st.selectbox("👤 Estudiante:", lista_alumnos)
            with col2: fecha_sel = st.date_input("📅 Fecha:")
            with col3: estado_sel = st.selectbox("🚦 Estado / Tipo:", ["Falla", "Retardo", "Excusa", "Llamado de Atención", "Felicitación"])
            obs_sel = st.text_area("📝 Observaciones o Detalles:")
            submit_btn = st.form_submit_button("💾 GUARDAR REPORTE", type="primary")
            if submit_btn and alum_sel:
-               grado_alum = df[df['NOMBRE_COMPLETO'] == alum_sel]['Grado'].iloc[0] if not df[df['NOMBRE_COMPLETO'] == alum_sel].empty else "N/A"
-               nuevo_registro = pd.DataFrame([{'NOMBRE_COMPLETO': alum_sel, 'GRADO': grado_alum, 'FECHA': fecha_sel.strftime("%Y-%m-%d"), 'ESTADO': estado_sel, 'OBSERVACIONES': obs_sel}])
+               grado_alum = df[df['Nombre_Completo'] == alum_sel]['Grado'].iloc[0] if not df[df['Nombre_Completo'] == alum_sel].empty else "N/A"
+               nuevo_registro = pd.DataFrame([{'Nombre_Completo': alum_sel, 'GRADO': grado_alum, 'FECHA': fecha_sel.strftime("%Y-%m-%d"), 'ESTADO': estado_sel, 'OBSERVACIONES': obs_sel}])
                st.session_state.df_asistencia = pd.concat([st.session_state.df_asistencia, nuevo_registro], ignore_index=True)
                registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, f"📝 Reporte: {alum_sel}")
                try: conn.update(worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia); st.success(f"✅ Reporte guardado.")
@@ -491,11 +493,11 @@ elif menu == "📝 Asistencias y Reportes":
 
    with tab2:
        st.markdown("<p style='font-weight:bold;'>Seleccione un estudiante para imprimir su hoja de vida disciplinaria:</p>", unsafe_allow_html=True)
-       alumno_obs = st.selectbox("👤 Buscar Estudiante:", sorted(df['NOMBRE_COMPLETO'].dropna().unique()), key="sel_obs")
+       alumno_obs = st.selectbox("👤 Buscar Estudiante:", sorted(df['Nombre_Completo'].dropna().unique()), key="sel_obs")
        
        if st.button("🖨️ PREPARAR OBSERVADOR", type="primary"):
            if not st.session_state.df_asistencia.empty:
-               df_obs_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['NOMBRE_COMPLETO'] == alumno_obs]
+               df_obs_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['Nombre_Completo'] == alumno_obs]
                if not df_obs_alum.empty:
                    css_obs = """<style>body { font-family: Arial, sans-serif; background: white; color: black; } .b-print { padding: 30px; border: 2px solid #000; } .table-obs { width: 100%; border-collapse: collapse; margin-top: 15px; } .table-obs th, .table-obs td { border: 1px solid #000; padding: 8px; text-align: left; } .table-obs th { background-color: #f0f0f0; } .firmas-box { display: flex; justify-content: space-between; margin-top: 60px; } .firma-linea { border-top: 1px solid #000; width: 30%; text-align: center; font-weight: bold; font-size: 12px; padding-top: 5px; } @media print { .no-print { display: none !important; } } </style>"""
                    
@@ -530,7 +532,7 @@ elif menu == "📜 Boletines":
    modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
    css_vip = """<style>body { font-family: Arial, sans-serif; background: white; color: black; } .b-print { position: relative; padding: 30px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; } .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: -1; pointer-events: none; } .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; } .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; } .table-custom td { border: 1px solid #000; padding: 8px; background-color: rgba(255, 255, 255, 0.85); } .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; } .header-table td { border: none; } .firmas-container { display: flex; justify-content: space-around; margin-top: 60px; font-size: 14px; z-index: 2; position: relative; } .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; } @media print { @page { size: letter portrait; margin: 10mm; } body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } .b-print { border: none; box-shadow: none; padding: 0; } .salto-pagina { page-break-after: always; } } </style>"""
    if modo_impresion == "👤 Individual":
-       alumno = st.selectbox("👤 Estudiante:", sorted(df['NOMBRE_COMPLETO'].dropna().unique()))
+       alumno = st.selectbox("👤 Estudiante:", sorted(df['Nombre_Completo'].dropna().unique()))
        if alumno:
                 # 🛡️ BLINDAJE NIVEL DIOS (Base64 para evadir el bloqueo de Repositorio Privado)
                 import base64
@@ -541,7 +543,7 @@ elif menu == "📜 Boletines":
                 except:
                     URL_LOGO_OFICIAL = ""
 
-                res = df[df['NOMBRE_COMPLETO'] == alumno]; p_prom = res[col_n].mean()
+                res = df[df['Nombre_Completo'] == alumno]; p_prom = res[col_n].mean()
                 th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
                 
                 # --- 1. ENCABEZADO CON EL LOGO INCRUSTADO ---
@@ -591,7 +593,7 @@ elif menu == "📜 Boletines":
                 
                 components.html(html_boletin, height=600, scrolling=True)
        else:
-            estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
+            estudiantes = sorted(df['Nombre_Completo'].dropna().unique())
             st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
             
             if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary"):
@@ -609,7 +611,7 @@ elif menu == "📜 Boletines":
                 html_masivo = f"""<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR LOTE MASIVO</button></div>"""
                 
                 for i, alum in enumerate(estudiantes):
-                    res = df[df['NOMBRE_COMPLETO'] == alum]; p_prom = res[col_n].mean(); salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
+                    res = df[df['Nombre_Completo'] == alum]; p_prom = res[col_n].mean(); salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
                     
                     # --- ENCABEZADO MASIVO ---
                     html_masivo += f"""<div class="b-print {salto}">
