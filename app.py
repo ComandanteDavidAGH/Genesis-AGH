@@ -228,15 +228,34 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 6. ZONA DE TRABAJO ---
-# 📥 1. RECONEXIÓN AUTOMÁTICA
+# 📥 1. RECONEXIÓN AUTOMÁTICA: Si la memoria del profesor está vacía, descarga los datos
 if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
     with st.spinner("📡 Descargando notas de la base satelital..."):
-        st.session_state.df_maestro = conn.read(worksheet='DATA_ESTUDIANTES', ttl=600)
+        # 1. Leemos la pestaña depurada con las notas reales
+        df_notas = conn.read(worksheet='NOTAS_CONSOLIDADAS', ttl=600)
+        
+        # 2. Renombramos las columnas para que SU código las entienda sin tener que cambiar nada más
+        df_notas = df_notas.rename(columns={
+            'NOMBRE_COMPLETO': 'Nombre_Completo', 
+            'ASIGNATURA': 'Materia',
+            'LOGROS': 'LOGRO'
+        })
+        
+        # 3. Leemos los estudiantes solo para sacar el Grado y que su menú lateral no se dañe
+        df_estud = conn.read(worksheet='DATA_ESTUDIANTES', ttl=600)
+        if 'Nombre_Completo' not in df_estud.columns and 'NOMBRE_COMPLETO' in df_estud.columns:
+            df_estud = df_estud.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo'})
+            
+        df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates()
+        
+        # 4. Unimos las verdaderas notas con su respectivo grado
+        st.session_state.df_maestro = pd.merge(df_notas, df_grados, on='Nombre_Completo', how='left')
         
 if 'df_logros' not in st.session_state or st.session_state.df_logros is None or st.session_state.df_logros.empty:
     with st.spinner("📡 Descargando logros de la base satelital..."):
+        # ✅ Coordenada REAL de logros:
         st.session_state.df_logros = conn.read(worksheet='DB_LOGROS', ttl=600)
-
+        
 # 🔄 2. ASIGNACIÓN DE TROPAS
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
