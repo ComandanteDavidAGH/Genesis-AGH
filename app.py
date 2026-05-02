@@ -413,8 +413,7 @@ elif menu == "📈 Dashboard Estudiantil":
             if not df_alum.empty:
                 fig_radar = px.line_polar(df_alum, r=col_n, theta='Materia', line_close=True, range_r=[0,10], text=col_n)
                 fig_radar.update_traces(fill='toself', fillcolor='rgba(212, 175, 55, 0.4)', line_color='#0d1b2a', line_width=3, mode='lines+markers+text', textfont=dict(color='#000000', size=13, family='Arial Black'), textposition='top center')
-                fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 10]), angularaxis=dict(type='category')), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=60, r=60, t=30, b=30))
-                st.plotly_chart(fig_radar, use_container_width=True, config={'displaylogo': False})
+                fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 10], tickfont=dict(color='black')), angularaxis=dict(type='category', tickfont=dict(color='black', size=13, family='Arial Black'))), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=60, r=60, t=30, b=30))                st.plotly_chart(fig_radar, use_container_width=True, config={'displaylogo': False})
             else:
                 st.info("📡 No hay datos suficientes para graficar el polígono.")
 
@@ -506,7 +505,7 @@ elif menu == "📝 Asistencias y Reportes":
             st.markdown("<h4 style='color:#000000; font-family:Arial Black;'>Historial de Novedades</h4>", unsafe_allow_html=True)
         with col_h2:
             # BOTÓN DE EMERGENCIA: DESHACER
-            if not st.session_state.df_asistencia.empty:
+            if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty:
                 if st.button("↩️ DESHACER ÚLTIMO REPORTE", help="Elimina el último registro guardado por error"):
                     st.session_state.df_asistencia = st.session_state.df_asistencia.iloc[:-1] # Borra la última fila
                     try: 
@@ -516,7 +515,7 @@ elif menu == "📝 Asistencias y Reportes":
                     except: 
                         st.warning("No se pudo conectar con el satélite.")
                         
-        if not st.session_state.df_asistencia.empty: 
+        if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty: 
             st.dataframe(st.session_state.df_asistencia.iloc[::-1], use_container_width=True, hide_index=True)
         else: 
             st.info("No hay registros disciplinarios almacenados.")
@@ -526,7 +525,7 @@ elif menu == "📝 Asistencias y Reportes":
         alumno_obs = st.selectbox("👤 Buscar Estudiante:", sorted(df['Nombre_Completo'].dropna().unique()), key="sel_obs")
         
         if st.button("🖨️ PREPARAR OBSERVADOR", type="primary"):
-            if not st.session_state.df_asistencia.empty:
+            if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty:
                 df_obs_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['Nombre_Completo'] == alumno_obs]
                 if not df_obs_alum.empty:
                     css_obs = """<style>body { font-family: Arial, sans-serif; background: white; color: black; } .b-print { padding: 30px; border: 2px solid #000; } .table-obs { width: 100%; border-collapse: collapse; margin-top: 15px; } .table-obs th, .table-obs td { border: 1px solid #000; padding: 8px; text-align: left; } .table-obs th { background-color: #f0f0f0; } .firmas-box { display: flex; justify-content: space-between; margin-top: 60px; } .firma-linea { border-top: 1px solid #000; width: 30%; text-align: center; font-weight: bold; font-size: 12px; padding-top: 5px; } @media print { .no-print { display: none !important; } } </style>"""
