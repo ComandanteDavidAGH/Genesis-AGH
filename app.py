@@ -114,7 +114,7 @@ if not st.session_state.logueado:
         try:
             st.image(Image.open("logo.png"), width=250)
         except Exception as e:
-            pass # Si hay micro-cortes, el sistema sigue funcionando sin romperse
+            pass 
             
         st.markdown("""<div style="background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #d4af37; border: 2px solid #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; margin-bottom: 10px; margin-top: -10px;"><h3 style="color:#000000; font-family:'Arial Black'; margin-top:0; font-size:18px;">ACCESO AL SISTEMA</h3></div>""", unsafe_allow_html=True)
         
@@ -125,7 +125,7 @@ if not st.session_state.logueado:
         if st.button("🚀 INGRESAR", use_container_width=True):
             with st.spinner("Validando en Bóveda Satelital..."):
                 try:
-                    # 🛡️ 2. CANAL EXCLUSIVO DEL COMANDANTE (Va directo a Misterios, ignora el Excel)
+                    # 🛡️ 2. CANAL EXCLUSIVO DEL COMANDANTE (Va directo a Misterios)
                     if u == "admin":
                         clave_secreta = st.secrets.get("CLAVE_MAESTRA", "Genesis2026*") 
                         if p == clave_secreta:
@@ -139,7 +139,32 @@ if not st.session_state.logueado:
                             st.error("🚨 Acceso Denegado: Llave maestra incorrecta.")
                             st.stop()
                             
-           
+                    # 👥 3. CANAL DE DOCENTES (Lee el Excel en TIEMPO REAL sin retraso)
+                    df_usuarios = conn.read(worksheet='DATA_USUARIOS', ttl=0) 
+                    acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
+                    
+                    if not acceso.empty:
+                        estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
+                        rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
+                        if estado == "ACTIVO":
+                            st.session_state.logueado = True
+                            st.session_state.rol = rol
+                            st.session_state.usuario_actual = u
+                            if 'NOMBRE_COMPLETO' in df_usuarios.columns:
+                                st.session_state.nombre_completo_usuario = str(acceso['NOMBRE_COMPLETO'].iloc[0]).strip()
+                            else:
+                                st.session_state.nombre_completo_usuario = u
+                            registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
+                            st.rerun()
+                        else:
+                            st.error("🚨 Acceso Denegado: Cuenta inactiva.")
+                    else:
+                        st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
+                        
+                except Exception as e:
+                    # ⚠️ EL PARACAÍDAS RESTAURADO QUE EVITA EL ERROR DE SINTAXIS
+                    st.error("🚨 Error de conexión con la base de datos satelital. Notifique a Rectoría.")
+    st.stop()           
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
    st.image("logo.png", width=120)
