@@ -228,7 +228,7 @@ st.markdown(f"""
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
 # 🛡️ ESCUDO ANTICOLAPSO: Verifica que los datos se hayan descargado antes de operar
-        if df_m is not None:
+if df_m is not None:
             df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
         else:
             st.error("📡 Interferencia satelital: No se pudo descargar la base de datos en este momento.")
