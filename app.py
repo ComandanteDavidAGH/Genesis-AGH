@@ -569,21 +569,68 @@ elif menu == "📜 Boletines":
                 
                 components.html(html_boletin, height=600, scrolling=True)
        else:
-           estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
-           st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
-           if st.button("🚀 COMPILAR LOTE MASIVO VIP", type="primary"):
-           th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
-           html_masivo = f"""<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; border-bottom: 3px solid #d4af37; border: 2px solid #000; text-align:right; margin-bottom:15px; z-index:9999;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:12px 25px; cursor:pointer; border-radius:6px; font-weight:bold; font-size:16px; font-family:'Arial Black';">🖨️ IMPRIMIR LOS {len(estudiantes)} BOLETINES OFICIALES</button></div>"""
-           for i, alum in enumerate(estudiantes):
-               res = df[df['NOMBRE_COMPLETO'] == alum]; p_prom = res[col_n].mean(); salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
-               html_masivo += f"""<div class="b-print {salto}"><img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Génesis-AGH/main/logo.png" class="watermark"><table class="header-table"><tr><td style="width:15%;"><img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png" width="80"></td><td style="text-align:center;"><h2 style="margin:0; color:#0d1b2a; font-size:22px; font-family:'Arial Black';">INSTITUCIÓN EDUCATIVA GÉNESIS JORSUG 2026</h2><p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p></td><td style="text-align:right; width:15%;"><div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;"><b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b></div></td></tr></table><div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;"><span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0]}</span></div><table class="table-custom"><tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""           
-           for _, row in res.iterrows():
-                   td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td><b style='color:#0d1b2a;'>{row[col_n]:.1f}</b></td>"
-                   html_masivo += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td>{row['DESEMPEÑO']}</td></tr><tr><td colspan='{7 if periodo_sel == 'CONSOLIDADO FINAL' else 3}' style='text-align:justify; font-style:italic; font-weight:normal; font-size:12px;'><b style='color:#0d1b2a;'>LOGRO:</b> {row['LOGROS']}</td></tr>"
-           html_masivo += "</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo<br><span style='font-size:10px; font-weight:normal;'>Génesis AGH System</span></div></div></div>"
-           html_masivo += "</body></html>"
-           components.html(html_masivo, height=600, scrolling=True)
-
+            estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
+            st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
+            
+            if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary"):
+                
+                # 🛡️ BLINDAJE BASE64 PARA LOTE MASIVO (Evita el bloqueo de GitHub Privado)
+                import base64
+                try:
+                    with open("logo.png", "rb") as img_file:
+                        b64_string = base64.b64encode(img_file.read()).decode()
+                    URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
+                except:
+                    URL_LOGO_OFICIAL = ""
+                    
+                th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
+                html_masivo = f"""<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR LOTE MASIVO</button></div>"""
+                
+                for i, alum in enumerate(estudiantes):
+                    res = df[df['NOMBRE_COMPLETO'] == alum]; p_prom = res[col_n].mean(); salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
+                    
+                    # --- ENCABEZADO MASIVO ---
+                    html_masivo += f"""<div class="b-print {salto}">
+                    <img src="{URL_LOGO_OFICIAL}" class="watermark">
+                    <table class="header-table">
+                        <tr>
+                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="90"></td>
+                            <td style="text-align:center;">
+                                <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">INSTITUCION EDUCATIVA GÉNESIS JORSUG 2026</h2>
+                                <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                            </td>
+                            <td style="text-align:right; width:15%;">
+                                <div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                                    <b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;">
+                        <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0]}</span>
+                    </div>
+                    <table class="table-custom">
+                        <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
+                    
+                    # --- NOTAS MASIVO ---
+                    for _, row in res.iterrows():
+                        td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[periodo_sel]:.1f}</td>"
+                        html_masivo += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td style='font-weight:bold;'>{row['DESEMPEÑO']}</td></tr>"
+                        col_span = 7 if periodo_sel == "CONSOLIDADO FINAL" else 3
+                        logro_texto = row['LOGRO'] if 'LOGRO' in res.columns else 'Sin registro'
+                        html_masivo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                        
+                    # --- CIERRE MASIVO ---
+                    html_masivo += """
+                    </table>
+                    <div class='firmas-container'>
+                        <div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div>
+                        <div class='firma-box'>Firma Director de Grupo</div>
+                    </div>
+                    </div>"""
+                    
+                html_masivo += "</body></html>"
+                components.html(html_masivo, height=600, scrolling=True)
 elif menu == "📖 Manual de Usuario":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📖 Manual de Operaciones Génesis AGH</h3>", unsafe_allow_html=True)
    
