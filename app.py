@@ -253,7 +253,7 @@ else:
     st.warning("🔄 Verifique que los nombres de las pestañas en el código coincidan exactamente con Excel.")
     st.stop()
    
-   if menu == "🏠 Inicio":
+if menu == "🏠 Inicio":
    c1, c2, c3 = st.columns([1, 8, 1])
    with c2:
        st.markdown("""<div style="background:rgba(255,255,255,0.95); padding:15px; border-radius:10px; border-left:6px solid #0d1b2a; box-shadow:0 4px 10px rgba(0,0,0,0.05); color:#000; margin-bottom:15px; border:2px solid #000;">
