@@ -382,10 +382,10 @@ elif menu == "📈 Dashboard Estudiantil":
        with col_m3: st.markdown(f"<div class='metric-card'><p class='metric-label'>Novedades / Faltas</p><p class='metric-value'>{novedades_count}</p></div>", unsafe_allow_html=True)
        st.markdown("<br>", unsafe_allow_html=True)
        col_r1, col_r2 = st.columns([1.2, 1])
-       with col_r1:
-           st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>POLÍGONO DE DESEMPEÑO</p>", unsafe_allow_html=True)
-            
-          # 🛡️ Verificamos que el estudiante sí tenga datos antes de dibujar
+       with col_l1:
+        st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>POLÍGONO DE DESEMPEÑO</p>", unsafe_allow_html=True)
+        
+        # 🛡️ Verificamos que el estudiante sí tenga datos antes de dibujar
         if not df_alum.empty:
             fig_radar = px.line_polar(df_alum, r=col_n, theta='Materia', line_close=True, range_r=[0,10], text=col_n)
             fig_radar.update_traces(fill='toself', fillcolor='rgba(212, 175, 55, 0.4)', line_color='#0d1b2a', line_width=3, mode='lines+markers+text', textfont=dict(color='#000000', size=13, family='Arial Black'), textposition='top center')
