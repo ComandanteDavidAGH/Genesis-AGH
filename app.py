@@ -229,11 +229,11 @@ df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
 # 🛡️ ESCUDO ANTICOLAPSO: Verifica que los datos se hayan descargado antes de operar
 if df_m is not None:
-            df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
-        else:
-            st.error("📡 Interferencia satelital: No se pudo descargar la base de datos en este momento.")
-            st.warning("🔄 Por favor, recargue la página o presione F5 para intentar reconectar.")
-            st.stop()
+    df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
+else:
+    st.error("📡 Interferencia satelital: No se pudo descargar la base de datos en este momento.")
+    st.warning("🔄 Por favor, recargue la página o presione F5 para intentar reconectar.")
+    st.stop()
 
 if menu == "🏠 Inicio":
    c1, c2, c3 = st.columns([1, 8, 1])
