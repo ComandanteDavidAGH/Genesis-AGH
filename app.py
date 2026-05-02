@@ -510,19 +510,22 @@ elif menu == "📜 Boletines":
    if modo_impresion == "👤 Individual":
        alumno = st.selectbox("👤 Estudiante:", sorted(df['NOMBRE_COMPLETO'].dropna().unique()))
        if alumno:
+                # 🛡️ USAMOS EL ENLACE QUE YA SABEMOS QUE FUNCIONA:
+                URL_LOGO_OFICIAL = "https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png"
+                
                 res = df[df['NOMBRE_COMPLETO'] == alumno]; p_prom = res[col_n].mean()
                 th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
                 
-                # --- 1. ENCABEZADO Y LOGO BLINDADO ---
+                # --- 1. ENCABEZADO CON EL LOGO CORREGIDO ---
                 html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
                 <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;">
                     <button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR REPORTE OFICIAL</button>
                 </div>
                 <div class="b-print">
-                    <img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png" class="watermark">
+                    <img src="{URL_LOGO_OFICIAL}" class="watermark">
                     <table class="header-table">
                         <tr>
-                            <td style="width:15%;"><img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png" width="80"></td>
+                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="90"></td>
                             <td style="text-align:center;">
                                 <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">INSTITUCION EDUCATIVA GÉNESIS JORSUG 2026</h2>
                                 <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
@@ -540,19 +543,15 @@ elif menu == "📜 Boletines":
                     <table class="table-custom">
                         <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
                 
-                # --- 2. INYECCIÓN DE MATERIAS Y LOGROS ---
+                # --- 2. CICLO DE NOTAS ---
                 for _, row in res.iterrows():
                     td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[periodo_sel]:.1f}</td>"
-                    
-                    # Fila de la nota
                     html_boletin += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td style='font-weight:bold;'>{row['DESEMPEÑO']}</td></tr>"
-                    
-                    # Fila del Logro 
                     col_span = 7 if periodo_sel == "CONSOLIDADO FINAL" else 3
-                    logro_texto = row['LOGRO'] if 'LOGRO' in res.columns else 'Sin registro'
+                    log_texto = row['LOGRO'] if 'LOGRO' in res.columns else 'Sin registro'
                     html_boletin += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
-                # --- 3. FIRMAS Y CIERRE ---
+                # --- 3. CIERRE ---
                 html_boletin += """
                     </table>
                     <div class='firmas-container'>
