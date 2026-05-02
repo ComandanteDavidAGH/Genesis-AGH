@@ -372,7 +372,7 @@ elif menu == "📈 Dashboard Estudiantil":
        else: des_global = 'SUPERIOR 🌟'
        novedades_count = 0
        df_hist_alum = pd.DataFrame()
-       if not st.session_state.df_asistencia.empty and 'Nombre_Completo' in st.session_state.df_asistencia.columns:
+       if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty and 'Nombre_Completo' in st.session_state.df_asistencia.columns:
            df_hist_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['Nombre_Completo'] == alumno_analisis]
            novedades_count = len(df_hist_alum)
        st.markdown("<br>", unsafe_allow_html=True)
