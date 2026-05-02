@@ -139,15 +139,6 @@ if not st.session_state.logueado:
                             st.error("🚨 Acceso Denegado: Llave maestra incorrecta.")
                             st.stop()
                             
-# 🛡️ ESCUDO ANTICOLAPSO NIVEL 2: Protege contra celdas vacías y errores de lectura
-       if df_m is not None and not df_m.empty:
-            df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") # Rellena los huecos vacíos
-            curso_texto = str(curso_sel) # Obliga a que sea texto para que no colapse
-            df = df_m[df_m['Grado'].astype(str) == curso_texto].copy() if curso_texto != "TODOS" else df_m.copy()
-        else:
-            st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
-            st.warning("🔄 Verifique el nombre de la hoja en Google Sheets o presione F5.")
-            st.stop()
            
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
@@ -211,14 +202,18 @@ st.markdown(f"""
 # --- 6. ZONA DE TRABAJO ---
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
-# 🛡️ ESCUDO ANTICOLAPSO: Verifica que los datos se hayan descargado antes de operar
-if df_m is not None:
-    df = df_m[df_m['Grado'].astype(str) == curso_sel].copy() if curso_sel != "TODOS" else df_m.copy()
+# 🛡️ ESCUDO ANTICOLAPSO: Protege contra celdas vacías y errores de lectura
+if df_m is not None and not df_m.empty:
+    df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
+    curso_texto = str(curso_sel)
+    if curso_texto != "TODOS":
+        df = df_m[df_m['Grado'].astype(str) == curso_texto].copy()
+    else:
+        df = df_m.copy()
 else:
-    st.error("📡 Interferencia satelital: No se pudo descargar la base de datos en este momento.")
-    st.warning("🔄 Por favor, recargue la página o presione F5 para intentar reconectar.")
+    st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
+    st.warning("🔄 Verifique que la pestaña de notas en Excel no esté vacía o con nombre cambiado.")
     st.stop()
-
 if menu == "🏠 Inicio":
    c1, c2, c3 = st.columns([1, 8, 1])
    with c2:
