@@ -510,13 +510,19 @@ elif menu == "📜 Boletines":
    if modo_impresion == "👤 Individual":
        alumno = st.selectbox("👤 Estudiante:", sorted(df['NOMBRE_COMPLETO'].dropna().unique()))
        if alumno:
-                # 🛡️ USAMOS EL ENLACE QUE YA SABEMOS QUE FUNCIONA:
-                URL_LOGO_OFICIAL = "https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png"
-                
+                # 🛡️ BLINDAJE NIVEL DIOS (Base64 para evadir el bloqueo de Repositorio Privado)
+                import base64
+                try:
+                    with open("logo.png", "rb") as img_file:
+                        b64_string = base64.b64encode(img_file.read()).decode()
+                    URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
+                except:
+                    URL_LOGO_OFICIAL = ""
+
                 res = df[df['NOMBRE_COMPLETO'] == alumno]; p_prom = res[col_n].mean()
                 th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
                 
-                # --- 1. ENCABEZADO CON EL LOGO CORREGIDO ---
+                # --- 1. ENCABEZADO CON EL LOGO INCRUSTADO ---
                 html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
                 <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;">
                     <button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR REPORTE OFICIAL</button>
@@ -543,15 +549,16 @@ elif menu == "📜 Boletines":
                     <table class="table-custom">
                         <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
                 
-                # --- 2. CICLO DE NOTAS ---
+                # --- 2. CICLO DE NOTAS Y LOGROS ---
                 for _, row in res.iterrows():
                     td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[periodo_sel]:.1f}</td>"
                     html_boletin += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td style='font-weight:bold;'>{row['DESEMPEÑO']}</td></tr>"
+                    
                     col_span = 7 if periodo_sel == "CONSOLIDADO FINAL" else 3
                     logro_texto = row['LOGRO'] if 'LOGRO' in res.columns else 'Sin registro'
                     html_boletin += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
-                # --- 3. CIERRE ---
+                # --- 3. FIRMAS Y CIERRE ---
                 html_boletin += """
                     </table>
                     <div class='firmas-container'>
@@ -561,7 +568,7 @@ elif menu == "📜 Boletines":
                 </div></body></html>"""
                 
                 components.html(html_boletin, height=600, scrolling=True)
-   else:
+                else:
        estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
        st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
        if st.button("🚀 COMPILAR LOTE MASIVO VIP", type="primary"):
