@@ -569,9 +569,9 @@ elif menu == "📜 Boletines":
                 
                 components.html(html_boletin, height=600, scrolling=True)
        else:
-       estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
-       st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
-       if st.button("🚀 COMPILAR LOTE MASIVO VIP", type="primary"):
+           estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
+           st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
+           if st.button("🚀 COMPILAR LOTE MASIVO VIP", type="primary"):
            th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
            html_masivo = f"""<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; border-bottom: 3px solid #d4af37; border: 2px solid #000; text-align:right; margin-bottom:15px; z-index:9999;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:12px 25px; cursor:pointer; border-radius:6px; font-weight:bold; font-size:16px; font-family:'Arial Black';">🖨️ IMPRIMIR LOS {len(estudiantes)} BOLETINES OFICIALES</button></div>"""
            for i, alum in enumerate(estudiantes):
