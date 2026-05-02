@@ -225,21 +225,35 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 6. ZONA DE TRABAJO ---
-df_m = st.session_state.df_maestro
-df_l = st.session_state.df_logros
-# 🛡️ ESCUDO ANTICOLAPSO: Protege contra celdas vacías y errores de lectura
-if df_m is not None and not df_m.empty:
-    df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
-    curso_texto = str(curso_sel)
-    if curso_texto != "TODOS":
-        df = df_m[df_m['Grado'].astype(str) == curso_texto].copy()
-    else:
-        df = df_m.copy()
-else:
-    st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
-    st.warning("🔄 Verifique que la pestaña de notas en Excel no esté vacía o con nombre cambiado.")
-    st.stop()
-if menu == "🏠 Inicio":
+# 📥 1. RECONEXIÓN AUTOMÁTICA: Si la memoria del profesor está vacía, descarga los datos
+        if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
+            with st.spinner("📡 Descargando notas de la base satelital..."):
+                # ⚠️ ATENCIÓN: Cambie 'NOTAS' por el nombre REAL de su pestaña de Excel
+                st.session_state.df_maestro = conn.read(worksheet='NOTAS', ttl=600)
+                
+        if 'df_logros' not in st.session_state or st.session_state.df_logros is None or st.session_state.df_logros.empty:
+            with st.spinner("📡 Descargando logros de la base satelital..."):
+                # ⚠️ ATENCIÓN: Cambie 'LOGROS' por el nombre REAL de su pestaña de Excel
+                st.session_state.df_logros = conn.read(worksheet='LOGROS', ttl=600)
+
+        # 🔄 2. ASIGNACIÓN DE TROPAS
+        df_m = st.session_state.df_maestro
+        df_l = st.session_state.df_logros
+
+        # 🛡️ 3. ESCUDO ANTICOLAPSO
+        if df_m is not None and not df_m.empty:
+            df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
+            curso_texto = str(curso_sel)
+            if curso_texto != "TODOS":
+                df = df_m[df_m['Grado'].astype(str) == curso_texto].copy()
+            else:
+                df = df_m.copy()
+        else:
+            st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
+            st.warning("🔄 Verifique que los nombres de las pestañas en el código coincidan exactamente con Excel.")
+            st.stop()
+   
+   if menu == "🏠 Inicio":
    c1, c2, c3 = st.columns([1, 8, 1])
    with c2:
        st.markdown("""<div style="background:rgba(255,255,255,0.95); padding:15px; border-radius:10px; border-left:6px solid #0d1b2a; box-shadow:0 4px 10px rgba(0,0,0,0.05); color:#000; margin-bottom:15px; border:2px solid #000;">
