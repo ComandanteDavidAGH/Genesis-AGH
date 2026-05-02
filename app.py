@@ -278,8 +278,6 @@ elif menu == "👑 Centro de Mando":
    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
    
    total_estudiantes = len(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else 0
-   
-   ' in df.columns else 0
    promedio_colegio = df[col_n].mean() if not df.empty else 0
    
    # --- NUEVO CÁLCULO DE EFICIENCIA ---
