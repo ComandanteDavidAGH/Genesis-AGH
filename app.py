@@ -549,7 +549,7 @@ elif menu == "📜 Boletines":
                     html_boletin += f"<tr><td style='text-align:left;'>{row['ASIGNATURA']}</td>{td}<td style='font-weight:bold;'>{row['DESEMPEÑO']}</td></tr>"
                     col_span = 7 if periodo_sel == "CONSOLIDADO FINAL" else 3
                     log_texto = row['LOGRO'] if 'LOGRO' in res.columns else 'Sin registro'
-                    html_boletin += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                       html_boletin += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
                 # --- 3. CIERRE ---
                 html_boletin += """
