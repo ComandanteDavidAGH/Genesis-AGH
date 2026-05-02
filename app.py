@@ -139,32 +139,16 @@ if not st.session_state.logueado:
                             st.error("🚨 Acceso Denegado: Llave maestra incorrecta.")
                             st.stop()
                             
-                    # 👥 3. CANAL DE DOCENTES (Lee el Excel en TIEMPO REAL sin retraso)
-                    df_usuarios = conn.read(worksheet='DATA_USUARIOS', ttl=0) 
-                    acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
-                    
-                    if not acceso.empty:
-                        estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
-                        rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
-                        if estado == "ACTIVO":
-                            st.session_state.logueado = True
-                            st.session_state.rol = rol
-                            st.session_state.usuario_actual = u
-                            if 'NOMBRE_COMPLETO' in df_usuarios.columns:
-                                st.session_state.nombre_completo_usuario = str(acceso['NOMBRE_COMPLETO'].iloc[0]).strip()
-                            else:
-                                st.session_state.nombre_completo_usuario = u
-                            registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
-                            st.rerun()
-                        else:
-                            st.error("🚨 Acceso Denegado: Cuenta inactiva.")
-                    else:
-                        st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
-                        
-                except Exception as e:
-                    st.error("🚨 Error de conexión con la base de datos satelital. Notifique a Rectoría.")
-    st.stop()
-   
+# 🛡️ ESCUDO ANTICOLAPSO NIVEL 2: Protege contra celdas vacías y errores de lectura
+        if df_m is not None and not df_m.empty:
+            df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") # Rellena los huecos vacíos
+            curso_texto = str(curso_sel) # Obliga a que sea texto para que no colapse
+            df = df_m[df_m['Grado'].astype(str) == curso_texto].copy() if curso_texto != "TODOS" else df_m.copy()
+        else:
+            st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
+            st.warning("🔄 Verifique el nombre de la hoja en Google Sheets o presione F5.")
+            st.stop()
+           
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
    st.image("logo.png", width=120)
