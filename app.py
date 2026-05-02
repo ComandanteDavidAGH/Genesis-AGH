@@ -404,10 +404,10 @@ elif menu == "📈 Dashboard Estudiantil":
 else:
            st.info("📡 No hay datos suficientes para graficar el polígono.")
                 
-            with col_r2:
-           st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>HISTORIAL DISCIPLINARIO</p>", unsafe_allow_html=True)
-           if novedades_count > 0: st.dataframe(df_hist_alum[['FECHA', 'ESTADO', 'OBSERVACIONES']].sort_values(by='FECHA', ascending=False), use_container_width=True, hide_index=True)
-           else: st.info(f"✅ Sin reportes disciplinarios ni faltas.")
+        with col_r2:
+            st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>HISTORIAL DISCIPLINARIO</p>", unsafe_allow_html=True)
+            if novedades_count > 0: st.dataframe(df_hist_alum[['FECHA', 'ESTADO', 'OBSERVACIONES']].sort_values(by='FECHA', ascending=False), use_container_width=True, hide_index=True)
+            else: st.info("✅ Sin reportes disciplinarios ni faltas.")
 
 elif menu == "🚦 Semáforo Académico":
    st.markdown(f"<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Semáforo de Riesgo Académico - Grado {curso_sel} ({periodo_sel})</h3>", unsafe_allow_html=True)
