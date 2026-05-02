@@ -337,11 +337,13 @@ elif menu == "🛡️ Bitácora y Backup":
             'style': 'Table Style Medium 4' # Estilo azul institucional
         })
         
-        # Auto-ajustar el ancho de las columnas a la palabra más larga
+        # Auto-ajustar el ancho de las columnas (BLINDADO)
         for i, col in enumerate(df_export.columns):
-            col_len = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
+            # 🛡️ Usamos .str.len() que es compatible con el motor Arrow y evitamos errores si hay nulos
+            max_len_datos = df_export[col].astype(str).str.len().max()
+            max_len_datos = int(max_len_datos) if pd.notna(max_len_datos) else 0
+            col_len = max(max_len_datos, len(str(col))) + 2
             worksheet.set_column(i, i, min(col_len, 45)) # Tope de 45 para que no sea infinita
-
     # --- 1. BACKUP GENERAL ---
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
