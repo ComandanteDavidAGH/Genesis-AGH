@@ -395,7 +395,7 @@ elif menu == "📈 Dashboard Estudiantil":
 
 elif menu == "🚦 Semáforo Académico":
    st.markdown(f"<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Semáforo de Riesgo Académico - Grado {curso_sel} ({periodo_sel})</h3>", unsafe_allow_html=True)
-   df_estudiantes = df.groupby(['NOMBRE_COMPLETO', 'Grado'])[col_n].mean().reset_index()
+   df_estudiantes = df.groupby(['Nombre_Completo', 'Grado'])[col_n].mean().reset_index()
    def color_semaforo(nota):
        if nota < 6.0: return '🔴 CRÍTICO'
        elif nota < 7.6: return '🟡 ALERTA'
