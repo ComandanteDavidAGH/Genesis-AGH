@@ -321,13 +321,35 @@ elif menu == "👑 Centro de Mando":
 elif menu == "🛡️ Bitácora y Backup":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
     
+    # 🛠️ Función interna para convertir a Tabla de Excel y ajustar columnas automáticamente
+    def guardar_como_tabla(df_export, writer_obj, sheet_name):
+        if df_export is None or df_export.empty: return
+        df_export.columns = df_export.columns.astype(str) # Evitar errores de nombres
+        # Imprimir sin cabecera normal, porque la tabla de Excel le pondrá su propia cabecera elegante
+        df_export.to_excel(writer_obj, sheet_name=sheet_name, index=False, startrow=1, header=False)
+        worksheet = writer_obj.sheets[sheet_name]
+        (max_row, max_col) = df_export.shape
+        
+        # Crear la estructura de tabla con filtros y color corporativo
+        column_settings = [{'header': col} for col in df_export.columns]
+        worksheet.add_table(0, 0, max_row, max_col - 1, {
+            'columns': column_settings, 
+            'style': 'Table Style Medium 4' # Estilo azul institucional
+        })
+        
+        # Auto-ajustar el ancho de las columnas a la palabra más larga
+        for i, col in enumerate(df_export.columns):
+            col_len = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, min(col_len, 45)) # Tope de 45 para que no sea infinita
+
     # --- 1. BACKUP GENERAL ---
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        st.session_state.df_maestro.to_excel(writer, sheet_name='NOTAS_CONSOLIDADAS', index=False)
-        if not st.session_state.df_logros.empty: st.session_state.df_logros.to_excel(writer, sheet_name='DB_LOGROS', index=False)
-        if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty: st.session_state.df_asistencia.to_excel(writer, sheet_name='DB_ASISTENCIA', index=False)
-        if st.session_state.bitacora: pd.DataFrame(st.session_state.bitacora).to_excel(writer, sheet_name='BITACORA', index=False)
+        guardar_como_tabla(st.session_state.df_maestro, writer, 'NOTAS_CONSOLIDADAS')
+        guardar_como_tabla(st.session_state.df_logros, writer, 'DB_LOGROS')
+        guardar_como_tabla(st.session_state.df_asistencia, writer, 'DB_ASISTENCIA')
+        if st.session_state.bitacora: 
+            guardar_como_tabla(pd.DataFrame(st.session_state.bitacora), writer, 'BITACORA')
     
     st.info("Comandante, aquí puede descargar todo el trabajo. Es su copia de seguridad física.")
     st.download_button(label="📥 DESCARGAR BASE DE DATOS ACTUALIZADA (EXCEL)", data=buffer.getvalue(), file_name=f"Backup_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d_%H%M')}.xlsx", mime="application/vnd.ms-excel", type="primary", use_container_width=True)
@@ -345,7 +367,7 @@ elif menu == "🛡️ Bitácora y Backup":
         
         buffer_simat = io.BytesIO()
         with pd.ExcelWriter(buffer_simat, engine='xlsxwriter') as writer:
-            df_simat.to_excel(writer, sheet_name='REPORTE_SIMAT', index=False)
+            guardar_como_tabla(df_simat, writer, 'REPORTE_SIMAT')
             
         st.download_button(label="📄 DESCARGAR PLANTILLA SIMAT OFICIAL", data=buffer_simat.getvalue(), file_name=f"SIMAT_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d')}.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
     else:
@@ -355,7 +377,6 @@ elif menu == "🛡️ Bitácora y Backup":
     # --- 3. BITÁCORA HISTÓRICA ---
     st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Registro Histórico de Usuarios</h4>", unsafe_allow_html=True)
     if st.session_state.bitacora: st.dataframe(pd.DataFrame(st.session_state.bitacora).iloc[::-1].reset_index(drop=True), use_container_width=True)
-
 elif menu == "📊 Inteligencia Académica":
     config_espanol = {'locale': 'es', 'displaylogo': False}
     c1, c2 = st.columns(2)
