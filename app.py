@@ -578,15 +578,16 @@ elif menu == "📜 Boletines":
                         <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
                 
                 # --- 2. CICLO DE NOTAS Y LOGROS ---
-                for _, row in res.iterrows():
-                    td = f"<td>{row['P1']:.1f}</td><td>{row['P2']:.1f}</td><td>{row['P3']:.1f}</td><td>{row['P4']:.1f}</td><td><b style='color:#0d1b2a;'>{row['PROMEDIO']:.1f}</b></td>" if periodo_sel == "CONSOLIDADO FINAL" else f"<td>{row[periodo_sel]:.1f}</td>"
-            # 🛡️ Calculamos el desempeño según la nota (P4 o Promedio) porque la columna no está en esta tabla
-            nota_final = row.get('P4', 0) 
+        for index, row in df_alum_bol.iterrows():
+            # 🛡️ Calculamos el desempeño según la nota P4 porque la columna no está en esta tabla
+            nota_final = row.get('P4', 0)
             if nota_final >= 9.1: desp = "SUPERIOR"
             elif nota_final >= 7.6: desp = "ALTO"
             elif nota_final >= 6.0: desp = "BÁSICO"
             else: desp = "BAJO"
 
+            color = "#155724" if nota_final >= 6.0 else "#721c24"
+            td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
             html_boletin += f"<tr><td style='text-align:left;'>{row['Materia']}</td>{td}<td style='font-weight:bold;'>{desp}</td></tr>"                    
                     col_span = 7 if periodo_sel == "CONSOLIDADO FINAL" else 3
                     logro_texto = row['LOGRO'] if 'LOGRO' in res.columns else 'Sin registro'
