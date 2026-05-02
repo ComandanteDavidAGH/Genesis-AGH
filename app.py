@@ -104,13 +104,18 @@ def registrar_bitacora(usuario, rol, accion):
        "Rol": rol,
        "Acción": accion
    })
-# --- 3. LOGIN SEGURO (BLINDADO) ---
+# --- 3. LOGIN SEGURO (BLINDADO Y EN TIEMPO REAL) ---
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
     with c2:
-        # Usamos el enlace directo blindado para evitar fallos del logo
-        st.image("https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png", width=250)
+        # 🛡️ 1. LECTURA BLINDADA DEL ESCUDO (A prueba de bloqueos de internet)
+        from PIL import Image
+        try:
+            st.image(Image.open("logo.png"), width=250)
+        except Exception as e:
+            pass # Si hay micro-cortes, el sistema sigue funcionando sin romperse
+            
         st.markdown("""<div style="background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #d4af37; border: 2px solid #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; margin-bottom: 10px; margin-top: -10px;"><h3 style="color:#000000; font-family:'Arial Black'; margin-top:0; font-size:18px;">ACCESO AL SISTEMA</h3></div>""", unsafe_allow_html=True)
         
         u = st.text_input("👤 Usuario", placeholder="Ej: admin", label_visibility="collapsed")
@@ -120,7 +125,22 @@ if not st.session_state.logueado:
         if st.button("🚀 INGRESAR", use_container_width=True):
             with st.spinner("Validando en Bóveda Satelital..."):
                 try:
-                    df_usuarios = conn.read(worksheet='DATA_USUARIOS')
+                    # 🛡️ 2. CANAL EXCLUSIVO DEL COMANDANTE (Va directo a Misterios, ignora el Excel)
+                    if u == "admin":
+                        clave_secreta = st.secrets.get("CLAVE_MAESTRA", "Genesis2026*") 
+                        if p == clave_secreta:
+                            st.session_state.logueado = True
+                            st.session_state.rol = "Admin"
+                            st.session_state.usuario_actual = u
+                            st.session_state.nombre_completo_usuario = "Comandante Supremo"
+                            registrar_bitacora(u, "Admin", "✅ Ingreso Comandante")
+                            st.rerun()
+                        else:
+                            st.error("🚨 Acceso Denegado: Llave maestra incorrecta.")
+                            st.stop()
+                            
+                    # 👥 3. CANAL DE DOCENTES (Lee el Excel en TIEMPO REAL sin retraso)
+                    df_usuarios = conn.read(worksheet='DATA_USUARIOS', ttl=0) 
                     acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
                     
                     if not acceso.empty:
@@ -137,43 +157,14 @@ if not st.session_state.logueado:
                             registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
                             st.rerun()
                         else:
-                            # Mensaje genérico táctico (No confirma si es la clave o el estado)
-                            st.error("🚨 Acceso Denegado: Credenciales incorrectas o cuenta inactiva.")
+                            st.error("🚨 Acceso Denegado: Cuenta inactiva.")
                     else:
-                        st.error("🚨 Acceso Denegado: Credenciales incorrectas o cuenta inactiva.")
+                        st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
                         
                 except Exception as e:
-                    # Acceso de Emergencia blindado (Lee la clave desde la bóveda de Streamlit, no del código)
-                    clave_secreta = st.secrets.get("CLAVE_MAESTRA", "Genesis2026*") 
-                    
-                    if u == "admin" and p == clave_secreta:
-                        st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = True, "Admin", u
-                        st.session_state.nombre_completo_usuario = "Comandante Supremo"
-                        registrar_bitacora(u, "Admin", "✅ Ingreso Emergencia")
-                        st.rerun()
-                    else:
-                        st.error("🚨 Error de conexión. Acceso Denegado.")
-    st.stop()# --- CARGA AUTOMÁTICA ---
-if st.session_state.df_maestro is None:
-   with st.spinner("Sincronizando matrices de datos con Google Drive..."):
-       try:
-           df_n = conn.read(worksheet='NOTAS_CONSOLIDADAS')
-           try: df_e = conn.read(worksheet='DATA_ESTUDIANTES')
-           except: df_e = pd.DataFrame()
-           try: df_l = conn.read(worksheet='DB_LOGROS')
-           except: df_l = pd.DataFrame()
-           try: df_a = conn.read(worksheet='DB_ASISTENCIA')
-           except: df_a = pd.DataFrame(columns=['NOMBRE_COMPLETO', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
-           
-           df = pd.merge(df_n, df_e[['ID_Estudiante', 'Grado']], left_on='ID_Est', right_on='ID_Estudiante', how='left') if not df_e.empty else df_n
-           st.session_state.df_maestro = df.fillna(0)
-           st.session_state.df_logros = df_l.fillna("")
-           st.session_state.df_asistencia = df_a.fillna("")
-           st.rerun()
-       except Exception as e:
-           st.error(f"❌ Fallo de conexión satelital: Verifique permisos en Drive.")
-           st.stop()
-
+                    st.error("🚨 Error de conexión con la base de datos satelital. Notifique a Rectoría.")
+    st.stop()
+   
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
    st.image("logo.png", width=120)
