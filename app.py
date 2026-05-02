@@ -140,7 +140,7 @@ if not st.session_state.logueado:
                             st.stop()
                             
 # 🛡️ ESCUDO ANTICOLAPSO NIVEL 2: Protege contra celdas vacías y errores de lectura
-        if df_m is not None and not df_m.empty:
+       if df_m is not None and not df_m.empty:
             df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") # Rellena los huecos vacíos
             curso_texto = str(curso_sel) # Obliga a que sea texto para que no colapse
             df = df_m[df_m['Grado'].astype(str) == curso_texto].copy() if curso_texto != "TODOS" else df_m.copy()
