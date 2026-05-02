@@ -305,7 +305,7 @@ elif menu == "🛡️ Bitácora y Backup":
    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
        st.session_state.df_maestro.to_excel(writer, sheet_name='NOTAS_CONSOLIDADAS', index=False)
        if not st.session_state.df_logros.empty: st.session_state.df_logros.to_excel(writer, sheet_name='DB_LOGROS', index=False)
-       if not st.session_state.df_asistencia.empty: st.session_state.df_asistencia.to_excel(writer, sheet_name='DB_ASISTENCIA', index=False)
+       if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty: st.session_state.df_asistencia.to_excel(writer, sheet_name='DB_ASISTENCIA', index=False)
        if st.session_state.bitacora: pd.DataFrame(st.session_state.bitacora).to_excel(writer, sheet_name='BITACORA', index=False)
    
    st.info("Comandante, aquí puede descargar todo el trabajo. Es su copia de seguridad física.")
