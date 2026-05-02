@@ -401,8 +401,8 @@ elif menu == "📈 Dashboard Estudiantil":
                     margin=dict(l=60, r=60, t=30, b=30)
                 )
                 st.plotly_chart(fig_radar, use_container_width=True, config={'displaylogo': False})
-            else:
-                st.info("📡 No hay datos suficientes para graficar el polígono.")
+else:
+           st.info("📡 No hay datos suficientes para graficar el polígono.")
                 
             with col_r2:
            st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>HISTORIAL DISCIPLINARIO</p>", unsafe_allow_html=True)
