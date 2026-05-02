@@ -568,7 +568,7 @@ elif menu == "📜 Boletines":
                 </div></body></html>"""
                 
                 components.html(html_boletin, height=600, scrolling=True)
-                else:
+         else:
        estudiantes = sorted(df['NOMBRE_COMPLETO'].dropna().unique())
        st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
        if st.button("🚀 COMPILAR LOTE MASIVO VIP", type="primary"):
