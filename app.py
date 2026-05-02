@@ -339,7 +339,7 @@ elif menu == "📊 Inteligencia Académica":
    c1, c2 = st.columns(2)
    with c1: 
        st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Rendimiento por Asignatura ({periodo_sel})</div>", unsafe_allow_html=True)
-       df_promedios = df.groupby('ASIGNATURA')[col_n].mean().reset_index().sort_values(by=col_n, ascending=True) 
+       df_promedios = df.groupby('Materia')[col_n].mean().reset_index().sort_values(by=col_n, ascending=True) 
        fig1 = px.bar(df_promedios, x=col_n, y='ASIGNATURA', text_auto='.1f', color='ASIGNATURA', orientation='h')
        fig1.update_layout(height=260, margin=dict(t=0, b=10, l=10, r=10), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
        fig1.update_yaxes(title_text="", visible=True, tickmode='linear', dtick=1, tickfont=dict(size=14, color='#000000', family="Arial Black"), automargin=True) 
