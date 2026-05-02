@@ -281,7 +281,7 @@ elif menu == "👑 Centro de Mando":
    promedio_colegio = df[col_n].mean() if not df.empty else 0
    
    # --- NUEVO CÁLCULO DE EFICIENCIA ---
-   est_en_riesgo = df[df[col_n] < 6.0]['NOMBRE_COMPLETO'].nunique()
+   est_en_riesgo = df[df[col_n] < 6.0]['Nombre_Completo'].nunique()
    porcentaje_riesgo = (est_en_riesgo / total_estudiantes * 100) if total_estudiantes > 0 else 0
    eficiencia_interna = 100 - porcentaje_riesgo
    
