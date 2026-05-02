@@ -228,12 +228,12 @@ st.markdown(f"""
 # 📥 1. RECONEXIÓN AUTOMÁTICA: Si la memoria del profesor está vacía, descarga los datos
 if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
     with st.spinner("📡 Descargando notas de la base satelital..."):
-        # ⚠️ ATENCIÓN: Cambie 'NOTAS' por el nombre REAL de su pestaña de Excel
-        st.session_state.df_maestro = conn.read(worksheet='NOTAS', ttl=600)
-                
+        # ✅ Coordenada corregida:
+        st.session_state.df_maestro = conn.read(worksheet='NOTAS_CONSOLIDADAS', ttl=600)
+        
 if 'df_logros' not in st.session_state or st.session_state.df_logros is None or st.session_state.df_logros.empty:
     with st.spinner("📡 Descargando logros de la base satelital..."):
-        # ⚠️ ATENCIÓN: Cambie 'LOGROS' por el nombre REAL de su pestaña de Excel
+        # ⚠️ Si su pestaña de logros se llama diferente a 'LOGROS', cámbielo aquí abajo:
         st.session_state.df_logros = conn.read(worksheet='LOGROS', ttl=600)
 
 # 🔄 2. ASIGNACIÓN DE TROPAS
@@ -250,9 +250,9 @@ if df_m is not None and not df_m.empty:
         df = df_m.copy()
 else:
     st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
-    st.warning("🔄 Verifique que los nombres de las pestañas en el código coincidan exactamente con Excel.")
+    st.warning("🔄 Verifique que el nombre 'NOTAS_CONSOLIDADAS' sea exacto en su Google Sheets.")
     st.stop()
-   
+    
 if menu == "🏠 Inicio":
    c1, c2, c3 = st.columns([1, 8, 1])
    with c2:
