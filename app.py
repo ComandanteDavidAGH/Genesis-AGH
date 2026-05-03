@@ -59,6 +59,12 @@ st.markdown("""
         background-size: 350px; background-repeat: no-repeat; background-position: center;
         opacity: 0.04; position: fixed; top: 0; left: 0; bottom: 0; right: 0; z-index: 0; pointer-events: none;
     }
+    
+    /* --- AJUSTES DE CONTENEDOR --- */
+    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
+    </style>
+""", unsafe_allow_html=True)
+
     </style>
 """, unsafe_allow_html=True)   
    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
