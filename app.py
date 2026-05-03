@@ -47,17 +47,28 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 
 # --- 2. CSS AVANZADO (ALTO CONTRASTE Y BLINDAJE DE INTERFAZ) ---
 st.markdown("""
-   <style>
-   /* --- CAMUFLAJE LIMPIO --- */
-   [data-testid="stDecoration"] { display: none !important; }
-   footer { visibility: hidden !important; }
-   
-   .stApp { background-color: #ffffff; }
-   .stApp::before {
+    <style>
+    /* --- FRANCOTIRADOR QUIRÚRGICO: ELIMINAR SOLO EL GATO Y MENÚ DERECHO --- */
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+    
+    /* Hacemos el encabezado transparente para que no estorbe, PERO dejamos vivo el botón de colapsar menú */
+    header {
+        background-color: transparent !important;
+    }
+    
+    /* --- CAMUFLAJE LIMPIO --- */
+    [data-testid="stDecoration"] { display: none !important; }
+    footer { visibility: hidden !important; }
+
+    .stApp { background-color: #ffffff; }
+    .stApp::before {
         content: ""; background-image: url('https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png');
         background-size: 350px; background-repeat: no-repeat; background-position: center;
         opacity: 0.04; position: fixed; top: 0; left: 0; bottom: 0; right: 0; z-index: 0; pointer-events: none;
-   }
+    }
+   
    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
    [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
    [data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
