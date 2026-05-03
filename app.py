@@ -1,4 +1,25 @@
 import streamlit as st
+# 📋 MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS IE GÉNESIS 2026
+ASIGNACIONES_DOCENTES = {
+    "Priscila": {"grados": ["5°"], "materias": "TODAS"},
+    "Celeste": {"grados": ["1°"], "materias": "TODAS"},
+    "Maria": {"grados": ["2°"], "materias": "TODAS"},
+    "Ana": {"grados": ["3°"], "materias": "TODAS"},
+    "Juliana": {"grados": ["4°"], "materias": "TODAS"},
+    "Daniel": {"grados": ["10°", "11°"], "materias": ["Física", "Matemáticas"]},
+    "Rafael": {"grados": ["10°", "11°"], "materias": ["Química"]},
+    "Ludis": {"grados": ["10°", "11°"], "materias": ["Filosofía", "Ética"]},
+    "Arnaldo": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Matemáticas"]},
+    # Puestos recreados (ajustar cuando haya personal real)
+    "Docente_Lenguaje_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Lenguaje"]},
+    "Docente_Sociales_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Sociales"]},
+    "Docente_Ingles_VIP": {"grados": ["1°", "2°", "3°", "4°", "5°", "6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Inglés"]},
+    "Docente_Ciencias_VIP": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Ciencias Naturales"]},
+    "Docente_Especialidades_VIP": {"grados": ["1°", "11°"], "materias": ["Educación Física", "Artística", "Informática", "Religión"]}
+}
+
+# Lista maestra de materias para Primaria (usada cuando dice "TODAS")
+MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta, timezone
@@ -166,7 +187,9 @@ if not st.session_state.logueado:
                 except Exception as e:
                     # ⚠️ EL PARACAÍDAS RESTAURADO QUE EVITA EL ERROR DE SINTAXIS
                     st.error("🚨 Error de conexión con la base de datos satelital. Notifique a Rectoría.")
-    st.stop()           
+    st.stop() 
+
+
 
 # --- 4. PANEL LATERAL ---
 with st.sidebar:
@@ -189,11 +212,39 @@ with st.sidebar:
         
     menu = st.radio("SECCIONES:", opciones_menu)
     
-    cursos = ["TODOS"]
-    if st.session_state.df_maestro is not None:
-        cursos += sorted(st.session_state.df_maestro['Grado'].dropna().unique().astype(str).tolist())
+    # --- 🛡️ FILTRO INTELIGENTE DE GRADOS (MATRIZ DE MANDO) ---
+    usuario_activo = st.session_state.usuario_actual
+    cursos = []
+
+    if st.session_state.rol == "Admin":
+        cursos = ["TODOS"]
+        if st.session_state.df_maestro is not None:
+            cursos += sorted(st.session_state.df_maestro['Grado'].dropna().unique().astype(str).tolist())
+    else:
+        if usuario_activo in ASIGNACIONES_DOCENTES:
+            cursos = ASIGNACIONES_DOCENTES[usuario_activo]["grados"]
+        else:
+            cursos = ["Sin asignación"] # Bloqueo por seguridad si el profe no está en la matriz
+
     st.markdown("---")
-    curso_sel = st.selectbox("📚 GRADO:", cursos)
+    curso_sel = st.selectbox("🎓 GRADO:", cursos)
+    
+    # --- 🛡️ FILTRO INTELIGENTE DE MATERIAS ---
+    materias_permitidas = []
+    if st.session_state.rol == "Admin":
+        materias_permitidas = ["TODAS"]
+        if st.session_state.df_maestro is not None and 'Materia' in st.session_state.df_maestro.columns:
+            materias_permitidas += sorted(st.session_state.df_maestro['Materia'].dropna().unique().astype(str).tolist())
+    else:
+        if usuario_activo in ASIGNACIONES_DOCENTES:
+            if ASIGNACIONES_DOCENTES[usuario_activo]["materias"] == "TODAS":
+                materias_permitidas = MATERIAS_PRIMARIA
+            else:
+                materias_permitidas = ASIGNACIONES_DOCENTES[usuario_activo]["materias"]
+        else:
+            materias_permitidas = ["Sin asignación"]
+
+    materia_sel = st.selectbox("📚 MATERIA:", materias_permitidas)
     periodo_sel = st.selectbox("🎯 PERIODO:", ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"])
     col_n = periodo_sel if periodo_sel != "CONSOLIDADO FINAL" else "PROMEDIO"
     
@@ -260,14 +311,22 @@ if 'df_logros' not in st.session_state or st.session_state.df_logros is None or 
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
 
-# 🛡️ 3. ESCUDO ANTICOLAPSO
+# 🛡️ 3. ESCUDO ANTICOLAPSO (Ahora filtra Grado y Materia)
 if df_m is not None and not df_m.empty:
     df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
+    df_temp = df_m.copy()
+    
+    # 1. Filtramos por Grado
     curso_texto = str(curso_sel)
     if curso_texto != "TODOS":
-        df = df_m[df_m['Grado'].astype(str) == curso_texto].copy()
-    else:
-        df = df_m.copy()
+        df_temp = df_temp[df_temp['Grado'].astype(str) == curso_texto]
+        
+    # 2. Filtramos por Materia
+    materia_texto = str(materia_sel)
+    if materia_texto != "TODAS" and materia_texto != "Sin asignación" and 'Materia' in df_temp.columns:
+        df_temp = df_temp[df_temp['Materia'].astype(str) == materia_texto]
+        
+    df = df_temp.copy()
 else:
     st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
     st.warning("🔄 Verifique que los nombres 'DATA_ESTUDIANTES' y 'DB_LOGROS' sean exactos en Excel.")
