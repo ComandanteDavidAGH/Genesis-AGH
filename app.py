@@ -311,9 +311,21 @@ if 'df_logros' not in st.session_state or st.session_state.df_logros is None or 
 df_m = st.session_state.df_maestro
 df_l = st.session_state.df_logros
 
-# 🛡️ 3. ESCUDO ANTICOLAPSO (Ahora filtra Grado y Materia)
+# 🛡️ 3. ESCUDO ANTICOLAPSO (Ahora con Motor de Cálculo Anti-NAN)
 if df_m is not None and not df_m.empty:
     df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
+    
+    # --- 🛠️ INYECCIÓN: MOTOR DE CÁLCULO GLOBAL ---
+    # 1. Aseguramos que todas las notas sean números reales (si hay vacíos, pone 0.0)
+    for col_nota in ['P1', 'P2', 'P3', 'P4']:
+        if col_nota in df_m.columns:
+            df_m[col_nota] = pd.to_numeric(df_m[col_nota], errors='coerce').fillna(0.0)
+            
+    # 2. Calculamos la columna PROMEDIO automáticamente
+    if all(c in df_m.columns for c in ['P1', 'P2', 'P3', 'P4']):
+        df_m['PROMEDIO'] = df_m[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
+    # ----------------------------------------------
+
     df_temp = df_m.copy()
     
     # 1. Filtramos por Grado
@@ -330,8 +342,7 @@ if df_m is not None and not df_m.empty:
 else:
     st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
     st.warning("🔄 Verifique que los nombres 'DATA_ESTUDIANTES' y 'DB_LOGROS' sean exactos en Excel.")
-    st.stop()
-    
+    st.stop()    
 if menu == "🏠 Inicio":
     c1, c2, c3 = st.columns([1, 8, 1])
     with c2:
