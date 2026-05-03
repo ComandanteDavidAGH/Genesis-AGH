@@ -1,4 +1,11 @@
 import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime, timedelta, timezone
+import io
+import streamlit.components.v1 as components
+from streamlit_gsheets import GSheetsConnection
+
 # 📋 MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS IE GÉNESIS 2026
 ASIGNACIONES_DOCENTES = {
     "Priscila": {"grados": ["5°"], "materias": "TODAS"},
@@ -10,7 +17,6 @@ ASIGNACIONES_DOCENTES = {
     "Rafael": {"grados": ["10°", "11°"], "materias": ["Química"]},
     "Ludis": {"grados": ["10°", "11°"], "materias": ["Filosofía", "Ética"]},
     "Arnaldo": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Matemáticas"]},
-    # Puestos recreados (ajustar cuando haya personal real)
     "Docente_Lenguaje_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Lenguaje"]},
     "Docente_Sociales_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Sociales"]},
     "Docente_Ingles_VIP": {"grados": ["1°", "2°", "3°", "4°", "5°", "6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Inglés"]},
@@ -18,23 +24,14 @@ ASIGNACIONES_DOCENTES = {
     "Docente_Especialidades_VIP": {"grados": ["1°", "11°"], "materias": ["Educación Física", "Artística", "Informática", "Religión"]}
 }
 
-# Lista maestra de materias para Primaria (usada cuando dice "TODAS")
 MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
-import pandas as pd
-import plotly.express as px
-from datetime import datetime, timedelta, timezone
-import io
-import streamlit.components.v1 as components
-from streamlit_gsheets import GSheetsConnection
 
 # --- 1. CONFIGURACIÓN DE NÚCLEO ---
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
 
-# Conexión Satelital y Reloj de Colombia (UTC-5)
 conn = st.connection("gsheets", type=GSheetsConnection)
 zona_colombia = timezone(timedelta(hours=-5))
 
-# Inicialización de Estados
 if 'logueado' not in st.session_state: st.session_state.logueado = False
 if 'rol' not in st.session_state: st.session_state.rol = ""
 if 'usuario_actual' not in st.session_state: st.session_state.usuario_actual = ""
@@ -45,7 +42,7 @@ if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
-# --- 2. CSS AVANZADO (DISEÑO RESTAURADO 100% BLANCO Y DORADO) ---
+# --- 2. CSS AVANZADO (BOTONES REPARADOS) ---
 st.markdown("""
 <style>
 /* --- CAMUFLAJE Y RESCATE DE HAMBURGUESA --- */
@@ -86,7 +83,6 @@ footer { visibility: hidden !important; }
 
 p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
 
-/* ESTO ES LO QUE ARREGLA LOS MENÚS DESPLEGABLES OSCUROS */
 div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
 div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
 div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
@@ -96,8 +92,26 @@ ul[role="listbox"] li:hover, ul[role="listbox"] li[aria-selected="true"] { backg
 
 div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial', sans-serif !important; caret-color: #cc0000 !important; font-weight: bold; }
 
+/* --- PINTURA PARA BOTONES (PRIMARIOS Y SECUNDARIOS) --- */
 .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] * { color: #ffffff !important; }
 button[kind="primary"] * { color: #ffffff !important; }
+
+/* AQUÍ SE ARREGLA EL BOTÓN NEGRO DEL SIMAT Y EL DE DESHACER */
+button[kind="secondary"] { 
+    background-color: #ffffff !important; 
+    border: 2px solid #0d1b2a !important; 
+    border-radius: 8px !important; 
+}
+button[kind="secondary"] * { 
+    color: #0d1b2a !important; 
+    font-weight: bold !important; 
+}
+button[kind="secondary"]:hover { 
+    background-color: #0d1b2a !important; 
+}
+button[kind="secondary"]:hover * { 
+    color: #d4af37 !important; 
+}
 
 div[data-baseweb="calendar"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
 div[data-baseweb="calendar"] * { color: #000000 !important; background-color: transparent !important; }
@@ -314,7 +328,6 @@ if df_m is not None and not df_m.empty:
     df = df_temp.copy()
 else:
     st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
-    st.warning("🔄 Verifique que los nombres 'DATA_ESTUDIANTES' y 'DB_LOGROS' sean exactos en Excel.")
     st.stop()
     
 if menu == "🏠 Inicio":
@@ -341,7 +354,6 @@ if menu == "🏠 Inicio":
 elif menu == "👑 Centro de Mando":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
     
-    # SOLUCIÓN DEL CENTRO DE MANDO: Usamos df_m (la base total) y no df (la base filtrada por la barra lateral)
     total_estudiantes = len(df_m['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df_m.columns else 0
     promedio_colegio = df_m[col_n].mean() if not df_m.empty else 0
     
@@ -650,7 +662,6 @@ elif menu == "📜 Boletines":
 
             res = df[df['Nombre_Completo'] == alumno]
             
-            # 🛡️ SOLUCIÓN BOLETÍN: Eliminamos materias fantasma y duplicadas
             res = res.drop_duplicates(subset=['Materia'])
             res = res[res['PROMEDIO'] > 0.0]
             
@@ -770,7 +781,6 @@ elif menu == "📜 Boletines":
             for i, alum in enumerate(estudiantes):
                 res = df[df['Nombre_Completo'] == alum]
                 
-                # 🛡️ SOLUCIÓN BOLETÍN: Eliminamos materias fantasma y duplicadas
                 res = res.drop_duplicates(subset=['Materia'])
                 res = res[res['PROMEDIO'] > 0.0]
                 
