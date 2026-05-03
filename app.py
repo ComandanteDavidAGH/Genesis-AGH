@@ -44,6 +44,29 @@ if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetim
 
 # --- 2. CSS AVANZADO (BOTONES REPARADOS) ---
 st.markdown("""
+/* --- REPARACIÓN DE MENÚS DESPLEGABLES (EXPANDERS) --- */
+[data-testid="stExpander"] {
+    background-color: #ffffff !important;
+    border: 2px solid #d4af37 !important;
+    border-radius: 8px !important;
+}
+[data-testid="stExpander"] summary {
+    background-color: #ffffff !important;
+}
+[data-testid="stExpander"] summary:hover {
+    background-color: #f0f0f0 !important;
+}
+[data-testid="stExpander"] summary * {
+    color: #000000 !important;
+    font-weight: bold !important;
+}
+[data-testid="stExpanderDetails"] {
+    background-color: #ffffff !important;
+}
+[data-testid="stExpanderDetails"] * {
+    color: #000000 !important;
+}
+
 <style>
 /* --- CAMUFLAJE Y RESCATE DE HAMBURGUESA --- */
 [data-testid="stToolbar"] { visibility: hidden !important; }
