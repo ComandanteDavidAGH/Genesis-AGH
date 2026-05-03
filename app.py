@@ -42,7 +42,7 @@ if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
-# --- 2. CSS AVANZADO (TODOS LOS PARCHES INYECTADOS CORRECTAMENTE) ---
+# --- 2. CSS AVANZADO (SELLADO Y BLINDADO) ---
 st.markdown("""
 <style>
 /* --- CAMUFLAJE Y RESCATE DE HAMBURGUESA --- */
@@ -83,7 +83,7 @@ footer { visibility: hidden !important; }
 
 p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
 
-/* MENÚS DESPLEGABLES NATIVOS */
+/* MENÚS DESPLEGABLES NATIVOS Y CAJAS DE TEXTO */
 div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
 div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
 div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
@@ -122,7 +122,6 @@ div[data-baseweb="calendar"] div[aria-selected="true"] { background-color: #d4af
 [data-testid="stExpander"] summary * { color: #000000 !important; font-weight: bold !important; }
 [data-testid="stExpanderDetails"] { background-color: #ffffff !important; }
 [data-testid="stExpanderDetails"] * { color: #000000 !important; }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -135,7 +134,7 @@ def registrar_bitacora(usuario, rol, accion):
         "Acción": accion
     })
 
-# --- 3. LOGIN SEGURO (BLINDADO Y EN TIEMPO REAL) ---
+# --- 3. LOGIN SEGURO ---
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
@@ -352,10 +351,12 @@ if menu == "🏠 Inicio":
 elif menu == "👑 Centro de Mando":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
     
-    total_estudiantes = len(df_m['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df_m.columns else 0
-    promedio_colegio = df_m[col_n].mean() if not df_m.empty else 0
+    # --- RESTAURACIÓN TÁCTICA DEL FILTRO ---
+    # Usamos "df" para que los totales respondan al grado que seleccione en la barra izquierda.
+    total_estudiantes = len(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else 0
+    promedio_colegio = df[col_n].mean() if not df.empty else 0
     
-    est_en_riesgo = df_m[df_m[col_n] < 6.0]['Nombre_Completo'].nunique()
+    est_en_riesgo = df[df[col_n] < 6.0]['Nombre_Completo'].nunique()
     porcentaje_riesgo = (est_en_riesgo / total_estudiantes * 100) if total_estudiantes > 0 else 0
     eficiencia_interna = 100 - porcentaje_riesgo
     
