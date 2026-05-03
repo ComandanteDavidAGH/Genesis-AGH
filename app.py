@@ -42,31 +42,8 @@ if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
-# --- 2. CSS AVANZADO (BOTONES REPARADOS) ---
+# --- 2. CSS AVANZADO (TODOS LOS PARCHES INYECTADOS CORRECTAMENTE) ---
 st.markdown("""
-/* --- REPARACIÓN DE MENÚS DESPLEGABLES (EXPANDERS) --- */
-[data-testid="stExpander"] {
-    background-color: #ffffff !important;
-    border: 2px solid #d4af37 !important;
-    border-radius: 8px !important;
-}
-[data-testid="stExpander"] summary {
-    background-color: #ffffff !important;
-}
-[data-testid="stExpander"] summary:hover {
-    background-color: #f0f0f0 !important;
-}
-[data-testid="stExpander"] summary * {
-    color: #000000 !important;
-    font-weight: bold !important;
-}
-[data-testid="stExpanderDetails"] {
-    background-color: #ffffff !important;
-}
-[data-testid="stExpanderDetails"] * {
-    color: #000000 !important;
-}
-
 <style>
 /* --- CAMUFLAJE Y RESCATE DE HAMBURGUESA --- */
 [data-testid="stToolbar"] { visibility: hidden !important; }
@@ -106,6 +83,7 @@ footer { visibility: hidden !important; }
 
 p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
 
+/* MENÚS DESPLEGABLES NATIVOS */
 div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
 div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
 div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
@@ -119,22 +97,10 @@ div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { backgro
 .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] * { color: #ffffff !important; }
 button[kind="primary"] * { color: #ffffff !important; }
 
-/* AQUÍ SE ARREGLA EL BOTÓN NEGRO DEL SIMAT Y EL DE DESHACER */
-button[kind="secondary"] { 
-    background-color: #ffffff !important; 
-    border: 2px solid #0d1b2a !important; 
-    border-radius: 8px !important; 
-}
-button[kind="secondary"] * { 
-    color: #0d1b2a !important; 
-    font-weight: bold !important; 
-}
-button[kind="secondary"]:hover { 
-    background-color: #0d1b2a !important; 
-}
-button[kind="secondary"]:hover * { 
-    color: #d4af37 !important; 
-}
+button[kind="secondary"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; border-radius: 8px !important; }
+button[kind="secondary"] * { color: #0d1b2a !important; font-weight: bold !important; }
+button[kind="secondary"]:hover { background-color: #0d1b2a !important; }
+button[kind="secondary"]:hover * { color: #d4af37 !important; }
 
 div[data-baseweb="calendar"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
 div[data-baseweb="calendar"] * { color: #000000 !important; background-color: transparent !important; }
@@ -148,6 +114,15 @@ div[data-baseweb="calendar"] div[aria-selected="true"] { background-color: #d4af
 .metric-value { font-size: 28px; font-weight: 900; color: #0d1b2a; margin: 0; font-family: 'Arial Black';}
 .metric-label { font-size: 14px; font-weight: bold; color: #000000; margin: 0; text-transform: uppercase;}
 .footer-legal { font-size: 10px; color: #888888; text-align: center; margin-top: 50px; border-top: 1px solid #eeeeee; padding-top: 10px; font-family: 'Arial', sans-serif; }
+
+/* --- REPARACIÓN DE MENÚS DESPLEGABLES (EXPANDERS DEL MANUAL) --- */
+[data-testid="stExpander"] { background-color: #ffffff !important; border: 2px solid #d4af37 !important; border-radius: 8px !important; }
+[data-testid="stExpander"] summary { background-color: #ffffff !important; }
+[data-testid="stExpander"] summary:hover { background-color: #f0f0f0 !important; }
+[data-testid="stExpander"] summary * { color: #000000 !important; font-weight: bold !important; }
+[data-testid="stExpanderDetails"] { background-color: #ffffff !important; }
+[data-testid="stExpanderDetails"] * { color: #000000 !important; }
+
 </style>
 """, unsafe_allow_html=True)
 
