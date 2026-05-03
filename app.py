@@ -1,11 +1,4 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-from datetime import datetime, timedelta, timezone
-import io
-import streamlit.components.v1 as components
-from streamlit_gsheets import GSheetsConnection
-
 # 📋 MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS IE GÉNESIS 2026
 ASIGNACIONES_DOCENTES = {
     "Priscila": {"grados": ["5°"], "materias": "TODAS"},
@@ -17,6 +10,7 @@ ASIGNACIONES_DOCENTES = {
     "Rafael": {"grados": ["10°", "11°"], "materias": ["Química"]},
     "Ludis": {"grados": ["10°", "11°"], "materias": ["Filosofía", "Ética"]},
     "Arnaldo": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Matemáticas"]},
+    # Puestos recreados (ajustar cuando haya personal real)
     "Docente_Lenguaje_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Lenguaje"]},
     "Docente_Sociales_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Sociales"]},
     "Docente_Ingles_VIP": {"grados": ["1°", "2°", "3°", "4°", "5°", "6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Inglés"]},
@@ -24,14 +18,23 @@ ASIGNACIONES_DOCENTES = {
     "Docente_Especialidades_VIP": {"grados": ["1°", "11°"], "materias": ["Educación Física", "Artística", "Informática", "Religión"]}
 }
 
+# Lista maestra de materias para Primaria (usada cuando dice "TODAS")
 MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
+import pandas as pd
+import plotly.express as px
+from datetime import datetime, timedelta, timezone
+import io
+import streamlit.components.v1 as components
+from streamlit_gsheets import GSheetsConnection
 
 # --- 1. CONFIGURACIÓN DE NÚCLEO ---
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
 
+# Conexión Satelital y Reloj de Colombia (UTC-5)
 conn = st.connection("gsheets", type=GSheetsConnection)
 zona_colombia = timezone(timedelta(hours=-5))
 
+# Inicialización de Estados
 if 'logueado' not in st.session_state: st.session_state.logueado = False
 if 'rol' not in st.session_state: st.session_state.rol = ""
 if 'usuario_actual' not in st.session_state: st.session_state.usuario_actual = ""
@@ -42,25 +45,18 @@ if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
-# --- 2. CSS AVANZADO (LIMPIADO Y CON HAMBURGUESA VISIBLE) ---
+# --- 2. CSS AVANZADO (DISEÑO RESTAURADO 100% BLANCO Y DORADO) ---
 st.markdown("""
 <style>
-/* Ocultar gato de GitHub y menú derecho de Streamlit */
+/* --- CAMUFLAJE Y RESCATE DE HAMBURGUESA --- */
 [data-testid="stToolbar"] { visibility: hidden !important; }
 [data-testid="stDecoration"] { display: none !important; }
+header { background-color: transparent !important; }
+[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; background-color: #0d1b2a !important; border-radius: 0 5px 5px 0 !important; z-index: 99999 !important; }
+[data-testid="collapsedControl"] svg { fill: #d4af37 !important; color: #d4af37 !important; }
 footer { visibility: hidden !important; }
 
-/* RESCATE DE LA HAMBURGUESA: Hacerla visible y dorada */
-header { background-color: transparent !important; }
-[data-testid="collapsedControl"] { 
-    background-color: #0d1b2a !important; 
-    border-radius: 0 5px 5px 0;
-    display: flex !important;
-    visibility: visible !important;
-    z-index: 999999 !important;
-}
-[data-testid="collapsedControl"] svg { fill: #d4af37 !important; }
-
+/* --- DISEÑO ORIGINAL COMPLETO --- */
 .stApp { background-color: #ffffff; }
 .stApp::before {
     content: ""; background-image: url('https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png');
@@ -78,19 +74,38 @@ header { background-color: transparent !important; }
 
 [data-testid="stPlotlyChart"] { transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; }
 [data-testid="stPlotlyChart"]:hover { transform: scale(1.03); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); z-index: 10; }
+.colchon { height: 300px; width: 100%; }
 
 @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
+@keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
+@keyframes pulso-verde { 0% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } 50% { box-shadow: 0 0 20px rgba(0, 153, 51, 1), inset 0 0 10px rgba(0, 153, 51, 0.5); } 100% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } }
+
 .tarjeta-roja { animation: pulso-rojo 1.5s infinite; border: 3px solid #cc0000; border-left: 10px solid #cc0000; background:#ffe6e6; padding:15px; border-radius:8px; color: #000; }
-.tarjeta-naranja { border: 3px solid #cc8800; border-left: 10px solid #cc8800; background:#fff4e6; padding:15px; border-radius:8px; color: #000; }
-.tarjeta-verde { border: 3px solid #00994c; border-left: 10px solid #00994c; background:#e6ffe6; padding:15px; border-radius:8px; color: #000; }
+.tarjeta-naranja { animation: pulso-naranja 2s infinite; border: 3px solid #cc8800; border-left: 10px solid #cc8800; background:#fff4e6; padding:15px; border-radius:8px; color: #000; }
+.tarjeta-verde { animation: pulso-verde 2.5s infinite; border: 3px solid #00994c; border-left: 10px solid #00994c; background:#e6ffe6; padding:15px; border-radius:8px; color: #000; }
 
 p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
 
+/* ESTO ES LO QUE ARREGLA LOS MENÚS DESPLEGABLES OSCUROS */
 div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
 div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
+div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
 ul[role="listbox"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
 ul[role="listbox"] li { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; font-weight: bold !important; }
 ul[role="listbox"] li:hover, ul[role="listbox"] li[aria-selected="true"] { background-color: #d4af37 !important; color: #000000 !important; }
+
+div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial', sans-serif !important; caret-color: #cc0000 !important; font-weight: bold; }
+
+.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] * { color: #ffffff !important; }
+button[kind="primary"] * { color: #ffffff !important; }
+
+div[data-baseweb="calendar"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
+div[data-baseweb="calendar"] * { color: #000000 !important; background-color: transparent !important; }
+div[data-baseweb="calendar"] div[role="button"]:hover { background-color: #f0f0f0 !important; }
+div[data-baseweb="calendar"] div[aria-selected="true"] { background-color: #d4af37 !important; color: #0d1b2a !important; font-weight: bold !important; }
+
+.stTabs [data-baseweb="tab-list"] button { font-family: 'Arial Black'; color: #0d1b2a; border-bottom: 2px solid transparent; }
+.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] { border-bottom: 3px solid #d4af37; color: #d4af37; background-color: #0d1b2a; border-radius: 5px 5px 0 0; }
 
 .metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
 .metric-value { font-size: 28px; font-weight: 900; color: #0d1b2a; margin: 0; font-family: 'Arial Black';}
@@ -108,7 +123,7 @@ def registrar_bitacora(usuario, rol, accion):
         "Acción": accion
     })
 
-# --- 3. LOGIN SEGURO ---
+# --- 3. LOGIN SEGURO (BLINDADO Y EN TIEMPO REAL) ---
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
@@ -265,8 +280,7 @@ if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None o
         if 'Nombre_Completo' not in df_estud.columns and 'NOMBRE_COMPLETO' in df_estud.columns:
             df_estud = df_estud.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo'})
             
-        # 🛡️ BLINDAJE 1: Eliminamos duplicados desde la raíz para evitar el Efecto Multiplicador
-        df_grados = df_estud.drop_duplicates(subset=['Nombre_Completo'])[['Nombre_Completo', 'Grado']]
+        df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates()
         
         st.session_state.df_maestro = pd.merge(df_notas, df_grados, on='Nombre_Completo', how='left')
         
@@ -300,6 +314,7 @@ if df_m is not None and not df_m.empty:
     df = df_temp.copy()
 else:
     st.error("📡 Interferencia satelital: No se pudo descargar la pestaña de notas.")
+    st.warning("🔄 Verifique que los nombres 'DATA_ESTUDIANTES' y 'DB_LOGROS' sean exactos en Excel.")
     st.stop()
     
 if menu == "🏠 Inicio":
@@ -326,7 +341,7 @@ if menu == "🏠 Inicio":
 elif menu == "👑 Centro de Mando":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
     
-    # 🛡️ BLINDAJE 2: Calculamos estadísticas con la base total (df_m) para que no dependa del filtro de Grado. ¡Siempre mostrará 700!
+    # SOLUCIÓN DEL CENTRO DE MANDO: Usamos df_m (la base total) y no df (la base filtrada por la barra lateral)
     total_estudiantes = len(df_m['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df_m.columns else 0
     promedio_colegio = df_m[col_n].mean() if not df_m.empty else 0
     
@@ -342,25 +357,32 @@ elif menu == "👑 Centro de Mando":
         st.markdown(f"<div class='metric-card' style='border-top-color:{color_e}'><p class='metric-label'>Índice de Eficiencia</p><p class='metric-value' style='color:{color_e}'>{eficiencia_interna:.1f}%</p></div>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
+    
     if eficiencia_interna < 80:
         st.warning(f"⚠️ Alerta de Rectoría: El {porcentaje_riesgo:.1f}% de la población estudiantil presenta riesgo de reprobación.")
 
 elif menu == "🛡️ Bitácora y Backup":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
+    
     def guardar_como_tabla(df_export, writer_obj, sheet_name):
         if df_export is None or df_export.empty: return
-        df_export.columns = df_export.columns.astype(str)
+        df_export.columns = df_export.columns.astype(str) 
         df_export.to_excel(writer_obj, sheet_name=sheet_name, index=False, startrow=1, header=False)
         worksheet = writer_obj.sheets[sheet_name]
         (max_row, max_col) = df_export.shape
+        
         column_settings = [{'header': col} for col in df_export.columns]
-        worksheet.add_table(0, 0, max_row, max_col - 1, {'columns': column_settings, 'style': 'Table Style Medium 4'})
+        worksheet.add_table(0, 0, max_row, max_col - 1, {
+            'columns': column_settings, 
+            'style': 'Table Style Medium 4' 
+        })
+        
         for i, col in enumerate(df_export.columns):
             max_len_datos = df_export[col].astype(str).str.len().max()
             max_len_datos = int(max_len_datos) if pd.notna(max_len_datos) else 0
             col_len = max(max_len_datos, len(str(col))) + 2
             worksheet.set_column(i, i, min(col_len, 45)) 
-            
+
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
         guardar_como_tabla(st.session_state.df_maestro, writer, 'NOTAS_CONSOLIDADAS')
@@ -628,7 +650,7 @@ elif menu == "📜 Boletines":
 
             res = df[df['Nombre_Completo'] == alumno]
             
-            # 🛡️ BLINDAJE 3: Destruir materias repetidas y materias en 0.0 (materias fantasma)
+            # 🛡️ SOLUCIÓN BOLETÍN: Eliminamos materias fantasma y duplicadas
             res = res.drop_duplicates(subset=['Materia'])
             res = res[res['PROMEDIO'] > 0.0]
             
@@ -748,7 +770,7 @@ elif menu == "📜 Boletines":
             for i, alum in enumerate(estudiantes):
                 res = df[df['Nombre_Completo'] == alum]
                 
-                # 🛡️ BLINDAJE 3: Destruir materias repetidas y materias en 0.0 (materias fantasma)
+                # 🛡️ SOLUCIÓN BOLETÍN: Eliminamos materias fantasma y duplicadas
                 res = res.drop_duplicates(subset=['Materia'])
                 res = res[res['PROMEDIO'] > 0.0]
                 
