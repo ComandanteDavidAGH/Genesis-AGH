@@ -528,34 +528,63 @@ elif menu == "🚦 Semáforo Académico":
 elif menu == "✍️ Digitar Notas":
     col_btn, col_espacio = st.columns([1.5, 8.5])
     with col_btn:
-        if st.button("💾 GUARDAR", type="primary", use_container_width=True):
-            # 1. Aseguramos que lo digitado sean números
-            for c in ['P1', 'P2', 'P3', 'P4']: 
-                st.session_state.df_temp_n[c] = pd.to_numeric(st.session_state.df_temp_n[c], errors='coerce').fillna(0).round(1)
+        if st.button("💾 GUARDAR CAMBIOS", type="primary", use_container_width=True):
+            # 1. Capturamos los cambios del editor
+            df_editado = st.session_state.editor_notas.get('edited_rows', {})
             
-            # 2. 🛡️ BLINDAJE: Solo "actualizamos" a los alumnos filtrados dentro de la gran base maestra (sin borrar a nadie)
-            st.session_state.df_maestro.update(st.session_state.df_temp_n)
-            
-            # 3. Recalculamos promedios generales
-            st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
-            
-            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Notas")
-            
-            try:
-                # 4. 🛡️ BLINDAJE: Enviamos la base de datos COMPLETA al Excel, no solo el pedacito filtrado
-                df_to_save = st.session_state.df_maestro.copy()
-                if 'Grado' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['Grado'])
-                if 'ID_Estudiante' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['ID_Estudiante'])
-                
-                conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_to_save)
-                st.success("✅ Guardado en Drive exitoso. Tropa intacta.")
-            except: 
-                st.warning("Guardado local")
-            st.rerun()
-            
-    config_notas = { 'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1), 'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1), 'P3': st.column_config.NumberColumn("P3", min_value=1.0, max_value=10.0, step=0.1), 'P4': st.column_config.NumberColumn("P4", min_value=1.0, max_value=10.0, step=0.1) }
-    st.session_state.df_temp_n = st.data_editor(df, use_container_width=True, num_rows="dynamic", height=300, key="editor_notas", column_config=config_notas)
+            if df_editado:
+                with st.spinner("🚀 Transmitiendo datos al satélite..."):
+                    # 2. Aplicamos los cambios a la base maestra usando el índice real
+                    for indice, cambios in df_editado.items():
+                        for columna, valor in cambios.items():
+                            st.session_state.df_maestro.at[indice, columna] = valor
+                    
+                    # 3. Recalculamos promedios y desempeños para las filas tocadas
+                    st.session_state.df_maestro['P1'] = pd.to_numeric(st.session_state.df_maestro['P1'], errors='coerce').fillna(0)
+                    st.session_state.df_maestro['P2'] = pd.to_numeric(st.session_state.df_maestro['P2'], errors='coerce').fillna(0)
+                    st.session_state.df_maestro['P3'] = pd.to_numeric(st.session_state.df_maestro['P3'], errors='coerce').fillna(0)
+                    st.session_state.df_maestro['P4'] = pd.to_numeric(st.session_state.df_maestro['P4'], errors='coerce').fillna(0)
+                    st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
 
+                    # 4. TRADUCCIÓN PARA EXCEL: Volvemos a los nombres originales de las columnas
+                    df_final_drive = st.session_state.df_maestro.copy()
+                    
+                    # Quitamos 'Grado' porque esa columna vive en la otra pestaña
+                    if 'Grado' in df_final_drive.columns:
+                        df_final_drive = df_final_drive.drop(columns=['Grado'])
+                    
+                    # Renombramos para que coincida EXACTO con el Excel
+                    df_final_drive = df_final_drive.rename(columns={
+                        'Nombre_Completo': 'NOMBRE_COMPLETO',
+                        'Materia': 'ASIGNATURA',
+                        'LOGRO': 'LOGROS'
+                    })
+
+                    try:
+                        # 5. Envío masivo blindado
+                        conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_final_drive)
+                        registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Sincronización exitosa con Drive")
+                        st.success("✅ ¡SATÉLITE ACTUALIZADO! Los cambios ya están en el Excel.")
+                        st.balloons() # Pequeña celebración visual de éxito
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"🚨 Error de conexión: {e}")
+            else:
+                st.info("ℹ️ No se detectaron cambios para guardar.")
+
+    # Configuración de la tabla de edición
+    config_notas = { 
+        'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1),
+        'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1),
+        'P3': st.column_config.NumberColumn("P3", min_value=1.0, max_value=10.0, step=0.1),
+        'P4': st.column_config.NumberColumn("P4", min_value=1.0, max_value=10.0, step=0.1),
+        'Nombre_Completo': st.column_config.TextColumn("Estudiante", disabled=True),
+        'Materia': st.column_config.TextColumn("Asignatura", disabled=True),
+        'PROMEDIO': st.column_config.NumberColumn("Definitiva", disabled=True)
+    }
+    
+    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas, hide_index=False)
+    
 elif menu == "📚 Logros":
     col_btn, col_espacio = st.columns([1.5, 8.5])
     with col_btn:
