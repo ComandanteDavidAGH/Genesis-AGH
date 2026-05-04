@@ -237,7 +237,10 @@ with st.sidebar:
     if st.session_state.rol == "Admin": 
         opciones_menu.insert(1, "🛡️ Bitácora y Backup")
         opciones_menu.insert(1, "👑 Centro de Mando")
-        
+    # 🛡️ FILTRO DE SEGURIDAD: Ocultar boletines a la tropa docente
+    if st.session_state.rol == "Docente":
+        if "📜 Boletines" in opciones_menu:
+            opciones_menu.remove("📜 Boletines")
     menu = st.radio("SECCIONES:", opciones_menu)
     
     usuario_activo = st.session_state.usuario_actual
