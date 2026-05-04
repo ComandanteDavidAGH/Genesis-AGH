@@ -344,10 +344,12 @@ if menu == "🏠 Inicio":
 elif menu == "👑 Centro de Mando":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
     
-    total_estudiantes = len(df_m['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df_m.columns else 0
-    promedio_colegio = df_m[col_n].mean() if not df_m.empty else 0
+    # --- RESTAURACIÓN DE LA REGLA DE ORO ---
+    # Usamos "df" para que los totales respondan al grado que seleccione en la barra izquierda.
+    total_estudiantes = len(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else 0
+    promedio_colegio = df[col_n].mean() if not df.empty else 0
     
-    est_en_riesgo = df_m[df_m[col_n] < 6.0]['Nombre_Completo'].nunique()
+    est_en_riesgo = df[df[col_n] < 6.0]['Nombre_Completo'].nunique()
     porcentaje_riesgo = (est_en_riesgo / total_estudiantes * 100) if total_estudiantes > 0 else 0
     eficiencia_interna = 100 - porcentaje_riesgo
     
@@ -362,7 +364,7 @@ elif menu == "👑 Centro de Mando":
     
     if eficiencia_interna < 80:
         st.warning(f"⚠️ Alerta de Rectoría: El {porcentaje_riesgo:.1f}% de la población estudiantil presenta riesgo de reprobación.")
-
+        
 elif menu == "🛡️ Bitácora y Backup":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
     
