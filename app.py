@@ -647,19 +647,19 @@ elif menu == "✍️ Digitar Notas":
     notas_editadas = st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
 
     with col_btn:
-    # --- 🛡️ ESCUDO DE SEGURIDAD: VERIFICACIÓN DE PERIODO ---
-    try:
-        # Leemos la pestaña de configuración
-        df_conf = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
-        # Filtramos el estado del periodo que el profe tiene seleccionado
-        estado_actual = df_conf[df_conf['Periodo'] == periodo_seleccionado]['Estado'].values[0]
-            
-        if estado_actual == "Cerrado":
-            st.error(f"🚫 PERIODO BLOQUEADO: El {periodo_seleccionado} ha sido cerrado por Rectoría.")
-            st.info("⚠️ No se pueden transmitir datos. Si requiere un cambio, solicite apertura al Administrador.")
-            st.stop() # 🛑 AQUÍ SE DETIENE TODO. El botón de abajo no se ejecutará.
-        except Exception as e:
-            st.warning("⚠️ Nota: No se pudo verificar el bloqueo de periodos. Proceda con precaución.")
+        # --- 🛡️ ESCUDO DE SEGURIDAD: VERIFICACIÓN DE PERIODO ---
+        try:
+            # Leemos la pestaña de configuración
+            df_conf = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
+            # Filtramos el estado del periodo que el profe tiene seleccionado
+            estado_actual = df_conf[df_conf['Periodo'] == periodo_seleccionado]['Estado'].values[0]
+                
+            if estado_actual == "Cerrado":
+                st.error(f"🚫 PERIODO BLOQUEADO: El {periodo_seleccionado} ha sido cerrado por Rectoría.")
+                st.info("⚠️ No se pueden transmitir datos. Si requiere un cambio, solicite apertura al Administrador.")
+                st.stop() # 🛑 AQUÍ SE DETIENE TODO. El botón de abajo no se ejecutará.
+            except Exception as e:
+                st.warning("⚠️ Nota: No se pudo verificar el bloqueo de periodos. Proceda con precaución.")
             
         if st.button("💾 GUARDAR EN EXCEL", type="primary", use_container_width=True):
             cambios = st.session_state.editor_notas.get('edited_rows', {})
