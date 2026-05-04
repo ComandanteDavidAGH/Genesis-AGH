@@ -8,22 +8,28 @@ from streamlit_gsheets import GSheetsConnection
 
 # 📋 MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS IE GÉNESIS 2026
 ASIGNACIONES_DOCENTES = {
+    # --- PRIMARIA (Carga Completa) ---
     "Priscila": {"grados": ["5°"], "materias": "TODAS"},
     "Celeste": {"grados": ["1°"], "materias": "TODAS"},
     "Maria": {"grados": ["2°"], "materias": "TODAS"},
     "Ana": {"grados": ["3°"], "materias": "TODAS"},
     "Juliana": {"grados": ["4°"], "materias": "TODAS"},
+
+    # --- BACHILLERATO (Carga por Especialidad) ---
     "Daniel": {"grados": ["10°", "11°"], "materias": ["Física", "Matemáticas"]},
     "Rafael": {"grados": ["10°", "11°"], "materias": ["Química"]},
     "Ludis": {"grados": ["10°", "11°"], "materias": ["Filosofía", "Ética"]},
     "Arnaldo": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Matemáticas"]},
-    "Docente_Lenguaje_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Lenguaje"]},
-    "Docente_Sociales_VIP": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Sociales"]},
-    "Docente_Ingles_VIP": {"grados": ["1°", "2°", "3°", "4°", "5°", "6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Inglés"]},
-    "Docente_Ciencias_VIP": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Ciencias Naturales"]},
-    "Docente_Especialidades_VIP": {"grados": ["1°", "11°"], "materias": ["Educación Física", "Artística", "Informática", "Religión"]}
+    
+    # Profesores de área para toda la secundaria:
+    "USUARIO_LENGUAJE": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Lenguaje"]},
+    "USUARIO_SOCIALES": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Sociales", "Constitución"]},
+    "USUARIO_INGLES": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Inglés"]},
+    "USUARIO_CIENCIAS": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Ciencias Naturales"]},
+    "USUARIO_ESPECIALIDADES": {"grados": ["1°", "2°", "3°", "4°", "5°", "6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Educación Física", "Artística", "Informática", "Religión"]}
 }
 
+# Lista maestra de materias para Primaria (usada cuando dice "TODAS")
 MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
 
 # --- 1. CONFIGURACIÓN DE NÚCLEO ---
