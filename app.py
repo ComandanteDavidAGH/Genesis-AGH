@@ -664,15 +664,31 @@ elif menu == "✍️ Digitar Notas":
             else:
                 st.warning("⚠️ No hay cambios para guardar.")                
 elif menu == "📚 Logros":
-    col_btn, col_espacio = st.columns([1.5, 8.5])
-    with col_btn:
-        if st.button("💾 GUARDAR", type="primary", use_container_width=True):
-            st.session_state.df_logros = st.session_state.df_l_temp
-            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Logros")
-            try: conn.update(worksheet="DB_LOGROS", data=st.session_state.df_logros); st.success("✅ Logros subidos a Drive")
-            except: st.warning("Guardado local.")
-            st.rerun()
-    st.session_state.df_l_temp = st.data_editor(df_l, use_container_width=True, num_rows="dynamic", height=300, key="editor_logros")
+    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📚 Diccionario Oficial de Logros</h3>", unsafe_allow_html=True)
+    
+    # 👑 RANGO ADMIN: Puede editar y guardar en la bóveda
+    if st.session_state.rol == "Admin":
+        st.info("💡 Modo Edición: Como Comandante, usted tiene autorización para modificar el diccionario oficial.")
+        col_btn, col_espacio = st.columns([2, 8])
+        with col_btn:
+            if st.button("💾 GUARDAR LOGROS", type="primary", use_container_width=True):
+                st.session_state.df_logros = st.session_state.df_l_temp
+                registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Diccionario de Logros")
+                with st.spinner("Subiendo a la Bóveda..."):
+                    try: 
+                        conn.update(worksheet="DB_LOGROS", data=st.session_state.df_logros)
+                        st.success("✅ Logros asegurados en el Satélite")
+                    except: 
+                        st.warning("⚠️ Error de conexión.")
+                st.rerun()
+        # Muestra el editor interactivo para el Admin
+        st.session_state.df_l_temp = st.data_editor(df_l, use_container_width=True, num_rows="dynamic", height=300, key="editor_logros")
+    
+    # 👨‍🏫 RANGO DOCENTE: Solo lectura (Ojos, pero no manos)
+    else:
+        st.info("👁️ Modo Lectura: Como docente, puede consultar los logros institucionales. Solo Rectoría está autorizada para modificarlos.")
+        # Muestra una tabla estática (no editable) para los profesores
+        st.dataframe(df_l, use_container_width=True, height=300, hide_index=True)
 
 elif menu == "📝 Asistencias y Reportes":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Control de Asistencia y Observaciones</h3>", unsafe_allow_html=True)
