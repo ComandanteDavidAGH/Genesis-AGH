@@ -405,49 +405,15 @@ elif menu == "👑 Centro de Mando":
         st.warning(f"⚠️ Alerta de Rectoría: El {porcentaje_riesgo:.1f}% de la población estudiantil presenta riesgo de reprobación.")
 
     # =========================================================
-    # 🔐 INICIO DEL NUEVO BLOQUE: PANEL DE BLOQUEO DE SEGURIDAD
+    # 🔐 PANEL DE BLOQUEO DE SEGURIDAD (ADMIN)
     # =========================================================
     st.markdown("---")
-    st.subheader("🔐 PANEL DE BLOQUEO DE SEGURIDAD")
+    st.subheader("🔐 Gestión de Seguridad de Periodos")
     st.info("Desde aquí puede cerrar los periodos para que ningún docente pueda modificar notas.")
     
     try:
-        # Leer configuración actual
-        df_conf = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
-        
-        periodos_lista = df_conf['Periodo'].tolist()
-        estados_actuales = df_conf['Estado'].tolist()
-        
-        col_a, col_b = st.columns(2)
-        nuevos_estados = []
-        
-        for i, p in enumerate(periodos_lista):
-            with col_a if i < 2 else col_b:
-                # El checkbox sale marcado si el estado es 'Cerrado'
-                bloqueado = st.checkbox(f"Bloquear {p}", value=(estados_actuales[i] == "Cerrado"))
-                nuevos_estados.append("Cerrado" if bloqueado else "Abierto")
-        
-        if st.button("💾 APLICAR BLOQUEO GENERAL"):
-            df_conf['Estado'] = nuevos_estados
-            
-            # ⚠️ ATENCIÓN COMANDANTE: Aquí debe colocar su código exacto 
-            # de guardado hacia Google Drive, asegurándose de que suba 
-            # el dataframe 'df_conf' a la pestaña "Configuracion".
-            
-            st.success("✅ Protocolo de seguridad procesado.")
-            
-    except Exception as e:
-        st.error("⚠️ No se encontró la pestaña 'Configuracion' en el Excel o hay error de conexión.")
-    # =========================================================
-    # 🔐 FIN DEL NUEVO BLOQUE
-    # =========================================================
-    # --- 🔐 PANEL DE BLOQUEO DE SEGURIDAD (ADMIN) ---
-    st.markdown("---")
-    st.subheader("🔐 Gestión de Seguridad de Periodos")
-    
-    try:
-        # Cargar la configuración actual
-        df_config = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
+        # Cargar la configuración actual conectando directamente a la bóveda
+        df_config = conn.read(worksheet="Configuracion", ttl=0)
         
         col_1, col_2 = st.columns(2)
         nuevos_estados = []
@@ -458,21 +424,23 @@ elif menu == "👑 Centro de Mando":
                 bloqueado = st.toggle(f"Cerrar {fila['Periodo']}", value=(fila['Estado'] == "Cerrado"))
                 nuevos_estados.append("Cerrado" if bloqueado else "Abierto")
 
-        if st.button("🔴 APLICAR BLOQUEO / APERTURA GENERAL"):
-            df_config['Estado'] = nuevos_estados
+        if st.button("🔴 APLICAR BLOQUEO / APERTURA GENERAL", type="primary"):
+            with st.spinner("🚀 Transmitiendo órdenes de seguridad al satélite..."):
+                try:
+                    df_config['Estado'] = nuevos_estados
+                    
+                    # --- 🚀 EL MOTOR DE GUARDADO HACIA CONFIGURACIÓN ---
+                    conn.update(worksheet="Configuracion", data=df_config)
+                    
+                    st.success("✅ Protocolo actualizado. Los periodos han sido configurados.")
+                    registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó la seguridad de los periodos")
+                    st.balloons()
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"🚨 FALLA DE CONEXIÓN AL SATÉLITE: {e}")
             
-            # --- 🚀 EL MOTOR DE GUARDADO ---
-            # Comandante: Aquí necesitamos el mismo código que usted usa para guardar 
-            # las notas, pero aplicado a la hoja "Configuracion". 
-            # Busque en su código la parte que sigue después de calcular los promedios
-            # y cópiela aquí abajo para que guarde el 'df_config'.
-            
-            st.success("✅ Protocolo actualizado. Los periodos han sido configurados.")
-            st.balloons()
-            
-    except:
-        st.error("❌ Error: No se encontró la pestaña 'Configuracion' en el archivo maestro.")    
-
+    except Exception as e:
+        st.error(f"❌ Error al leer la pestaña 'Configuracion'. Verifique el Excel. Error: {e}")
     
 elif menu == "🛡️ Bitácora y Backup":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
@@ -647,20 +615,19 @@ elif menu == "✍️ Digitar Notas":
     notas_editadas = st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
 
     with col_btn:
-        with col_btn:
-            # --- 🛡️ ESCUDO DE SEGURIDAD: VERIFICACIÓN DE PERIODO ---
-            try:
-                # Leemos la pestaña de configuración
-                df_conf = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
-                # Filtramos el estado del periodo que el profe tiene seleccionado
-                estado_actual = df_conf[df_conf['Periodo'] == periodo_seleccionado]['Estado'].values[0]
-                
-                if estado_actual == "Cerrado":
-                    st.error(f"🚫 PERIODO BLOQUEADO: El {periodo_seleccionado} ha sido cerrado por Rectoría.")
-                    st.info("⚠️ No se pueden transmitir datos. Si requiere un cambio, solicite apertura al Administrador.")
-                    st.stop() # 🛑 AQUÍ SE DETIENE TODO.
-            except Exception as e:
-                st.warning("⚠️ Nota: No se pudo verificar el bloqueo de periodos. Proceda con precaución.")
+        # --- 🛡️ ESCUDO DE SEGURIDAD: VERIFICACIÓN DE PERIODO ---
+        try:
+            # Leemos la pestaña de configuración usando GSheetsConnection
+            df_conf = conn.read(worksheet="Configuracion", ttl=0)
+            # Filtramos el estado del periodo que el profe tiene seleccionado
+            estado_actual = df_conf[df_conf['Periodo'] == periodo_sel]['Estado'].values[0]
+            
+            if estado_actual == "Cerrado":
+                st.error(f"🚫 PERIODO BLOQUEADO: El {periodo_sel} ha sido cerrado por Rectoría.")
+                st.info("⚠️ No se pueden transmitir datos. Solicite apertura al Administrador.")
+                st.stop() # 🛑 AQUÍ SE DETIENE TODO.
+        except Exception as e:
+            st.warning("⚠️ Nota: No se pudo verificar el bloqueo de periodos. Proceda con precaución.")
             
         if st.button("💾 GUARDAR EN EXCEL", type="primary", use_container_width=True):
             cambios = st.session_state.editor_notas.get('edited_rows', {})
@@ -688,50 +655,16 @@ elif menu == "✍️ Digitar Notas":
                         'Materia': 'ASIGNATURA',
                         'LOGRO': 'LOGROS'
                     })
-
-                                                
-            try:
-                            # 6. Envío final al satélite de Notas
-                            conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_para_drive)
-                            st.success("✅ ¡SATÉLITE SINCRONIZADO! Los cambios ya están en el Excel.")
-                            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
-                            st.balloons()
-                            st.rerun()
-            except Exception as e:
-                st.error(f"🚨 FALLA DE CONEXIÓN: No se pudo escribir en el Excel. Error: {e}")    
-        # Leer configuración actual
-        df_conf = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
-        
-        periodos_lista = df_conf['Periodo'].tolist()
-        estados_actuales = df_conf['Estado'].tolist()
-        
-        col_a, col_b = st.columns(2)
-        nuevos_estados = []
-        
-        for i, p in enumerate(periodos_lista):
-            with col_a if i < 2 else col_b:
-                # El toggle (interruptor) sale activado si el estado es 'Cerrado'
-                bloqueado = st.toggle(f"Bloquear {p}", value=(estados_actuales[i] == "Cerrado"))
-                nuevos_estados.append("Cerrado" if bloqueado else "Abierto")
-        
-        if st.button("💾 APLICAR BLOQUEO GENERAL", type="primary"):
-            with st.spinner("🚀 Transmitiendo órdenes de seguridad al satélite..."):
-                try:
-                    df_conf['Estado'] = nuevos_estados
-                    # --- 🚀 EL MOTOR DE GUARDADO HACIA CONFIGURACIÓN ---
-                    conn.update(worksheet="Configuracion", data=df_conf)
                     
-                    st.success("✅ ¡SATÉLITE SINCRONIZADO! Configuración actualizada.")
-                    registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó periodos")
-                    st.balloons()
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"🚨 FALLA DE CONEXIÓN AL SATÉLITE: {e}")
-            
-    except Exception as e:
-        st.error(f"⚠️ Error de lectura en pestaña 'Configuracion': {e}")
-
-
+                    try:
+                        # 6. Envío final al satélite de Notas
+                        conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_para_drive)
+                        st.success("✅ ¡SATÉLITE SINCRONIZADO! Los cambios ya están en el Excel.")
+                        registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
+                        st.balloons()
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"🚨 FALLA DE CONEXIÓN: No se pudo escribir en el Excel. Error: {e}")
             else:
                 st.warning("⚠️ No has realizado ningún cambio en las notas todavía.")
                 
