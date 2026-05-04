@@ -697,8 +697,8 @@ elif menu == "✍️ Digitar Notas":
                             registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
                             st.balloons()
                             st.rerun()
-                        except Exception as e:
-                            st.error(f"🚨 FALLA DE CONEXIÓN: No se pudo escribir en el Excel. Error: {e}")    
+            except Exception as e:
+                st.error(f"🚨 FALLA DE CONEXIÓN: No se pudo escribir en el Excel. Error: {e}")    
         # Leer configuración actual
         df_conf = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
         
