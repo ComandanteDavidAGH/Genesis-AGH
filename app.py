@@ -690,7 +690,7 @@ elif menu == "✍️ Digitar Notas":
                     })
 
                                                 
-                        try:
+            try:
                             # 6. Envío final al satélite de Notas
                             conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_para_drive)
                             st.success("✅ ¡SATÉLITE SINCRONIZADO! Los cambios ya están en el Excel.")
