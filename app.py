@@ -34,6 +34,17 @@ MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales
 
 # --- 1. CONFIGURACIÓN DE NÚCLEO ---
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
+# --- OCULTAR GATO Y MARCAS DE STREAMLIT ---
+ocultar_elementos = """
+<style>
+/* Oculta gato y botones de arriba */
+[data-testid="stToolbarActions"] { display: none !important; }
+/* Oculta el botón negro de gestionar app abajo a la derecha */
+.viewerBadge_container { display: none !important; }
+</style>
+"""
+st.markdown(ocultar_elementos, unsafe_allow_html=True)
+
 # --- ARTILLERÍA PESADA: DESTRUCCIÓN DE MARCAS DE AGUA Y GATO GITHUB ---
 arsenal_css = """
 <style>
@@ -42,7 +53,7 @@ arsenal_css = """
 div[class^="viewerBadge"] { display: none !important; }
 
 /* 2. Destruye los botones de GitHub y Deploy de la barra superior */
-[data-testid="stToolbarActions"] { display: none !important; visibility: hidden !important; }
+
 
 /* 3. Destruye el footer (pie de página) que dice "Made with Streamlit" */
 footer { display: none !important; visibility: hidden !important; }
