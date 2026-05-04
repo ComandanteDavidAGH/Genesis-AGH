@@ -689,15 +689,16 @@ elif menu == "✍️ Digitar Notas":
                         'LOGRO': 'LOGROS'
                     })
 
-                    try:
-    # =========================================================
-    # 🔐 INICIO DEL NUEVO BLOQUE: PANEL DE BLOQUEO DE SEGURIDAD
-    # =========================================================
-    st.markdown("---")
-    st.subheader("🔐 PANEL DE BLOQUEO DE SEGURIDAD")
-    st.info("Desde aquí puede cerrar los periodos para que ningún docente pueda modificar notas.")
-    
-    try:
+                                                
+                        try:
+                            # 6. Envío final al satélite de Notas
+                            conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_para_drive)
+                            st.success("✅ ¡SATÉLITE SINCRONIZADO! Los cambios ya están en el Excel.")
+                            registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
+                            st.balloons()
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"🚨 FALLA DE CONEXIÓN: No se pudo escribir en el Excel. Error: {e}")    
         # Leer configuración actual
         df_conf = pd.read_excel(URL_EXCEL, sheet_name="Configuracion")
         
