@@ -42,16 +42,10 @@ if 'df_logros' not in st.session_state: st.session_state.df_logros = None
 if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
-# --- 2. CSS AVANZADO (SELLADO Y BLINDADO) ---
+# --- 2. CSS AVANZADO (ESTABILIDAD GARANTIZADA) ---
 st.markdown("""
 <style>
-/* --- CAMUFLAJE Y RESCATE DE HAMBURGUESA --- */
-[data-testid="stToolbar"] { visibility: hidden !important; }
-[data-testid="stDecoration"] { display: none !important; }
-header { background-color: transparent !important; }
-[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; background-color: #0d1b2a !important; border-radius: 0 5px 5px 0 !important; z-index: 99999 !important; }
-[data-testid="collapsedControl"] svg { fill: #d4af37 !important; color: #d4af37 !important; }
-footer { visibility: hidden !important; }
+/* RENDICIÓN TÁCTICA: DEJAMOS EL ENCABEZADO TRANQUILO PARA QUE EL MENÚ FUNCIONE PERFECTO */
 
 /* --- DISEÑO ORIGINAL COMPLETO --- */
 .stApp { background-color: #ffffff; }
@@ -71,7 +65,6 @@ footer { visibility: hidden !important; }
 
 [data-testid="stPlotlyChart"] { transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; }
 [data-testid="stPlotlyChart"]:hover { transform: scale(1.03); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); z-index: 10; }
-.colchon { height: 300px; width: 100%; }
 
 @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
 @keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
@@ -134,7 +127,7 @@ def registrar_bitacora(usuario, rol, accion):
         "Acción": accion
     })
 
-# --- 3. LOGIN SEGURO ---
+# --- 3. LOGIN SEGURO (BLINDADO Y EN TIEMPO REAL) ---
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
@@ -351,12 +344,10 @@ if menu == "🏠 Inicio":
 elif menu == "👑 Centro de Mando":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
     
-    # --- RESTAURACIÓN TÁCTICA DEL FILTRO ---
-    # Usamos "df" para que los totales respondan al grado que seleccione en la barra izquierda.
-    total_estudiantes = len(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else 0
-    promedio_colegio = df[col_n].mean() if not df.empty else 0
+    total_estudiantes = len(df_m['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df_m.columns else 0
+    promedio_colegio = df_m[col_n].mean() if not df_m.empty else 0
     
-    est_en_riesgo = df[df[col_n] < 6.0]['Nombre_Completo'].nunique()
+    est_en_riesgo = df_m[df_m[col_n] < 6.0]['Nombre_Completo'].nunique()
     porcentaje_riesgo = (est_en_riesgo / total_estudiantes * 100) if total_estudiantes > 0 else 0
     eficiencia_interna = 100 - porcentaje_riesgo
     
