@@ -122,6 +122,14 @@ div[data-baseweb="calendar"] div[aria-selected="true"] { background-color: #d4af
 [data-testid="stExpanderDetails"] { background-color: #ffffff !important; }
 [data-testid="stExpanderDetails"] * { color: #000000 !important; }
 </style>
+/* 🎯 FRANCOTIRADOR: ELIMINAR EL GATO DE GITHUB Y BOTÓN DE DEPLOY, SALVANDO LA HAMBURGUESA */
+[data-testid="stToolbarActions"] {
+    display: none !important;
+}
+.viewerBadge_container {
+    display: none !important;
+}
+
 """, unsafe_allow_html=True)
 
 def registrar_bitacora(usuario, rol, accion):
