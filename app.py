@@ -718,22 +718,18 @@ elif menu == "✍️ Digitar Notas":
             with st.spinner("🚀 Transmitiendo órdenes de seguridad al satélite..."):
                 try:
                     df_conf['Estado'] = nuevos_estados
-                    
                     # --- 🚀 EL MOTOR DE GUARDADO HACIA CONFIGURACIÓN ---
                     conn.update(worksheet="Configuracion", data=df_conf)
                     
-                    st.success("✅ ¡SATÉLITE SINCRONIZADO! Los periodos han sido bloqueados/abiertos correctamente.")
-                    registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó la seguridad de los periodos")
+                    st.success("✅ ¡SATÉLITE SINCRONIZADO! Configuración actualizada.")
+                    registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó periodos")
                     st.balloons()
                     st.rerun()
                 except Exception as e:
-                    st.error(f"🚨 FALLA DE CONEXIÓN AL SATÉLITE: No se pudo actualizar la configuración. Error: {e}")
+                    st.error(f"🚨 FALLA DE CONEXIÓN AL SATÉLITE: {e}")
             
     except Exception as e:
-        st.error(f"⚠️ No se encontró la pestaña 'Configuracion' en el Excel o hay error de lectura. Error: {e}")
-    # =========================================================
-    # 🔐 FIN DEL NUEVO BLOQUE
-    # =========================================================
+        st.error(f"⚠️ Error de lectura en pestaña 'Configuracion': {e}")
 
 
             else:
