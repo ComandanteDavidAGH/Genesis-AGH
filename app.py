@@ -236,9 +236,11 @@ with st.sidebar:
     else:
         if usuario_activo in ASIGNACIONES_DOCENTES:
             if ASIGNACIONES_DOCENTES[usuario_activo]["materias"] == "TODAS":
-                materias_permitidas = MATERIAS_PRIMARIA
+                # SOLUCIÓN: Agregamos "TODAS" al inicio de la lista de Primaria
+                materias_permitidas = ["TODAS"] + MATERIAS_PRIMARIA
             else:
-                materias_permitidas = ASIGNACIONES_DOCENTES[usuario_activo]["materias"]
+                # SOLUCIÓN: También le damos la opción "TODAS" a los de Bachillerato
+                materias_permitidas = ["TODAS"] + ASIGNACIONES_DOCENTES[usuario_activo]["materias"]
         else:
             materias_permitidas = ["Sin asignación"]
 
