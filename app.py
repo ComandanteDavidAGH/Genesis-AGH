@@ -526,53 +526,11 @@ elif menu == "🚦 Semáforo Académico":
         st.dataframe(criticos[['Nombre_Completo', 'Grado', col_n]].rename(columns={col_n: 'PROMEDIO'}).style.format({'PROMEDIO': '{:.1f}'}), use_container_width=True, hide_index=True)
 
 elif menu == "✍️ Digitar Notas":
-    col_btn, col_espacio = st.columns([1.5, 8.5])
-    with col_btn:
-        if st.button("💾 GUARDAR CAMBIOS", type="primary", use_container_width=True):
-            # 1. Capturamos los cambios del editor
-            df_editado = st.session_state.editor_notas.get('edited_rows', {})
-            
-            if df_editado:
-                with st.spinner("🚀 Transmitiendo datos al satélite..."):
-                    # 2. Aplicamos los cambios a la base maestra usando el índice real
-                    for indice, cambios in df_editado.items():
-                        for columna, valor in cambios.items():
-                            st.session_state.df_maestro.at[indice, columna] = valor
-                    
-                    # 3. Recalculamos promedios y desempeños para las filas tocadas
-                    st.session_state.df_maestro['P1'] = pd.to_numeric(st.session_state.df_maestro['P1'], errors='coerce').fillna(0)
-                    st.session_state.df_maestro['P2'] = pd.to_numeric(st.session_state.df_maestro['P2'], errors='coerce').fillna(0)
-                    st.session_state.df_maestro['P3'] = pd.to_numeric(st.session_state.df_maestro['P3'], errors='coerce').fillna(0)
-                    st.session_state.df_maestro['P4'] = pd.to_numeric(st.session_state.df_maestro['P4'], errors='coerce').fillna(0)
-                    st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
-
-                    # 4. TRADUCCIÓN PARA EXCEL: Volvemos a los nombres originales de las columnas
-                    df_final_drive = st.session_state.df_maestro.copy()
-                    
-                    # Quitamos 'Grado' porque esa columna vive en la otra pestaña
-                    if 'Grado' in df_final_drive.columns:
-                        df_final_drive = df_final_drive.drop(columns=['Grado'])
-                    
-                    # Renombramos para que coincida EXACTO con el Excel
-                    df_final_drive = df_final_drive.rename(columns={
-                        'Nombre_Completo': 'NOMBRE_COMPLETO',
-                        'Materia': 'ASIGNATURA',
-                        'LOGRO': 'LOGROS'
-                    })
-
-                    try:
-                        # 5. Envío masivo blindado
-                        conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_final_drive)
-                        registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Sincronización exitosa con Drive")
-                        st.success("✅ ¡SATÉLITE ACTUALIZADO! Los cambios ya están en el Excel.")
-                        st.balloons() # Pequeña celebración visual de éxito
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"🚨 Error de conexión: {e}")
-            else:
-                st.info("ℹ️ No se detectaron cambios para guardar.")
-
-    # Configuración de la tabla de edición
+    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>✍️ Registro de Calificaciones</h3>", unsafe_allow_html=True)
+    
+    col_btn, col_espacio = st.columns([2, 8])
+    
+    # 1. Configuración visual del editor
     config_notas = { 
         'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1),
         'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1),
@@ -582,9 +540,51 @@ elif menu == "✍️ Digitar Notas":
         'Materia': st.column_config.TextColumn("Asignatura", disabled=True),
         'PROMEDIO': st.column_config.NumberColumn("Definitiva", disabled=True)
     }
-    
-    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas, hide_index=False)
-    
+
+    # 2. Mostramos el editor (Capturamos los cambios en tiempo real)
+    # Usamos 'df' que ya está filtrado por el grado/materia que usted eligió
+    notas_editadas = st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
+
+    with col_btn:
+        if st.button("💾 GUARDAR EN EXCEL", type="primary", use_container_width=True):
+            cambios = st.session_state.editor_notas.get('edited_rows', {})
+            
+            if cambios:
+                with st.spinner("🚀 Transmitiendo datos a la Bóveda de Google Drive..."):
+                    # 3. Aplicamos los cambios a la base maestra usando mapeo de índices reales
+                    for fila_posicional, valores_nuevos in cambios.items():
+                        # MAGIA TÁCTICA: Obtenemos el ID real de la fila en la base maestra (df_maestro)
+                        idx_real = df.index[int(fila_posicional)]
+                        
+                        for columna, valor in valores_nuevos.items():
+                            st.session_state.df_maestro.at[idx_real, columna] = valor
+                    
+                    # 4. Recalculamos promedios de las filas modificadas
+                    st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
+
+                    # 5. TRADUCCIÓN PARA EXCEL: Ajustamos nombres para que coincidan con las columnas del Drive
+                    df_para_drive = st.session_state.df_maestro.copy()
+                    if 'Grado' in df_para_drive.columns: 
+                        df_para_drive = df_para_drive.drop(columns=['Grado'])
+                    
+                    df_para_drive = df_para_drive.rename(columns={
+                        'Nombre_Completo': 'NOMBRE_COMPLETO',
+                        'Materia': 'ASIGNATURA',
+                        'LOGRO': 'LOGROS'
+                    })
+
+                    try:
+                        # 6. Envío final al satélite
+                        conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_para_drive)
+                        st.success("✅ ¡SATÉLITE SINCRONIZADO! Los cambios ya están en el Excel.")
+                        registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas en Drive")
+                        st.balloons()
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"🚨 FALLA DE CONEXIÓN: No se pudo escribir. ¿El Excel está compartido como EDITOR con la cuenta de servicio? Error: {e}")
+            else:
+                st.warning("⚠️ No has realizado ningún cambio en las notas todavía.")
+                
 elif menu == "📚 Logros":
     col_btn, col_espacio = st.columns([1.5, 8.5])
     with col_btn:
