@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import io
 import streamlit.components.v1 as components
 from streamlit_gsheets import GSheetsConnection
+from xhtml2pdf import pisa
 
 # 📋 MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS IE GÉNESIS 2026
 ASIGNACIONES_DOCENTES = {
@@ -160,6 +161,14 @@ def registrar_bitacora(usuario, rol, accion):
         "Rol": rol,
         "Acción": accion
     })
+
+def generar_pdf(html_contenido):
+    """Convierte el código HTML en un archivo PDF descargable"""
+    result = io.BytesIO()
+    pdf = pisa.pisaDocument(io.BytesIO(html_contenido.encode("UTF-8")), result)
+    if not pdf.err:
+        return result.getvalue()
+    return None
 
 # --- 3. LOGIN SEGURO (BLINDADO Y EN TIEMPO REAL) ---
 if not st.session_state.logueado:
@@ -884,6 +893,17 @@ elif menu == "📜 Boletines":
                     <div class='firma-box'>Firma Director de Grupo</div>
                 </div>
             </div></body></html>"""
+
+            pdf_data = generar_pdf(html_boletin)
+            if pdf_data:
+                st.download_button(
+                    label="📥 DESCARGAR BOLETÍN EN PDF",
+                    data=pdf_data,
+                    file_name=f"Boletin_{alumno}_{periodo_sel}.pdf",
+                    mime="application/pdf",
+                    type="primary",
+                    use_container_width=True
+                )
             
             components.html(html_boletin, height=600, scrolling=True)
             
