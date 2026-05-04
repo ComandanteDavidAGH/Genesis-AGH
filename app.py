@@ -376,6 +376,7 @@ elif menu == "👑 Centro de Mando":
 elif menu == "🛡️ Bitácora y Backup":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
     
+    # ⚡ OPERACIÓN VELOCIDAD: Optimizamos la creación del Excel
     def guardar_como_tabla(df_export, writer_obj, sheet_name):
         if df_export is None or df_export.empty: return
         df_export.columns = df_export.columns.astype(str) 
@@ -389,11 +390,10 @@ elif menu == "🛡️ Bitácora y Backup":
             'style': 'Table Style Medium 4' 
         })
         
-        for i, col in enumerate(df_export.columns):
-            max_len_datos = df_export[col].astype(str).str.len().max()
-            max_len_datos = int(max_len_datos) if pd.notna(max_len_datos) else 0
-            col_len = max(max_len_datos, len(str(col))) + 2
-            worksheet.set_column(i, i, min(col_len, 45)) 
+        # 🛡️ BLINDAJE DE VELOCIDAD: Asignamos un ancho fijo (25) en vez de hacer que 
+        # el sistema lea miles de celdas para calcular el ancho exacto.
+        for i in range(max_col):
+            worksheet.set_column(i, i, 25) 
 
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -427,7 +427,7 @@ elif menu == "🛡️ Bitácora y Backup":
     
     st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Registro Histórico de Usuarios</h4>", unsafe_allow_html=True)
     if st.session_state.bitacora: st.dataframe(pd.DataFrame(st.session_state.bitacora).iloc[::-1].reset_index(drop=True), use_container_width=True)
-
+    
 elif menu == "📊 Inteligencia Académica":
     config_espanol = {'locale': 'es', 'displaylogo': False}
     c1, c2 = st.columns(2)
