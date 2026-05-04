@@ -521,19 +521,30 @@ elif menu == "✍️ Digitar Notas":
     col_btn, col_espacio = st.columns([1.5, 8.5])
     with col_btn:
         if st.button("💾 GUARDAR", type="primary", use_container_width=True):
-            for c in ['P1', 'P2', 'P3', 'P4']: st.session_state.df_temp_n[c] = pd.to_numeric(st.session_state.df_temp_n[c], errors='coerce').fillna(0).round(1)
-            st.session_state.df_temp_n['PROMEDIO'] = st.session_state.df_temp_n[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
-            st.session_state.df_temp_n['DESEMPEÑO'] = st.session_state.df_temp_n['PROMEDIO'].apply(lambda x: 'BAJO' if x<6 else ('BÁSICO' if x<7.6 else ('ALTO' if x<9.1 else 'SUPERIOR')))
-            st.session_state.df_maestro = st.session_state.df_temp_n
+            # 1. Aseguramos que lo digitado sean números
+            for c in ['P1', 'P2', 'P3', 'P4']: 
+                st.session_state.df_temp_n[c] = pd.to_numeric(st.session_state.df_temp_n[c], errors='coerce').fillna(0).round(1)
+            
+            # 2. 🛡️ BLINDAJE: Solo "actualizamos" a los alumnos filtrados dentro de la gran base maestra (sin borrar a nadie)
+            st.session_state.df_maestro.update(st.session_state.df_temp_n)
+            
+            # 3. Recalculamos promedios generales
+            st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
+            
             registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Notas")
+            
             try:
-                df_to_save = st.session_state.df_temp_n.copy()
+                # 4. 🛡️ BLINDAJE: Enviamos la base de datos COMPLETA al Excel, no solo el pedacito filtrado
+                df_to_save = st.session_state.df_maestro.copy()
                 if 'Grado' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['Grado'])
                 if 'ID_Estudiante' in df_to_save.columns: df_to_save = df_to_save.drop(columns=['ID_Estudiante'])
+                
                 conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_to_save)
-                st.success("✅ Guardado en Drive")
-            except: st.warning("Guardado local")
+                st.success("✅ Guardado en Drive exitoso. Tropa intacta.")
+            except: 
+                st.warning("Guardado local")
             st.rerun()
+            
     config_notas = { 'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1), 'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1), 'P3': st.column_config.NumberColumn("P3", min_value=1.0, max_value=10.0, step=0.1), 'P4': st.column_config.NumberColumn("P4", min_value=1.0, max_value=10.0, step=0.1) }
     st.session_state.df_temp_n = st.data_editor(df, use_container_width=True, num_rows="dynamic", height=300, key="editor_notas", column_config=config_notas)
 
