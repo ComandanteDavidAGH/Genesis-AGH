@@ -596,10 +596,22 @@ elif menu == "🚦 Semáforo Académico":
 
 elif menu == "✍️ Digitar Notas":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>✍️ Registro de Calificaciones</h3>", unsafe_allow_html=True)
-    
-    col_btn, col_espacio = st.columns([2, 8])
-    
-    # 1. Configuración visual del editor
+
+    # --- 🛡️ ESCUDO DE SEGURIDAD (AHORA AL INICIO PARA BLOQUEO TOTAL) ---
+    try:
+        # Leemos la pestaña de configuración
+        df_conf_shield = conn.read(worksheet="Configuracion", ttl=0)
+        # Verificamos el estado del periodo seleccionado en el sidebar (P1, P2, etc.)
+        estado_periodo = df_conf_shield[df_conf_shield['Periodo'] == periodo_sel]['Estado'].values[0]
+        
+        if estado_periodo == "Cerrado":
+            st.error(f"🚫 ACCESO DENEGADO: El {periodo_sel} ha sido CERRADO por la administración.")
+            st.info("⚠️ No se permiten modificaciones en este periodo. Contacte a Rectoría para apertura.")
+            st.stop() # 🛑 AQUÍ SE DETIENE TODO. El profesor no verá ni la tabla ni el botón.
+    except Exception as e:
+        st.warning("⚠️ Nota: No se pudo verificar el blindaje de seguridad. Proceda con precaución.")
+
+    # --- 1. CONFIGURACIÓN VISUAL DEL EDITOR ---
     config_notas = { 
         'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1),
         'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1),
@@ -610,42 +622,26 @@ elif menu == "✍️ Digitar Notas":
         'PROMEDIO': st.column_config.NumberColumn("Definitiva", disabled=True)
     }
 
-    # 2. Mostramos el editor (Capturamos los cambios en tiempo real)
-    # Usamos 'df' que ya está filtrado por el grado/materia que usted eligió
+    # 2. Mostramos el editor
     notas_editadas = st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
 
+    col_btn, col_espacio = st.columns([2, 8])
     with col_btn:
-        # --- 🛡️ ESCUDO DE SEGURIDAD: VERIFICACIÓN DE PERIODO ---
-        try:
-            # Leemos la pestaña de configuración usando GSheetsConnection
-            df_conf = conn.read(worksheet="Configuracion", ttl=0)
-            # Filtramos el estado del periodo que el profe tiene seleccionado
-            estado_actual = df_conf[df_conf['Periodo'] == periodo_sel]['Estado'].values[0]
-            
-            if estado_actual == "Cerrado":
-                st.error(f"🚫 PERIODO BLOQUEADO: El {periodo_sel} ha sido cerrado por Rectoría.")
-                st.info("⚠️ No se pueden transmitir datos. Solicite apertura al Administrador.")
-                st.stop() # 🛑 AQUÍ SE DETIENE TODO.
-        except Exception as e:
-            st.warning("⚠️ Nota: No se pudo verificar el bloqueo de periodos. Proceda con precaución.")
-            
         if st.button("💾 GUARDAR EN EXCEL", type="primary", use_container_width=True):
             cambios = st.session_state.editor_notas.get('edited_rows', {})
             
             if cambios:
                 with st.spinner("🚀 Transmitiendo datos a la Bóveda de Google Drive..."):
-                    # 3. Aplicamos los cambios a la base maestra usando mapeo de índices reales
+                    # 3. Aplicamos los cambios a la base maestra
                     for fila_posicional, valores_nuevos in cambios.items():
-                        # MAGIA TÁCTICA: Obtenemos el ID real de la fila en la base maestra (df_maestro)
                         idx_real = df.index[int(fila_posicional)]
-                        
                         for columna, valor in valores_nuevos.items():
                             st.session_state.df_maestro.at[idx_real, columna] = valor
                     
-                    # 4. Recalculamos promedios de las filas modificadas
+                    # 4. Recalculamos promedios
                     st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
 
-                    # 5. TRADUCCIÓN PARA EXCEL: Ajustamos nombres para que coincidan con las columnas del Drive
+                    # 5. TRADUCCIÓN PARA EXCEL
                     df_para_drive = st.session_state.df_maestro.copy()
                     if 'Grado' in df_para_drive.columns: 
                         df_para_drive = df_para_drive.drop(columns=['Grado'])
@@ -659,15 +655,14 @@ elif menu == "✍️ Digitar Notas":
                     try:
                         # 6. Envío final al satélite de Notas
                         conn.update(worksheet="NOTAS_CONSOLIDADAS", data=df_para_drive)
-                        st.success("✅ ¡SATÉLITE SINCRONIZADO! Los cambios ya están en el Excel.")
+                        st.success("✅ ¡SATÉLITE SINCRONIZADO!")
                         registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
                         st.balloons()
                         st.rerun()
                     except Exception as e:
-                        st.error(f"🚨 FALLA DE CONEXIÓN: No se pudo escribir en el Excel. Error: {e}")
+                        st.error(f"🚨 FALLA DE CONEXIÓN: {e}")
             else:
-                st.warning("⚠️ No has realizado ningún cambio en las notas todavía.")
-                
+                st.warning("⚠️ No hay cambios para guardar.")                
 elif menu == "📚 Logros":
     col_btn, col_espacio = st.columns([1.5, 8.5])
     with col_btn:
