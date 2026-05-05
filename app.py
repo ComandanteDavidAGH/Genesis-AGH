@@ -631,9 +631,7 @@ elif menu == "✍️ Digitar Notas":
         'PROMEDIO': st.column_config.NumberColumn("Definitiva", disabled=True)
     }
 
-    # 2. Mostramos el editor
-    notas_editadas = st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
-
+    # 👉 EL BOTÓN AHORA VA ARRIBA
     col_btn, col_espacio = st.columns([2, 8])
     with col_btn:
         if st.button("💾 GUARDAR EN EXCEL", type="primary", use_container_width=True):
@@ -671,7 +669,11 @@ elif menu == "✍️ Digitar Notas":
                     except Exception as e:
                         st.error(f"🚨 FALLA DE CONEXIÓN: {e}")
             else:
-                st.warning("⚠️ No hay cambios para guardar.")                
+                st.warning("⚠️ No hay cambios para guardar.")
+
+    # 👉 LA TABLA AHORA SE DIBUJA ABAJO DEL BOTÓN
+    notas_editadas = st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
+                
 elif menu == "📚 Logros":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📚 Diccionario Oficial de Logros</h3>", unsafe_allow_html=True)
     
@@ -896,14 +898,17 @@ elif menu == "📜 Boletines":
 
             pdf_data = generar_pdf(html_boletin)
             if pdf_data:
-                st.download_button(
-                    label="📥 DESCARGAR BOLETÍN EN PDF",
-                    data=pdf_data,
-                    file_name=f"Boletin_{alumno}_{periodo_sel}.pdf",
-                    mime="application/pdf",
-                    type="primary",
-                    use_container_width=True
-                )
+                # 👉 Ajuste táctico: Columnas para empujar el botón a la derecha y hacerlo pequeño (20% del ancho)
+                col_espacio_vacio, col_boton_pequeno = st.columns([8, 2])
+                with col_boton_pequeno:
+                    st.download_button(
+                        label="📥 DESCARGAR PDF",
+                        data=pdf_data,
+                        file_name=f"Boletin_{alumno}_{periodo_sel}.pdf",
+                        mime="application/pdf",
+                        type="primary",
+                        use_container_width=True
+                    )
             
             components.html(html_boletin, height=600, scrolling=True)
             
