@@ -1067,7 +1067,7 @@ elif menu == "📸 Eventos Institucionales":
 # --- PIE DE PÁGINA LEGAL (Habeas Data) ---
 st.markdown(f"""
     <div class='footer-legal'>
-        Academia Global Horizonte - Sistema Génesis AGH © {datetime.now().year}<br>
+        INSTITUCIÓN EDUCATIVA GÉNESIS JORSUG 2026 - Sistema Génesis AGH © {datetime.now().year}<br>
         Protección de Datos Personales: En cumplimiento de la Ley 1581 de 2012, 
         el tratamiento de la información aquí registrada es de carácter estrictamente institucional y confidencial.
     </div>
