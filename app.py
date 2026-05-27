@@ -297,6 +297,7 @@ with st.sidebar:
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>INSTITUCIÓN EDUCATIVA GÉNESIS JORSUG 2026</h1></div>", unsafe_allow_html=True)
 
 if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
+elif menu == "🕒 Horarios y Asignaciones": msg_bot = "Radar de cuadrícula temporal activo. Cero colisiones."
 elif menu == "👑 Centro de Mando": msg_bot = "Visión satelital activada. Datos exclusivos de Rectoría."
 elif menu == "🛡️ Bitácora y Backup": msg_bot = "Descargue aquí el Excel con el historial de trabajo."
 elif menu == "📊 Inteligencia Académica": msg_bot = "Análisis de pelotón en español activo."
@@ -307,7 +308,8 @@ elif menu == "📚 Logros": msg_bot = "Diccionario protegido."
 elif menu == "📝 Asistencias y Reportes": msg_bot = "Registre fallas y observaciones disciplinarias."
 elif menu == "📜 Boletines": msg_bot = "Generador de impresión VIP activo."
 elif menu in ["📖 Manual de Usuario", "📸 Eventos Institucionales"]: msg_bot = "Módulos de información listos."
-
+else: msg_bot = "Módulo en línea y operando." # Este 'else' es un seguro de vida por si agregamos más menús en el futuro.
+    
 st.markdown(f"""
 <div class="asistente-box">
    <img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png" width="30" style="margin-right:15px;">
