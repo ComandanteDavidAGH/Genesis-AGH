@@ -522,7 +522,8 @@ elif menu == "🕒 Horarios y Asignaciones":
         st.warning("⚠️ La base de horarios está vacía. Ingrese los datos en Google Sheets.")
         st.stop()
         
-    # Limpiar textos de espacios invisibles que puedan arruinar los filtros
+    # 🛡️ ESCUDO 1: Rellenar vacíos y forzar a texto puro desde la raíz
+    df_horarios = df_horarios.fillna("")
     for col in df_horarios.columns:
         df_horarios[col] = df_horarios[col].astype(str).str.strip()
         
@@ -532,12 +533,13 @@ elif menu == "🕒 Horarios y Asignaciones":
         tipo_vista = st.radio("Seleccione el Modo de Radar:", ["🧑‍🏫 Vista por Docente", "🎓 Vista por Grado"], horizontal=True)
         
         if tipo_vista == "🧑‍🏫 Vista por Docente":
-            docentes_lista = sorted(df_horarios[df_horarios['DOCENTE'] != 'N/A']['DOCENTE'].unique())
+            # 🛡️ ESCUDO 2: Filtrar basura antes de ordenar
+            docentes_lista = sorted([str(d) for d in df_horarios['DOCENTE'].unique() if str(d).upper() not in ['N/A', 'NAN', '']])
             objetivo = st.selectbox("🔍 Seleccione el Docente a Inspeccionar:", docentes_lista)
             df_filtro = df_horarios[df_horarios['DOCENTE'] == objetivo].copy()
             df_filtro['CELDA'] = df_filtro['MATERIA'] + "<br><span style='color:#666; font-size:12px;'>(" + df_filtro['GRADO'] + ")</span>"
         else:
-            grados_lista = sorted(df_horarios[df_horarios['GRADO'] != 'N/A']['GRADO'].unique())
+            grados_lista = sorted([str(g) for g in df_horarios['GRADO'].unique() if str(g).upper() not in ['N/A', 'NAN', '']])
             objetivo = st.selectbox("🔍 Seleccione el Grado a Inspeccionar:", grados_lista)
             df_filtro = df_horarios[df_horarios['GRADO'] == objetivo].copy()
             df_filtro['CELDA'] = df_filtro['MATERIA'] + "<br><span style='color:#0d1b2a; font-size:11px;'>[" + df_filtro['DOCENTE'] + "]</span>"
@@ -551,18 +553,23 @@ elif menu == "🕒 Horarios y Asignaciones":
             st.stop()
             
     # --- 2. EL MOTOR DE PIVOTEO (CONSTRUCCIÓN DE LA TABLA) ---
-    # Forzamos el orden de los días
     dias_orden = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
-    df_filtro['DÍA'] = pd.Categorical(df_filtro['DÍA'], categories=dias_orden, ordered=True)
+    # Normalizamos el texto de los días para que coincida exacto (Lunes, no LUNES ni lunes)
+    df_filtro['DÍA'] = pd.Categorical(df_filtro['DÍA'].str.capitalize(), categories=dias_orden, ordered=True)
     
-    # Creamos la matriz (Días arriba, Bloques a la izquierda)
-    matriz = df_filtro.pivot_table(index='BLOQUE_HORARIO', columns='DÍA', values='CELDA', aggfunc=lambda x: '<hr style="margin:5px 0;">'.join(x)).fillna("")
+    # 🛡️ ESCUDO 3: En el agrupador, obligamos a convertir a texto antes de unir (.astype(str))
+    matriz = df_filtro.pivot_table(
+        index='BLOQUE_HORARIO', 
+        columns='DÍA', 
+        values='CELDA', 
+        aggfunc=lambda x: '<hr style="margin:5px 0;">'.join(x.astype(str))
+    ).fillna("")
     
     # Truco Samurái: Ordenar cronológicamente usando la hora que está entre paréntesis "(07:00"
     import re
     def extraer_hora(bloque_str):
-        match = re.search(r'\((\d{2}:\d{2})', bloque_str)
-        return match.group(1) if match else bloque_str
+        match = re.search(r'\((\d{2}:\d{2})', str(bloque_str))
+        return match.group(1) if match else str(bloque_str)
         
     matriz['sort_key'] = matriz.index.map(extraer_hora)
     matriz = matriz.sort_values('sort_key').drop(columns=['sort_key'])
