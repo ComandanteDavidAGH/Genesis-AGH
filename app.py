@@ -505,7 +505,7 @@ elif menu == "🛡️ Bitácora y Backup":
     
     st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Registro Histórico de Usuarios</h4>", unsafe_allow_html=True)
     if st.session_state.bitacora: st.dataframe(pd.DataFrame(st.session_state.bitacora).iloc[::-1].reset_index(drop=True), use_container_width=True)
-    elif menu == "🕒 Horarios y Asignaciones":
+elif menu == "🕒 Horarios y Asignaciones":
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>🕒 Matriz de Horarios Oficiales</h3>", unsafe_allow_html=True)
     
     with st.spinner("📡 Sincronizando reloj satelital con DB_HORARIOS..."):
