@@ -97,8 +97,8 @@ st.markdown("""
 
 .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
 
-[data-testid="stPlotlyChart"] { transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; }
-[data-testid="stPlotlyChart"]:hover { box-shadow: 0 10px 25px rgba(212, 175, 55, 0.8); z-index: 10; }
+[data-testid="stPlotlyChart"] { transition: all 0.3s ease-out; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; will-change: transform; }
+[data-testid="stPlotlyChart"]:hover { transform: translateY(-6px) scale(1.015); box-shadow: 0 15px 30px rgba(212, 175, 55, 0.6); z-index: 10; }
 
 @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
 @keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
