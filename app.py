@@ -98,7 +98,7 @@ st.markdown("""
 .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
 
 [data-testid="stPlotlyChart"] { transition: transform 0.3s ease, box-shadow 0.3s ease; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; }
-[data-testid="stPlotlyChart"]:hover { transform: scale(1.03); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4); z-index: 10; }
+[data-testid="stPlotlyChart"]:hover { box-shadow: 0 10px 25px rgba(212, 175, 55, 0.8); z-index: 10; }
 
 @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
 @keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
@@ -631,8 +631,25 @@ elif menu == "🕒 Horarios y Asignaciones":
         conteo.columns = ['Docente', 'Horas Asignadas']
         
         fig_carga = px.bar(conteo, x='Horas Asignadas', y='Docente', orientation='h', text='Horas Asignadas', color='Horas Asignadas', color_continuous_scale='Blues')
-        fig_carga.update_layout(plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Total Horas a la Semana", yaxis_title="", margin=dict(l=0, r=0, t=0, b=0), height=300)
-        fig_carga.update_traces(textfont_size=14, textangle=0, textposition="outside", cliponaxis=False)
+        
+        # 🎯 BLINDAJE VISUAL: Forzamos toda la letra a color NEGRO y fuente imponente
+        fig_carga.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)', 
+            xaxis_title="Total Horas a la Semana", 
+            yaxis_title="", 
+            margin=dict(l=0, r=0, t=0, b=0), 
+            height=300,
+            font=dict(color="black", family="Arial Black")
+        )
+        fig_carga.update_traces(
+            textfont=dict(color="black", size=14, family="Arial Black"), 
+            textangle=0, 
+            textposition="outside", 
+            cliponaxis=False
+        )
+        fig_carga.update_yaxes(tickfont=dict(color="black", family="Arial Black"))
+        fig_carga.update_xaxes(tickfont=dict(color="black", family="Arial Black"), title_font=dict(color="black", family="Arial Black"))
+        
         st.plotly_chart(fig_carga, use_container_width=True)
     
 elif menu == "📊 Inteligencia Académica":
