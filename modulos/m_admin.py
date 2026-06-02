@@ -105,7 +105,7 @@ def render_backup(conn_sql):
                     for p_origen, t_destino in tablas_mapeo:
                         if p_origen in pestanas:
                             df_origen = pd.read_excel(xls, p_origen)
-                            df_origen.to_sql(t_destino, motor_sql, if_exists='replace', index=False)
+                            df_origen.to_sql(t_destino, motor_sql, if_exists='replace', index=False, chunksize=500, method='multi')
                             st.success(f"✅ Tabla [{t_destino}] estructurada e inyectada.")
                     
                     df_conf_init = pd.DataFrame([{"Periodo": "P1", "Estado": "Abierto"}, {"Periodo": "P2", "Estado": "Abierto"}, {"Periodo": "P3", "Estado": "Abierto"}, {"Periodo": "P4", "Estado": "Abierto"}])
