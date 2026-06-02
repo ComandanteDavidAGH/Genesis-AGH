@@ -163,33 +163,28 @@ if not st.session_state.logueado:
                         else:
                             st.error("🚨 Acceso Denegado: Llave maestra incorrecta.")
                             st.stop()
-                            
-                    -------------------------------------
-# 🔐 CONTROL DE ACCESO BLINDADO (CON ADMIN DE EMERGENCIA)
-# ---------------------------------------------------------
-try:
-    df_usuarios = conn.query("SELECT * FROM data_usuarios;")
-    # Si la tabla existe pero está vacía, inyectamos el admin de respaldo
-    if df_usuarios.empty:
-        df_usuarios = pd.DataFrame([{
-            "USUARIO": "Admin", 
-            "PASSWORD": "Genesis2026_Admin*", 
-            "ESTADO": "Activo", 
-            "ROL": "Admin", 
-            "Nombre_Completo": "Administrador de Emergencia"
-        }])
-except Exception:
-    # Si la tabla aún no existe en SQL, creamos el admin temporal en memoria
-    df_usuarios = pd.DataFrame([{
-        "USUARIO": "Admin", 
-        "PASSWORD": "Genesis2026_Admin*", 
-        "ESTADO": "Activo", 
-        "ROL": "Admin", 
-        "Nombre_Completo": "Administrador de Emergencia"
-    }])
+                    
+                    # 🔐 CONTROL DE ACCESO BLINDADO (CON ADMIN DE EMERGENCIA)
+                    try:
+                        df_usuarios = conn.query("SELECT * FROM data_usuarios;")
+                        if df_usuarios.empty:
+                            df_usuarios = pd.DataFrame([{
+                                "USUARIO": "Admin", 
+                                "PASSWORD": "Genesis2026_Admin*", 
+                                "ESTADO": "Activo", 
+                                "ROL": "Admin", 
+                                "Nombre_Completo": "Administrador de Emergencia"
+                            }])
+                    except Exception:
+                        df_usuarios = pd.DataFrame([{
+                            "USUARIO": "Admin", 
+                            "PASSWORD": "Genesis2026_Admin*", 
+                            "ESTADO": "Activo", 
+                            "ROL": "Admin", 
+                            "Nombre_Completo": "Administrador de Emergencia"
+                        }])
 
-# Procesar el acceso con la tabla obtenida
-acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
+                    acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
                     
                     if not acceso.empty:
                         estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
@@ -218,16 +213,21 @@ acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] ==
 if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
     with st.spinner("📡 Descargando notas de la base satelital..."):
         try:
-    df_notas = conn.query("SELECT * FROM notas_consolidadas;", ttl=600)
-except Exception:
-    df_notas = pd.DataFrame(columns=["NOMBRE_COMPLETO", "ASIGNATURA", "P1", "P2", "P3", "P4", "LOGROS"])
+            df_notas = conn.query("SELECT * FROM notas_consolidadas;", ttl=600)
+        except Exception:
+            df_notas = pd.DataFrame(columns=["NOMBRE_COMPLETO", "ASIGNATURA", "P1", "P2", "P3", "P4", "LOGROS"])
+        
         df_notas = df_notas.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo', 'ASIGNATURA': 'Materia', 'LOGROS': 'LOGRO'})
         
-        df_estud = conn.read(worksheet='DATA_ESTUDIANTES', ttl=600)
+        try:
+            df_estud = conn.read(worksheet='DATA_ESTUDIANTES', ttl=600)
+        except Exception:
+            df_estud = pd.DataFrame(columns=['Nombre_Completo', 'Grado'])
+            
         if 'Nombre_Completo' not in df_estud.columns and 'NOMBRE_COMPLETO' in df_estud.columns:
             df_estud = df_estud.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo'})
             
-        df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates()
+        df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates() if not df_estud.empty else pd.DataFrame(columns=['Nombre_Completo', 'Grado'])
         st.session_state.df_maestro = pd.merge(df_notas, df_grados, on='Nombre_Completo', how='left')
         
 # ---------------------------------------------------------
@@ -238,7 +238,6 @@ if 'df_logros' not in st.session_state or st.session_state.df_logros is None or 
         try:
             st.session_state.df_logros = conn.query("SELECT * FROM db_logros;")
         except Exception:
-            # Si falla, creamos la estructura vacía para evitar que la app muera
             st.session_state.df_logros = pd.DataFrame(columns=["NIVEL", "MATERIA", "DESEMPEÑO", "LOGRO_TEXTO"])
             
 if 'df_asistencia' not in st.session_state or st.session_state.df_asistencia is None or st.session_state.df_asistencia.empty:
