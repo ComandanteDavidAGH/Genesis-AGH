@@ -37,7 +37,6 @@ def render_mando(df, periodo_sel, conn_sql):
     
     st.markdown("---")
     st.subheader("🔐 Gestión de Seguridad de Periodos")
-    st.info("Desde aquí puede cerrar los periodos para que ningún docente pueda modificar notas.")
     
     if 'df_config_seguridad' not in st.session_state or st.session_state.df_config_seguridad is None:
         try:
@@ -93,26 +92,39 @@ def render_backup(conn_sql):
                     xls = pd.ExcelFile(archivo_excel)
                     pestanas = xls.sheet_names
                     
+                    # Buscador flexible de nombres por si hay variaciones de mayúsculas o S
                     tablas_mapeo = [
-                        ('DATA_USUARIOS', 'data_usuarios'), 
-                        ('NOTAS_CONSOLIDADAS', 'notas_consolidadas'), 
-                        ('DB_LOGROS', 'db_logros'), 
-                        ('DB_ASISTENCIA', 'db_asistencia'), 
-                        ('DB_HORARIOS', 'db_horarios'), 
-                        ('DATA_ESTUDIANTES', 'data_estudiantes')
+                        (['DATA_USUARIOS', 'Data_Usuarios', 'data_usuarios'], 'data_usuarios'), 
+                        (['NOTAS_CONSOLIDADAS', 'NOTAS_CONSOLIDADA', 'Notas_Consolidadas'], 'notas_consolidadas'), 
+                        (['DB_LOGROS', 'Db_Logros', 'db_logros'], 'db_logros'), 
+                        (['DB_ASISTENCIA', 'Db_Asistencia', 'db_asistencia'], 'db_asistencia'), 
+                        (['DB_HORARIOS', 'Db_Horarios', 'db_horarios', 'Horarios'], 'db_horarios'), 
+                        (['DATA_ESTUDIANTES', 'Data_Estudiantes', 'data_estudiantes'], 'data_estudiantes')
                     ]
                     
-                    for p_origen, t_destino in tablas_mapeo:
-                        if p_origen in pestanas:
-                            df_origen = pd.read_excel(xls, p_origen)
-                            df_origen.to_sql(t_destino, motor_sql, if_exists='replace', index=False, chunksize=500, method='multi')
-                            st.success(f"✅ Tabla [{t_destino}] estructurada e inyectada.")
+                    for listas_nombres, t_destino in tablas_mapeo:
+                        p_encontrada = None
+                        for nombre_posible in listas_nombres:
+                            if nombre_posible in pestanas:
+                                p_encontrada = nombre_posible
+                                break
+                        
+                        if p_encontrada:
+                            try:
+                                df_origen = pd.read_excel(xls, p_encontrada)
+                                # ⚡ MOTOR TURBO MULTI-BLOQUE ACTIVADO ⚡
+                                df_origen.to_sql(t_destino, motor_sql, if_exists='replace', index=False, chunksize=500, method='multi')
+                                st.success(f"✅ Tabla [{t_destino}] estructurada e inyectada desde pestaña '{p_encontrada}'.")
+                            except Exception as e_tabla:
+                                st.error(f"❌ Error en pestaña '{p_encontrada}': {e_tabla}")
+                        else:
+                            st.warning(f"⚠️ No se encontró ninguna pestaña equivalente para la tabla [{t_destino}].")
                     
                     df_conf_init = pd.DataFrame([{"Periodo": "P1", "Estado": "Abierto"}, {"Periodo": "P2", "Estado": "Abierto"}, {"Periodo": "P3", "Estado": "Abierto"}, {"Periodo": "P4", "Estado": "Abierto"}])
                     df_conf_init.to_sql('configuracion', motor_sql, if_exists='replace', index=False)
                     
-                    st.success("🚀 ¡MIGRACIÓN COMPLETADA DE FORMA IMPECABLE! Cierre sesión e ingrese normalmente.")
+                    st.success("🚀 ¡MIGRACIÓN COMPLETADA DE FORMA IMPECABLE! Todos los módulos están sincronizados.")
                     st.balloons()
                 except Exception as e:
-                    st.error(f"🚨 ERROR EN LA INYECCIÓN SQL: {e}")
+                    st.error(f"🚨 ERROR GENERAL EN LA INYECCIÓN SQL: {e}")
     st.markdown("</div>", unsafe_allow_html=True)
