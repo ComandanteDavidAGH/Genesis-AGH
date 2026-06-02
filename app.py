@@ -294,7 +294,7 @@ with st.sidebar:
         st.rerun()
 
 # --- 5. ENCABEZADO FIJO ---
-st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>INSTITUCIÓN EDUCATIVA GÉNESIS JORSUG 2026</h1></div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h1></div>", unsafe_allow_html=True)
 
 if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
 elif menu == "🕒 Horarios y Asignaciones": msg_bot = "Radar de cuadrícula temporal activo. Cero colisiones."
@@ -374,7 +374,7 @@ if menu == "🏠 Inicio":
     c1, c2, c3 = st.columns([1, 8, 1])
     with c2:
         st.markdown("""<div style="background:rgba(255,255,255,0.95); padding:15px; border-radius:10px; border-left:6px solid #0d1b2a; box-shadow:0 4px 10px rgba(0,0,0,0.05); color:#000; margin-bottom:15px; border:2px solid #000;">
-            <h3 style="margin-top:0; color:#000000; font-family: 'Arial Black', sans-serif;">¡Bienvenido a la INSTITUCIÓN EDUCATIVA GÉNESIS JORSUG 2026!</h3>
+            <h3 style="margin-top:0; color:#000000; font-family: 'Arial Black', sans-serif;">¡Bienvenido a la PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026!</h3>
             <p style="font-size:1rem; color:#000; font-family: 'Arial Black', sans-serif; font-weight:bold;"><i>"Seguridad, Control y Excelencia Educativa."</i></p>
             </div>""", unsafe_allow_html=True)
         col_mision, col_vision = st.columns(2)
@@ -1213,7 +1213,7 @@ elif menu == "📸 Eventos Institucionales":
 # --- PIE DE PÁGINA LEGAL (Habeas Data) ---
 st.markdown(f"""
     <div class='footer-legal'>
-        INSTITUCIÓN EDUCATIVA GÉNESIS JORSUG 2026 - Sistema Génesis AGH © {datetime.now().year}<br>
+        PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 - Sistema Génesis AGH © {datetime.now().year}<br>
         Protección de Datos Personales: En cumplimiento de la Ley 1581 de 2012, 
         el tratamiento de la información aquí registrada es de carácter estrictamente institucional y confidencial.
     </div>
