@@ -16,9 +16,13 @@ def registrar_bitacora(usuario, rol, accion):
 def renderizar(df, periodo_sel, conn):
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>✍️ Registro de Calificaciones</h3>", unsafe_allow_html=True)
 
-    # --- 🛡️ ESCUDO DE SEGURIDAD ---
+    # --- 🛡️ ESCUDO DE SEGURIDAD ULTRARRÁPIDO ---
     try:
-        df_conf_shield = conn.read(worksheet="Configuracion", ttl=0)
+        # 🚀 MEJORA DE VELOCIDAD: Carga el escudo desde la RAM
+        if 'df_config_seguridad' not in st.session_state:
+            st.session_state.df_config_seguridad = conn.read(worksheet="Configuracion", ttl=600)
+            
+        df_conf_shield = st.session_state.df_config_seguridad
         estado_periodo = df_conf_shield[df_conf_shield['Periodo'] == periodo_sel]['Estado'].values[0]
         
         if estado_periodo == "Cerrado":
