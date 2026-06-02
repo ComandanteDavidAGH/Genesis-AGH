@@ -1,8 +1,7 @@
 streamlit
 pandas
 plotly
-st-gsheets-connection
-XlsxWriter
+xlsxwriter
 xhtml2pdf
 SQLAlchemy==2.0.25
 psycopg2-binary==2.9.9
