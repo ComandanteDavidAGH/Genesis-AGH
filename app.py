@@ -52,7 +52,7 @@ MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales
 # ---------------------------------------------------------
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
 
-# --- ARTILLERÍA PESADA CSS (RESTAURADA AL 100%) ---
+# --- ARTILLERÍA PESADA CSS (CORREGIDA PARA BOTONES Y TABLAS) ---
 st.markdown("""
 <style>
 /* Ocultar elementos nativos de Streamlit */
@@ -70,9 +70,32 @@ footer { display: none !important; visibility: hidden !important; }
 }
 .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
 
-/* Panel Lateral */
+/* 🛡️ PANEL LATERAL CORREGIDO */
 [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
-[data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: white !important; font-weight: bold; }
+
+/* 🛡️ PROTEGER SELECTBOX Y BOTONES DEL SIDEBAR (BOTÓN SALIR) */
+[data-testid="stSidebar"] div[data-baseweb="select"] * { color: #000000 !important; text-shadow: none !important; }
+[data-testid="stSidebar"] button { background-color: #ffffff !important; border: 2px solid #d4af37 !important; border-radius: 8px !important; transition: 0.3s; }
+[data-testid="stSidebar"] button * { color: #cc0000 !important; font-weight: bold !important; text-shadow: none !important; } /* Letra roja para salir */
+[data-testid="stSidebar"] button:hover { background-color: #cc0000 !important; border: 2px solid #ffffff !important; }
+[data-testid="stSidebar"] button:hover * { color: #ffffff !important; }
+
+/* 🎨 COLORES DE BOTONES PRINCIPALES (GUARDAR, INICIAR) */
+button[kind="primary"] { background-color: #0d1b2a !important; border: 2px solid #d4af37 !important; border-radius: 8px !important; transition: 0.3s; }
+button[kind="primary"] * { color: #ffffff !important; font-weight: bold !important; }
+button[kind="primary"]:hover { background-color: #d4af37 !important; border-color: #0d1b2a !important; box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; }
+button[kind="primary"]:hover * { color: #0d1b2a !important; }
+
+/* 🎨 COLORES DE BOTONES SECUNDARIOS */
+button[kind="secondary"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; border-radius: 8px !important; transition: 0.3s; }
+button[kind="secondary"] * { color: #0d1b2a !important; font-weight: bold !important; }
+button[kind="secondary"]:hover { background-color: #0d1b2a !important; border-color: #d4af37 !important; }
+button[kind="secondary"]:hover * { color: #d4af37 !important; }
+
+/* 📊 TABLAS Y CELDAS DE DATOS MÁS MARCADAS */
+[data-testid="stDataFrame"] { border: 3px solid #0d1b2a !important; border-radius: 8px !important; padding: 2px; background-color: #ffffff; box-shadow: 4px 4px 10px rgba(0,0,0,0.1); }
+[data-testid="stTable"] { border: 2px solid #0d1b2a !important; border-radius: 8px !important; }
 
 /* Título y Asistente */
 .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
@@ -250,7 +273,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.markdown("---")
     
-    # 🎯 CONFIGURACIÓN DEL MENÚ BLINDADA
     opciones_menu = [
         "🏠 Inicio", 
         "🕒 Horarios y Asignaciones", 
@@ -269,7 +291,6 @@ with st.sidebar:
         opciones_menu.insert(1, "🛡️ Bitácora y Backup")
         opciones_menu.insert(1, "👑 Centro de Mando")
         
-    # 🎯 SEGURIDAD: Solo se remueven los boletines si el usuario NO es Admin
     if st.session_state.rol != "Admin" and "📜 Boletines" in opciones_menu:
         opciones_menu.remove("📜 Boletines")
         
@@ -308,7 +329,7 @@ with st.sidebar:
     materia_sel = st.selectbox("📚 MATERIA:", materias_permitidas)
     periodo_sel = st.selectbox("🎯 PERIODO:", ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"])
     
-    if st.button("🔴 Salir"): 
+    if st.button("🔴 CERRAR SESIÓN"): 
         registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🚪 Salida")
         st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = False, "", ""
         st.rerun()
@@ -320,11 +341,10 @@ if materia_sel != "TODAS" and materia_sel != "Sin asignación" and 'Materia' in 
 df_filtrado = df_temp.copy()
 
 # ---------------------------------------------------------
-# 🚀 7. ENRUTADOR Y ENCABEZADO (RESTURADOS)
+# 🚀 7. ENRUTADOR Y ENCABEZADO
 # ---------------------------------------------------------
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h1></div>", unsafe_allow_html=True)
 
-# --- 🤖 CAJA DE ASISTENTE VIRTUAL ---
 if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
 elif menu == "🕒 Horarios y Asignaciones": msg_bot = "Radar de cuadrícula temporal activo. Cero colisiones."
 elif menu == "👑 Centro de Mando": msg_bot = "Visión satelital activada. Datos exclusivos de Rectoría."
@@ -349,7 +369,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- ENRUTADOR HACIA HANGARES ---
 try:
     if menu == "🏠 Inicio": m0.renderizar()
     elif menu == "👑 Centro de Mando": m_admin.render_mando(df_filtrado, periodo_sel, conn)
