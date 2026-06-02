@@ -33,16 +33,11 @@ def render_mando(df, periodo_sel, conn):
         color_e = "#00994c" if eficiencia_interna > 85 else "#cc8800"
         st.markdown(f"<div class='metric-card' style='border-top-color:{color_e}'><p class='metric-label'>Índice de Eficiencia</p><p class='metric-value' style='color:{color_e}'>{eficiencia_interna:.1f}%</p></div>", unsafe_allow_html=True)
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    if eficiencia_interna < 80:
-        st.warning(f"⚠️ Alerta de Rectoría: El {porcentaje_riesgo:.1f}% de la población estudiantil presenta riesgo de reprobación.")
-
     st.markdown("---")
     st.subheader("🔐 Gestión de Seguridad de Periodos")
     st.info("Desde aquí puede cerrar los periodos para que ningún docente pueda modificar notas.")
     
     try:
-        # 🚀 MEJORA DE VELOCIDAD: Se lee desde la RAM ultrarrápida
         if 'df_config_seguridad' not in st.session_state:
             st.session_state.df_config_seguridad = conn.read(worksheet="Configuracion", ttl=600)
         
@@ -56,23 +51,20 @@ def render_mando(df, periodo_sel, conn):
                 bloqueado = st.toggle(f"Cerrar {fila['Periodo']}", value=(fila['Estado'] == "Cerrado"))
                 nuevos_estados.append("Cerrado" if bloqueado else "Abierto")
 
-        if st.button("🔴 APLICAR BLOQUEO / APERTURA GENERAL", type="primary"):
+        if st.button("🔴 APLICAR BLOQUEO GENERAL", type="primary"):
             with st.spinner("🚀 Transmitiendo órdenes de seguridad al satélite..."):
                 try:
                     df_config['Estado'] = nuevos_estados
                     conn.update(worksheet="Configuracion", data=df_config)
-                    # Forzamos la actualización de la RAM instantáneamente
                     st.session_state.df_config_seguridad = df_config
                     st.cache_data.clear()
-                    
                     st.success("✅ Protocolo actualizado. Los periodos han sido configurados.")
-                    registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó la seguridad de los periodos")
-                    st.balloons()
+                    registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó la seguridad de periodos")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"🚨 FALLA DE CONEXIÓN AL SATÉLITE: {e}")
+                    st.error(f"🚨 FALLA DE CONEXIÓN: {e}")
     except Exception as e:
-        st.error(f"❌ Error al leer la pestaña 'Configuracion'. Verifique el Excel. Error: {e}")
+        st.error(f"❌ Error al leer la configuración. {e}")
 
 def render_backup(conn):
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
@@ -95,28 +87,67 @@ def render_backup(conn):
         if st.session_state.bitacora: 
             guardar_como_tabla(pd.DataFrame(st.session_state.bitacora), writer, 'BITACORA')
     
-    st.info("Comandante, aquí puede descargar todo el trabajo. Es su copia de seguridad física.")
-    st.download_button(label="📥 DESCARGAR BASE DE DATOS ACTUALIZADA (EXCEL)", data=buffer.getvalue(), file_name=f"Backup_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d_%H%M')}.xlsx", mime="application/vnd.ms-excel", type="primary", use_container_width=True)
+    st.download_button(label="📥 DESCARGAR BACKUP EXCEL", data=buffer.getvalue(), file_name=f"Backup_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d_%H%M')}.xlsx", mime="application/vnd.ms-excel", type="primary", use_container_width=True)
+    
+    # ---------------------------------------------------------
+    # 🚀 MOTOR DE TELETRANSPORTACIÓN A SQL SUPABASE
+    # ---------------------------------------------------------
     st.markdown("---")
+    st.markdown("<div style='background-color:#ffe6e6; border:3px solid #cc0000; padding:15px; border-radius:10px;'>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#cc0000; text-align:center; font-family:Arial Black; margin-top:0;'>⚠️ OPERACIÓN MIGRA-SQL</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:black; font-weight:bold; text-align:center;'>Este botón copiará TODOS los datos de su Google Sheets actual hacia la nueva base de datos PostgreSQL en Supabase. Oprímalo UNA SOLA VEZ.</p>", unsafe_allow_html=True)
+    
+    if st.button("⚡ INICIAR TELETRANSPORTACIÓN DE DATOS ⚡", use_container_width=True):
+        with st.spinner("Estableciendo enlace satelital con Supabase... (Por favor no cierre esta ventana)"):
+            try:
+                from sqlalchemy import create_engine
+                
+                # 1. Conectar al motor SQL usando las llaves ocultas
+                cadena_sql = st.secrets["connections"]["postgresql"]["url"]
+                motor_sql = create_engine(cadena_sql)
+                
+                # 2. Descargar todos los Excel al mismo tiempo
+                st.info("Descargando información de Google Sheets...")
+                df_usu = conn.read(worksheet="DATA_USUARIOS", ttl=0)
+                df_not = conn.read(worksheet="NOTAS_CONSOLIDADAS", ttl=0)
+                df_log = conn.read(worksheet="DB_LOGROS", ttl=0)
+                
+                try: df_asi = conn.read(worksheet="DB_ASISTENCIA", ttl=0)
+                except: df_asi = pd.DataFrame()
+                
+                try: df_hor = conn.read(worksheet="DB_HORARIOS", ttl=0)
+                except: df_hor = pd.DataFrame()
 
-    st.markdown("<h4 style='color:#000; font-family:Arial Black;'>🇨🇴 Módulo de Exportación SIMAT (MEN)</h4>", unsafe_allow_html=True)
-    st.write("Genera la plantilla estructurada con los estudiantes activos para reportar al Ministerio de Educación Nacional.")
-    
-    df_m = st.session_state.df_maestro
-    if df_m is not None and not df_m.empty and 'Nombre_Completo' in df_m.columns:
-        columnas_simat = [c for c in ['ID_Est', 'Nombre_Completo', 'Grado'] if c in df_m.columns]
-        df_simat = df_m[columnas_simat].drop_duplicates().copy()
-        df_simat['ESTADO_MATRICULA'] = "MATRICULADO"
-        df_simat['FECHA_REPORTE'] = datetime.now(zona_colombia).strftime("%Y-%m-%d")
-        
-        buffer_simat = io.BytesIO()
-        with pd.ExcelWriter(buffer_simat, engine='xlsxwriter') as writer:
-            guardar_como_tabla(df_simat, writer, 'REPORTE_SIMAT')
-            
-        st.download_button(label="📄 DESCARGAR PLANTILLA SIMAT OFICIAL", data=buffer_simat.getvalue(), file_name=f"SIMAT_AGH_{datetime.now(zona_colombia).strftime('%Y%m%d')}.xlsx", mime="application/vnd.ms-excel", use_container_width=True)
-    else:
-        st.warning("No hay datos de estudiantes para generar el SIMAT.")
-    
-    st.markdown("---")
-    st.markdown("<h4 style='color:#000; font-family:Arial Black;'>Registro Histórico de Usuarios</h4>", unsafe_allow_html=True)
-    if st.session_state.bitacora: st.dataframe(pd.DataFrame(st.session_state.bitacora).iloc[::-1].reset_index(drop=True), use_container_width=True)
+                # Limpieza rápida para alinear con SQL
+                df_not.columns = ["NOMBRE_COMPLETO", "ASIGNATURA", "P1", "P2", "P3", "P4", "LOGROS"]
+                df_not = df_not.fillna(0.0)
+                
+                df_log.columns = ["NIVEL", "MATERIA", "DESEMPEÑO", "LOGRO_TEXTO"]
+                df_usu = df_usu[["USUARIO", "PASSWORD", "ESTADO", "ROL", "Nombre_Completo"]]
+
+                if not df_hor.empty: df_hor.columns = ["DOCENTE", "DÍA", "BLOQUE_HORARIO", "MATERIA", "GRADO"]
+
+                # 3. Disparar a SQL
+                st.info("Inyectando Usuarios...")
+                df_usu.to_sql('data_usuarios', motor_sql, if_exists='append', index=False)
+                
+                st.info("Inyectando Notas...")
+                df_not.to_sql('notas_consolidadas', motor_sql, if_exists='append', index=False)
+                
+                st.info("Inyectando Logros...")
+                df_log.to_sql('db_logros', motor_sql, if_exists='append', index=False)
+                
+                if not df_asi.empty:
+                    st.info("Inyectando Asistencia...")
+                    df_asi.to_sql('db_asistencia', motor_sql, if_exists='append', index=False)
+                    
+                if not df_hor.empty:
+                    st.info("Inyectando Horarios...")
+                    df_hor.to_sql('db_horarios', motor_sql, if_exists='append', index=False)
+
+                st.success("✅ ¡MIGRACIÓN EXITOSA! TODOS LOS DATOS ESTÁN AHORA EN SUPABASE.")
+                st.balloons()
+                
+            except Exception as e:
+                st.error(f"🚨 ERROR EN LA TELETRANSPORTACIÓN: {e}")
+    st.markdown("</div>", unsafe_allow_html=True)
