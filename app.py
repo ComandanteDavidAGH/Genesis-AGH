@@ -78,12 +78,9 @@ def registrar_bitacora(usuario, rol, accion):
     })
 
 # ---------------------------------------------------------
-# 🔐 3. ENLACE DE CONEXIONES HÍBRIDAS (DOBLE PUENTE)
+# 🔐 3. ENLACE EXCLUSIVO AL NÚCLEO SQL SUPABASE
 # ---------------------------------------------------------
 conn_sql = st.connection("postgresql", type="sql")
-
-from streamlit_gsheets import GSheetsConnection
-conn_sheets = st.connection("gsheets", type=GSheetsConnection)
 
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -100,13 +97,12 @@ if not st.session_state.logueado:
         if st.button("🚀 INGRESAR", use_container_width=True):
             with st.spinner("Validando en Bóveda Satelital..."):
                 try:
-                    # Intento de lectura desde SQL, si falla, jala de Google Drive
                     try:
                         df_usuarios = conn_sql.query("SELECT * FROM data_usuarios;")
                     except Exception:
-                        df_usuarios = conn_sheets.read(worksheet="DATA_USUARIOS", ttl=600)
+                        df_usuarios = pd.DataFrame()
                     
-                    if df_usuarios.empty:
+                    if df_usuarios is None or df_usuarios.empty:
                         df_usuarios = pd.DataFrame([{"USUARIO": "Admin", "PASSWORD": "Genesis2026_Admin*", "ESTADO": "Activo", "ROL": "Admin", "Nombre_Completo": "Administrador de Emergencia"}])
 
                     acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
@@ -128,7 +124,7 @@ if not st.session_state.logueado:
     st.stop() 
 
 # ---------------------------------------------------------
-# Satélite: Extracción Inteligente de Datos
+# Satélite: Descarga Segura desde SQL
 # ---------------------------------------------------------
 if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
     with st.spinner("📡 Descargando notas de la base satelital..."):
@@ -139,26 +135,17 @@ if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None o
             df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates() if not df_estud.empty else pd.DataFrame(columns=['Nombre_Completo', 'Grado'])
             st.session_state.df_maestro = pd.merge(df_notas, df_grados, on='Nombre_Completo', how='left')
         except Exception:
-            try:
-                df_notas = conn_sheets.read(worksheet='NOTAS_CONSOLIDADAS', ttl=600)
-                df_notas = df_notas.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo', 'ASIGNATURA': 'Materia', 'LOGROS': 'LOGRO'})
-                df_estud = conn_sheets.read(worksheet='DATA_ESTUDIANTES', ttl=600)
-                df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates() if not df_estud.empty else pd.DataFrame(columns=['Nombre_Completo', 'Grado'])
-                st.session_state.df_maestro = pd.merge(df_notas, df_grados, on='Nombre_Completo', how='left')
-            except Exception:
-                st.session_state.df_maestro = pd.DataFrame(columns=["Nombre_Completo", "Materia", "P1", "P2", "P3", "P4", "LOGRO", "Grado"])
+            st.session_state.df_maestro = pd.DataFrame(columns=["Nombre_Completo", "Materia", "P1", "P2", "P3", "P4", "LOGRO", "Grado"])
 
 if 'df_logros' not in st.session_state or st.session_state.df_logros is None or st.session_state.df_logros.empty:
     try: st.session_state.df_logros = conn_sql.query("SELECT * FROM db_logros;")
     except Exception:
-        try: st.session_state.df_logros = conn_sheets.read(worksheet="DB_LOGROS", ttl=600)
-        except Exception: st.session_state.df_logros = pd.DataFrame(columns=["NIVEL", "MATERIA", "DESEMPEÑO", "LOGRO_TEXTO"])
+        st.session_state.df_logros = pd.DataFrame(columns=["NIVEL", "MATERIA", "DESEMPEÑO", "LOGRO_TEXTO"])
             
 if 'df_asistencia' not in st.session_state or st.session_state.df_asistencia is None or st.session_state.df_asistencia.empty:
     try: st.session_state.df_asistencia = conn_sql.query("SELECT * FROM db_asistencia;")
     except Exception:
-        try: st.session_state.df_asistencia = conn_sheets.read(worksheet='DB_ASISTENCIA', ttl=600)
-        except Exception: st.session_state.df_asistencia = pd.DataFrame(columns=['Nombre_Completo', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
+        st.session_state.df_asistencia = pd.DataFrame(columns=['Nombre_Completo', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
 
 df_m = st.session_state.df_maestro
 if df_m is not None and not df_m.empty:
@@ -213,7 +200,7 @@ st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>PLATAFORMA EST
 try:
     if menu == "🏠 Inicio": import modulos.m0_inicio as m0; m0.renderizar()
     elif menu == "👑 Centro de Mando": import modulos.m_admin as m_admin; m_admin.render_mando(df_filtrado, periodo_sel, conn_sql)
-    elif menu == "🛡️ Bitácora y Backup": import modulos.m_admin as m_admin; m_admin.render_backup(conn_sheets, conn_sql)
+    elif menu == "🛡️ Bitácora y Backup": import modulos.m_admin as m_admin; m_admin.render_backup(conn_sql)
     elif menu == "🕒 Horarios y Asignaciones": import modulos.m1_horarios as m1; m1.renderizar(conn_sql)
     elif menu == "📊 Inteligencia Académica": import modulos.m2_inteligencia as m2; m2.renderizar(df_filtrado, periodo_sel)
     elif menu == "📈 Dashboard Estudiantil": import modulos.m3_dashboard as m3; m3.renderizar(df_filtrado, periodo_sel, conn_sql)
