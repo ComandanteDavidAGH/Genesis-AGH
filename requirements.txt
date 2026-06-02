@@ -5,3 +5,4 @@ xlsxwriter
 xhtml2pdf
 SQLAlchemy
 pg8000
+st-gsheets-connection
