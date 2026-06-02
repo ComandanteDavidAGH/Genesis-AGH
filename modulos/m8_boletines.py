@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 import base64
+import streamlit.components.v1 as components
 from xhtml2pdf import pisa
 
 # 🚀 CACHÉ PARA LOGO (Solo para el PDF)
@@ -39,8 +40,11 @@ def renderizar(df, curso_sel, periodo_sel):
     URL_LOGO_PDF = get_logo_base64()
     URL_LOGO_PREVIEW = "https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png"
 
-    # CSS SEGURO PARA PANTALLA (Renderizado ultrarrápido)
-    css_preview = """<style> .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; background: white; color: black; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); font-family: Arial, sans-serif; overflow: hidden; } .watermark-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: 0; pointer-events: none; } .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; } .table-custom th { background-color: #0d1b2a !important; color: #d4af37 !important; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; } .table-custom td { border: 1px solid #000; padding: 8px; text-align: center; color: black; } .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; } .header-table td { border: none; } .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 14px; z-index: 2; position: relative; } .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; } </style>"""
+    # CSS SEGURO PARA PANTALLA (Renderizado ultrarrápido en IFrame)
+    css_preview = """<style> body { background: white; color: black; font-family: Arial, sans-serif; } .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; background: white; color: black; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; } .watermark-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: 0; pointer-events: none; } .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; } .table-custom th { background-color: #0d1b2a !important; color: #d4af37 !important; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; } .table-custom td { border: 1px solid #000; padding: 8px; text-align: center; color: black; } .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; } .header-table td { border: none; } .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 14px; z-index: 2; position: relative; } .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; } </style>"""
+
+    # CSS PARA PDF
+    css_para_pdf = css_preview.replace(".b-print {", ".b-print { border:none; box-shadow:none; padding:0;").replace("position: relative;", "")
 
     # 🚀 DICCIONARIO O(1) PARA VELOCIDAD EXTREMA EN LOS LOGROS
     dict_logros = {}
@@ -123,16 +127,15 @@ def renderizar(df, curso_sel, periodo_sel):
             
             html_cuerpo += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>"""
 
-            # 🎯 DIBUJO INSTANTÁNEO EN LA PANTALLA (Reemplaza la etiqueta con URL web ligera)
-            html_pantalla = html_cuerpo.replace("__LOGO_URL__", URL_LOGO_PREVIEW)
-            st.markdown(css_preview + html_pantalla, unsafe_allow_html=True)
+            # 🎯 DIBUJO INSTANTÁNEO EN LA PANTALLA MEDIANTE COMPONENTS.HTML
+            html_pantalla = f"<html><head>{css_preview}</head><body>{html_cuerpo.replace('__LOGO_URL__', URL_LOGO_PREVIEW)}</body></html>"
+            components.html(html_pantalla, height=600, scrolling=True)
             
-            # 🎯 GENERADOR DE PDF (Reemplaza la etiqueta con el código Base64 pesado)
+            # 🎯 GENERADOR DE PDF
             with st.expander("📥 Generar Archivo PDF Descargable"):
                 if st.button("Generar archivo .pdf (Toma unos segundos)"):
                     with st.spinner("Compilando Documento PDF Oficial..."):
                         html_para_pdf = html_cuerpo.replace("__LOGO_URL__", URL_LOGO_PDF)
-                        css_para_pdf = css_preview.replace(".b-print {", ".b-print { border:none; box-shadow:none; padding:0;").replace("position: relative;", "")
                         html_completo_pdf = f"<html><head><style>@page {{ size: legal portrait; margin: 10mm; }} {css_para_pdf.replace('<style>','').replace('</style>','')}</style></head><body style='background:white;'>{html_para_pdf}</body></html>"
                         
                         pdf_data = generar_pdf(html_completo_pdf)
@@ -198,8 +201,10 @@ def renderizar(df, curso_sel, periodo_sel):
                         
                     html_masivo += f"</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>{salto}"
                     
+                html_pantalla_masiva = f"<html><head>{css_preview}</head><body>{html_masivo.replace('__LOGO_URL__', URL_LOGO_PREVIEW)}</body></html>"
+                components.html(html_pantalla_masiva, height=600, scrolling=True)
+
                 html_para_pdf = html_masivo.replace("__LOGO_URL__", URL_LOGO_PDF)
-                css_para_pdf = css_preview.replace(".b-print {", ".b-print { border:none; box-shadow:none; padding:0;").replace("position: relative;", "")
                 html_pdf = f"<html><head><style>@page {{ size: legal portrait; margin: 10mm; }} {css_para_pdf.replace('<style>','').replace('</style>','')}</style></head><body style='background:white;'>{html_para_pdf}</body></html>"
                 
                 pdf_data = generar_pdf(html_pdf)
