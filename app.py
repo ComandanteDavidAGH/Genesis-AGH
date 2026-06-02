@@ -164,7 +164,7 @@ if not st.session_state.logueado:
                             st.error("🚨 Acceso Denegado: Llave maestra incorrecta.")
                             st.stop()
                             
-                    df_usuarios = conn.read(worksheet='DATA_USUARIOS', ttl=0) 
+                    df_usuarios = conn.query("SELECT * FROM data_usuarios;") 
                     acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
                     
                     if not acceso.empty:
@@ -193,7 +193,7 @@ if not st.session_state.logueado:
 # ---------------------------------------------------------
 if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
     with st.spinner("📡 Descargando notas de la base satelital..."):
-        df_notas = conn.read(worksheet='NOTAS_CONSOLIDADAS', ttl=600)
+        df_notas = conn.query("SELECT * FROM notas_consolidadas;", ttl=600)
         df_notas = df_notas.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo', 'ASIGNATURA': 'Materia', 'LOGROS': 'LOGRO'})
         
         df_estud = conn.read(worksheet='DATA_ESTUDIANTES', ttl=600)
@@ -205,7 +205,7 @@ if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None o
         
 if 'df_logros' not in st.session_state or st.session_state.df_logros is None or st.session_state.df_logros.empty:
     with st.spinner("📡 Descargando logros de la base satelital..."):
-        st.session_state.df_logros = conn.read(worksheet='DB_LOGROS', ttl=600)
+        st.session_state.df_logros = conn.query("SELECT * FROM db_logros;")
 
 if 'df_asistencia' not in st.session_state or st.session_state.df_asistencia is None or st.session_state.df_asistencia.empty:
     try: st.session_state.df_asistencia = conn.read(worksheet='DB_ASISTENCIA', ttl=600)
