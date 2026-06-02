@@ -6,9 +6,13 @@ import re
 def renderizar(conn):
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>🕒 Matriz de Horarios Oficiales</h3>", unsafe_allow_html=True)
     
-    with st.spinner("📡 Sincronizando reloj satelital con DB_HORARIOS..."):
+    with st.spinner("📡 Sincronizando reloj satelital..."):
         try:
-            df_horarios = conn.read(worksheet="DB_HORARIOS", ttl=0)
+            # 🚀 MEJORA DE VELOCIDAD: Se lee desde la RAM ultrarrápida
+            if 'df_horarios' not in st.session_state:
+                st.session_state.df_horarios = conn.read(worksheet="DB_HORARIOS", ttl=600)
+            
+            df_horarios = st.session_state.df_horarios.copy()
             df_horarios = df_horarios.dropna(subset=['DÍA', 'BLOQUE_HORARIO'])
         except Exception as e:
             st.error("🚨 Falla Crítica: No se encontró la pestaña 'DB_HORARIOS' en la base satelital.")
