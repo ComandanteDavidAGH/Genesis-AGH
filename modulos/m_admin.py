@@ -42,7 +42,12 @@ def render_mando(df, periodo_sel, conn):
     st.info("Desde aquí puede cerrar los periodos para que ningún docente pueda modificar notas.")
     
     try:
-        df_config = conn.read(worksheet="Configuracion", ttl=0)
+        # 🚀 MEJORA DE VELOCIDAD: Se lee desde la RAM ultrarrápida
+        if 'df_config_seguridad' not in st.session_state:
+            st.session_state.df_config_seguridad = conn.read(worksheet="Configuracion", ttl=600)
+        
+        df_config = st.session_state.df_config_seguridad.copy()
+        
         col_1, col_2 = st.columns(2)
         nuevos_estados = []
 
@@ -56,6 +61,10 @@ def render_mando(df, periodo_sel, conn):
                 try:
                     df_config['Estado'] = nuevos_estados
                     conn.update(worksheet="Configuracion", data=df_config)
+                    # Forzamos la actualización de la RAM instantáneamente
+                    st.session_state.df_config_seguridad = df_config
+                    st.cache_data.clear()
+                    
                     st.success("✅ Protocolo actualizado. Los periodos han sido configurados.")
                     registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó la seguridad de los periodos")
                     st.balloons()
