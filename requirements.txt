@@ -3,5 +3,5 @@ pandas
 plotly
 xlsxwriter
 xhtml2pdf
-SQLAlchemy==2.0.25
+SQLAlchemy
 pg8000
