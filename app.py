@@ -4,26 +4,7 @@ from datetime import datetime, timedelta, timezone
 from streamlit_gsheets import GSheetsConnection
 
 # ---------------------------------------------------------
-# 🛡️ 1. IMPORTACIÓN DE HANGARES (MÓDULOS)
-# ---------------------------------------------------------
-try:
-    import modulos.m0_inicio as m0
-    import modulos.m_admin as m_admin
-    import modulos.m1_horarios as m1
-    import modulos.m2_inteligencia as m2
-    import modulos.m3_dashboard as m3
-    import modulos.m4_semaforo as m4
-    import modulos.m5_notas as m5
-    import modulos.m6_logros as m6
-    import modulos.m7_asistencia as m7
-    import modulos.m8_boletines as m8
-    import modulos.m9_manual as m9
-    import modulos.m10_eventos as m10
-except ImportError:
-    st.warning("⚙️ Sistema en Mantenimiento Táctico (Transición Modular).")
-
-# ---------------------------------------------------------
-# 📋 2. MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS
+# 📋 1. MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS
 # ---------------------------------------------------------
 ASIGNACIONES_DOCENTES = {
     # --- PRIMARIA ---
@@ -48,20 +29,18 @@ ASIGNACIONES_DOCENTES = {
 MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
 
 # ---------------------------------------------------------
-# ⚙️ 3. CONFIGURACIÓN DEL NÚCLEO Y MEMORIA VISUAL
+# ⚙️ 2. CONFIGURACIÓN DEL NÚCLEO Y MEMORIA VISUAL
 # ---------------------------------------------------------
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
 
-# --- ARTILLERÍA PESADA CSS (CORREGIDA PARA BOTONES Y TABLAS) ---
+# --- ARTILLERÍA PESADA CSS ---
 st.markdown("""
 <style>
-/* Ocultar elementos nativos de Streamlit */
 [data-testid="stToolbarActions"] { display: none !important; }
 .viewerBadge_container { display: none !important; visibility: hidden !important; opacity: 0 !important; }
 footer { display: none !important; visibility: hidden !important; }
 #MainMenu { visibility: visible; }
 
-/* Fondo y contenedor general */
 .stApp { background-color: #ffffff; }
 .stApp::before {
     content: ""; background-image: url('https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png');
@@ -70,43 +49,35 @@ footer { display: none !important; visibility: hidden !important; }
 }
 .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
 
-/* 🛡️ PANEL LATERAL CORREGIDO */
 [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
 [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: white !important; font-weight: bold; }
 
-/* 🛡️ PROTEGER SELECTBOX Y BOTONES DEL SIDEBAR (BOTÓN SALIR) */
 [data-testid="stSidebar"] div[data-baseweb="select"] * { color: #000000 !important; text-shadow: none !important; }
 [data-testid="stSidebar"] button { background-color: #ffffff !important; border: 2px solid #d4af37 !important; border-radius: 8px !important; transition: 0.3s; }
-[data-testid="stSidebar"] button * { color: #cc0000 !important; font-weight: bold !important; text-shadow: none !important; } /* Letra roja para salir */
+[data-testid="stSidebar"] button * { color: #cc0000 !important; font-weight: bold !important; text-shadow: none !important; } 
 [data-testid="stSidebar"] button:hover { background-color: #cc0000 !important; border: 2px solid #ffffff !important; }
 [data-testid="stSidebar"] button:hover * { color: #ffffff !important; }
 
-/* 🎨 COLORES DE BOTONES PRINCIPALES (GUARDAR, INICIAR) */
 button[kind="primary"] { background-color: #0d1b2a !important; border: 2px solid #d4af37 !important; border-radius: 8px !important; transition: 0.3s; }
 button[kind="primary"] * { color: #ffffff !important; font-weight: bold !important; }
 button[kind="primary"]:hover { background-color: #d4af37 !important; border-color: #0d1b2a !important; box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; }
 button[kind="primary"]:hover * { color: #0d1b2a !important; }
 
-/* 🎨 COLORES DE BOTONES SECUNDARIOS */
 button[kind="secondary"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; border-radius: 8px !important; transition: 0.3s; }
 button[kind="secondary"] * { color: #0d1b2a !important; font-weight: bold !important; }
 button[kind="secondary"]:hover { background-color: #0d1b2a !important; border-color: #d4af37 !important; }
 button[kind="secondary"]:hover * { color: #d4af37 !important; }
 
-/* 📊 TABLAS Y CELDAS DE DATOS MÁS MARCADAS */
 [data-testid="stDataFrame"] { border: 3px solid #0d1b2a !important; border-radius: 8px !important; padding: 2px; background-color: #ffffff; box-shadow: 4px 4px 10px rgba(0,0,0,0.1); }
 [data-testid="stTable"] { border: 2px solid #0d1b2a !important; border-radius: 8px !important; }
 
-/* Título y Asistente */
 .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
 .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
 .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
 
-/* Gráficos Plotly 3D */
 [data-testid="stPlotlyChart"] { transition: all 0.3s ease-out; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; will-change: transform; }
 [data-testid="stPlotlyChart"]:hover { transform: translateY(-6px) scale(1.015); box-shadow: 0 15px 30px rgba(212, 175, 55, 0.6); z-index: 10; }
 
-/* Animaciones Semáforo */
 @keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
 @keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
 @keyframes pulso-verde { 0% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } 50% { box-shadow: 0 0 20px rgba(0, 153, 51, 1), inset 0 0 10px rgba(0, 153, 51, 0.5); } 100% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } }
@@ -115,10 +86,8 @@ button[kind="secondary"]:hover * { color: #d4af37 !important; }
 .tarjeta-naranja { animation: pulso-naranja 2s infinite; border: 3px solid #cc8800; border-left: 10px solid #cc8800; background:#fff4e6; padding:15px; border-radius:8px; color: #000; }
 .tarjeta-verde { animation: pulso-verde 2.5s infinite; border: 3px solid #00994c; border-left: 10px solid #00994c; background:#e6ffe6; padding:15px; border-radius:8px; color: #000; }
 
-/* Textos generales */
 p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
 
-/* Menús Desplegables */
 div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
 div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
 div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
@@ -126,12 +95,10 @@ ul[role="listbox"] { background-color: #ffffff !important; border: 2px solid #0d
 ul[role="listbox"] li { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; font-weight: bold !important; }
 ul[role="listbox"] li:hover, ul[role="listbox"] li[aria-selected="true"] { background-color: #d4af37 !important; color: #000000 !important; }
 
-/* Tarjetas de Métricas */
 .metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
 .metric-value { font-size: 28px; font-weight: 900; color: #0d1b2a; margin: 0; font-family: 'Arial Black';}
 .metric-label { font-size: 14px; font-weight: bold; color: #000000; margin: 0; text-transform: uppercase;}
 
-/* Expansores y Footer */
 [data-testid="stExpander"] { background-color: #ffffff !important; border: 2px solid #d4af37 !important; border-radius: 8px !important; }
 [data-testid="stExpander"] summary { background-color: #ffffff !important; }
 [data-testid="stExpander"] summary:hover { background-color: #f0f0f0 !important; }
@@ -165,7 +132,7 @@ def registrar_bitacora(usuario, rol, accion):
     })
 
 # ---------------------------------------------------------
-# 🔐 4. LOGIN BLINDADO
+# 🔐 3. LOGIN BLINDADO
 # ---------------------------------------------------------
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -223,7 +190,7 @@ if not st.session_state.logueado:
     st.stop() 
 
 # ---------------------------------------------------------
-# 🛰️ 5. DESCARGA DE DATOS SATELITALES MAESTROS
+# 🛰️ 4. DESCARGA DE DATOS SATELITALES MAESTROS
 # ---------------------------------------------------------
 if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
     with st.spinner("📡 Descargando notas de la base satelital..."):
@@ -256,7 +223,7 @@ if df_m is not None and not df_m.empty:
         df_m['PROMEDIO'] = df_m[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
 
 # ---------------------------------------------------------
-# 🧭 6. PANEL LATERAL Y FILTROS SEGURIZADOS
+# 🧭 5. PANEL LATERAL Y FILTROS SEGURIZADOS
 # ---------------------------------------------------------
 with st.sidebar:
     try: st.image("logo.png", width=120)
@@ -341,7 +308,7 @@ if materia_sel != "TODAS" and materia_sel != "Sin asignación" and 'Materia' in 
 df_filtrado = df_temp.copy()
 
 # ---------------------------------------------------------
-# 🚀 7. ENRUTADOR Y ENCABEZADO
+# 🚀 6. ENRUTADOR CON "LAZY LOADING" (VELOCIDAD MÁXIMA)
 # ---------------------------------------------------------
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h1></div>", unsafe_allow_html=True)
 
@@ -369,21 +336,48 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# 🎯 AQUÍ OCURRE LA MAGIA DEL "ENCENDIDO BAJO DEMANDA"
 try:
-    if menu == "🏠 Inicio": m0.renderizar()
-    elif menu == "👑 Centro de Mando": m_admin.render_mando(df_filtrado, periodo_sel, conn)
-    elif menu == "🛡️ Bitácora y Backup": m_admin.render_backup(conn)
-    elif menu == "🕒 Horarios y Asignaciones": m1.renderizar(conn)
-    elif menu == "📊 Inteligencia Académica": m2.renderizar(df_filtrado, periodo_sel)
-    elif menu == "📈 Dashboard Estudiantil": m3.renderizar(df_filtrado, periodo_sel, conn)
-    elif menu == "🚦 Semáforo Académico": m4.renderizar(df_filtrado, curso_sel, periodo_sel)
-    elif menu == "✍️ Digitar Notas": m5.renderizar(df_filtrado, periodo_sel, conn)
-    elif menu == "📚 Logros": m6.renderizar(conn)
-    elif menu == "📝 Asistencias y Reportes": m7.renderizar(df_filtrado, conn)
-    elif menu == "📜 Boletines": m8.renderizar(df_filtrado, curso_sel, periodo_sel)
-    elif menu == "📖 Manual de Usuario": m9.renderizar()
-    elif menu == "📸 Eventos Institucionales": m10.renderizar()
-except NameError:
-    st.info("🛠️ **Trabajando en el Ensamble.** Los hangares están siendo construidos.")
+    if menu == "🏠 Inicio": 
+        import modulos.m0_inicio as m0
+        m0.renderizar()
+    elif menu == "👑 Centro de Mando": 
+        import modulos.m_admin as m_admin
+        m_admin.render_mando(df_filtrado, periodo_sel, conn)
+    elif menu == "🛡️ Bitácora y Backup": 
+        import modulos.m_admin as m_admin
+        m_admin.render_backup(conn)
+    elif menu == "🕒 Horarios y Asignaciones": 
+        import modulos.m1_horarios as m1
+        m1.renderizar(conn)
+    elif menu == "📊 Inteligencia Académica": 
+        import modulos.m2_inteligencia as m2
+        m2.renderizar(df_filtrado, periodo_sel)
+    elif menu == "📈 Dashboard Estudiantil": 
+        import modulos.m3_dashboard as m3
+        m3.renderizar(df_filtrado, periodo_sel, conn)
+    elif menu == "🚦 Semáforo Académico": 
+        import modulos.m4_semaforo as m4
+        m4.renderizar(df_filtrado, curso_sel, periodo_sel)
+    elif menu == "✍️ Digitar Notas": 
+        import modulos.m5_notas as m5
+        m5.renderizar(df_filtrado, periodo_sel, conn)
+    elif menu == "📚 Logros": 
+        import modulos.m6_logros as m6
+        m6.renderizar(conn)
+    elif menu == "📝 Asistencias y Reportes": 
+        import modulos.m7_asistencia as m7
+        m7.renderizar(df_filtrado, conn)
+    elif menu == "📜 Boletines": 
+        import modulos.m8_boletines as m8
+        m8.renderizar(df_filtrado, curso_sel, periodo_sel)
+    elif menu == "📖 Manual de Usuario": 
+        import modulos.m9_manual as m9
+        m9.renderizar()
+    elif menu == "📸 Eventos Institucionales": 
+        import modulos.m10_eventos as m10
+        m10.renderizar()
+except ImportError as e:
+    st.info(f"🛠️ **Trabajando en el Ensamble.** El hangar aún no está listo: {e}")
 
 st.markdown(f"<div class='footer-legal'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 © {datetime.now().year}</div>", unsafe_allow_html=True)
