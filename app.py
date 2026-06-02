@@ -10,23 +10,23 @@ from xhtml2pdf import pisa
 # 📋 MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS IE GÉNESIS 2026
 ASIGNACIONES_DOCENTES = {
     # --- PRIMARIA (Carga Completa) ---
-    "Priscila": {"grados": ["5°"], "materias": "TODAS"},
-    "Celeste": {"grados": ["1°"], "materias": "TODAS"},
-    "Maria": {"grados": ["2°"], "materias": "TODAS"},
-    "Ana": {"grados": ["3°"], "materias": "TODAS"},
-    "Juliana": {"grados": ["4°"], "materias": "TODAS"},
+    "Priscila Pacheco": {"grados": ["5°"], "materias": "TODAS"},
+    "Celeste Conrrado": {"grados": ["1°"], "materias": "TODAS"},
+    "Maria Narvaez": {"grados": ["2°"], "materias": "TODAS"},
+    "Ana Soler": {"grados": ["3°"], "materias": "TODAS"},
+    "Daniel Quintero": {"grados": ["4°"], "materias": "TODAS"},
 
     # --- BACHILLERATO (Carga por Especialidad) ---
-    "Daniel": {"grados": ["10°", "11°"], "materias": ["Física", "Matemáticas"]},
-    "Rafael": {"grados": ["10°", "11°"], "materias": ["Química"]},
-    "Ludis": {"grados": ["10°", "11°"], "materias": ["Filosofía", "Ética"]},
-    "Arnaldo": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Matemáticas"]},
+    "Sugeydis Pacheco": {"grados": ["10°", "11°"], "materias": ["Física", "Matemáticas"]},
+    "Rafael Martínez": {"grados": ["10°", "11°"], "materias": ["Química"]},
+    "Ludis Barrios": {"grados": ["10°", "11°"], "materias": ["Filosofía", "Ética"]},
+    "Arnaldo Tilano": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Matemáticas"]},
     
     # Profesores de área para toda la secundaria:
-    "USUARIO_LENGUAJE": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Lenguaje"]},
-    "USUARIO_SOCIALES": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Sociales", "Constitución"]},
-    "USUARIO_INGLES": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Inglés"]},
-    "USUARIO_CIENCIAS": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Ciencias Naturales"]},
+    "Jorge Pacheco": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Lenguaje"]},
+    "Sandra Bolaño": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Sociales", "Constitución"]},
+    "Melquisedec Pacheco": {"grados": ["6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Inglés"]},
+    "Nellys Martínez": {"grados": ["6°", "7°", "8°", "9°"], "materias": ["Ciencias Naturales"]},
     "USUARIO_ESPECIALIDADES": {"grados": ["1°", "2°", "3°", "4°", "5°", "6°", "7°", "8°", "9°", "10°", "11°"], "materias": ["Educación Física", "Artística", "Informática", "Religión"]}
 }
 
