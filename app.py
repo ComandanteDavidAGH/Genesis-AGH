@@ -6,7 +6,6 @@ from streamlit_gsheets import GSheetsConnection
 # ---------------------------------------------------------
 # 🛡️ 1. IMPORTACIÓN DE HANGARES (MÓDULOS)
 # ---------------------------------------------------------
-# El bloque try/except evita que el sistema explote mientras construimos los módulos
 try:
     import modulos.m0_inicio as m0
     import modulos.m_admin as m_admin
@@ -49,17 +48,20 @@ ASIGNACIONES_DOCENTES = {
 MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
 
 # ---------------------------------------------------------
-# ⚙️ 3. CONFIGURACIÓN DEL NÚCLEO Y MEMORIA
+# ⚙️ 3. CONFIGURACIÓN DEL NÚCLEO Y MEMORIA VISUAL
 # ---------------------------------------------------------
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
 
-# --- ARTILLERÍA PESADA CSS ---
+# --- ARTILLERÍA PESADA CSS (RESTAURADA AL 100%) ---
 st.markdown("""
 <style>
+/* Ocultar elementos nativos de Streamlit */
 [data-testid="stToolbarActions"] { display: none !important; }
 .viewerBadge_container { display: none !important; visibility: hidden !important; opacity: 0 !important; }
 footer { display: none !important; visibility: hidden !important; }
 #MainMenu { visibility: visible; }
+
+/* Fondo y contenedor general */
 .stApp { background-color: #ffffff; }
 .stApp::before {
     content: ""; background-image: url('https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png');
@@ -67,10 +69,53 @@ footer { display: none !important; visibility: hidden !important; }
     opacity: 0.15; position: fixed; top: 0; left: 0; bottom: 0; right: 0; z-index: 0; pointer-events: none;
 }
 .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
+
+/* Panel Lateral */
 [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
 [data-testid="stSidebar"] * { color: white !important; font-weight: bold; }
+
+/* Título y Asistente */
 .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
 .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
+.asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
+
+/* Gráficos Plotly 3D */
+[data-testid="stPlotlyChart"] { transition: all 0.3s ease-out; border-radius: 12px; padding: 5px; background: white; border: 2px solid #000; will-change: transform; }
+[data-testid="stPlotlyChart"]:hover { transform: translateY(-6px) scale(1.015); box-shadow: 0 15px 30px rgba(212, 175, 55, 0.6); z-index: 10; }
+
+/* Animaciones Semáforo */
+@keyframes pulso-rojo { 0% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), inset 0 0 10px rgba(255, 0, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 51, 51, 0.4); } }
+@keyframes pulso-naranja { 0% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } 50% { box-shadow: 0 0 20px rgba(255, 153, 0, 1), inset 0 0 10px rgba(255, 153, 0, 0.5); } 100% { box-shadow: 0 0 0px rgba(255, 170, 0, 0.4); } }
+@keyframes pulso-verde { 0% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } 50% { box-shadow: 0 0 20px rgba(0, 153, 51, 1), inset 0 0 10px rgba(0, 153, 51, 0.5); } 100% { box-shadow: 0 0 0px rgba(0, 204, 102, 0.4); } }
+
+.tarjeta-roja { animation: pulso-rojo 1.5s infinite; border: 3px solid #cc0000; border-left: 10px solid #cc0000; background:#ffe6e6; padding:15px; border-radius:8px; color: #000; }
+.tarjeta-naranja { animation: pulso-naranja 2s infinite; border: 3px solid #cc8800; border-left: 10px solid #cc8800; background:#fff4e6; padding:15px; border-radius:8px; color: #000; }
+.tarjeta-verde { animation: pulso-verde 2.5s infinite; border: 3px solid #00994c; border-left: 10px solid #00994c; background:#e6ffe6; padding:15px; border-radius:8px; color: #000; }
+
+/* Textos generales */
+p, span, div, label, h1, h2, h3, h4, h5, h6 { color: #000000; }
+
+/* Menús Desplegables */
+div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
+div[data-baseweb="select"] > div * { color: #000000 !important; font-family: 'Arial Black', sans-serif !important; }
+div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul { background-color: #ffffff !important; }
+ul[role="listbox"] { background-color: #ffffff !important; border: 2px solid #0d1b2a !important; }
+ul[role="listbox"] li { background-color: #ffffff !important; color: #000000 !important; font-family: 'Arial Black', sans-serif !important; font-weight: bold !important; }
+ul[role="listbox"] li:hover, ul[role="listbox"] li[aria-selected="true"] { background-color: #d4af37 !important; color: #000000 !important; }
+
+/* Tarjetas de Métricas */
+.metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
+.metric-value { font-size: 28px; font-weight: 900; color: #0d1b2a; margin: 0; font-family: 'Arial Black';}
+.metric-label { font-size: 14px; font-weight: bold; color: #000000; margin: 0; text-transform: uppercase;}
+
+/* Expansores y Footer */
+[data-testid="stExpander"] { background-color: #ffffff !important; border: 2px solid #d4af37 !important; border-radius: 8px !important; }
+[data-testid="stExpander"] summary { background-color: #ffffff !important; }
+[data-testid="stExpander"] summary:hover { background-color: #f0f0f0 !important; }
+[data-testid="stExpander"] summary * { color: #000000 !important; font-weight: bold !important; }
+[data-testid="stExpanderDetails"] { background-color: #ffffff !important; }
+[data-testid="stExpanderDetails"] * { color: #000000 !important; }
+.footer-legal { font-size: 10px; color: #888888; text-align: center; margin-top: 50px; border-top: 1px solid #eeeeee; padding-top: 10px; font-family: 'Arial', sans-serif; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -140,7 +185,6 @@ if not st.session_state.logueado:
                             st.session_state.logueado = True
                             st.session_state.rol = rol
                             st.session_state.usuario_actual = u
-                            # GUARDA EL NOMBRE COMPLETO CORRECTAMENTE
                             if 'Nombre_Completo' in df_usuarios.columns:
                                 st.session_state.nombre_completo_usuario = str(acceso['Nombre_Completo'].iloc[0]).strip()
                             else:
@@ -189,7 +233,7 @@ if df_m is not None and not df_m.empty:
         df_m['PROMEDIO'] = df_m[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
 
 # ---------------------------------------------------------
-# 🧭 6. PANEL LATERAL (NAVEGACIÓN Y FILTROS)
+# 🧭 6. PANEL LATERAL Y FILTROS SEGURIZADOS
 # ---------------------------------------------------------
 with st.sidebar:
     try: st.image("logo.png", width=120)
@@ -206,18 +250,32 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.markdown("---")
     
-    opciones_menu = ["🏠 Inicio", "🕒 Horarios y Asignaciones", "📊 Inteligencia Académica", "📈 Dashboard Estudiantil", "🚦 Semáforo Académico", "✍️ Digitar Notas", "📚 Logros", "📝 Asistencias y Reportes", "📜 Boletines", "📖 Manual de Usuario", "📸 Eventos Institucionales"]
+    # 🎯 CONFIGURACIÓN DEL MENÚ BLINDADA
+    opciones_menu = [
+        "🏠 Inicio", 
+        "🕒 Horarios y Asignaciones", 
+        "📊 Inteligencia Académica", 
+        "📈 Dashboard Estudiantil", 
+        "🚦 Semáforo Académico", 
+        "✍️ Digitar Notas", 
+        "📚 Logros", 
+        "📝 Asistencias y Reportes", 
+        "📜 Boletines", 
+        "📖 Manual de Usuario", 
+        "📸 Eventos Institucionales"
+    ]
+    
     if st.session_state.rol == "Admin": 
         opciones_menu.insert(1, "🛡️ Bitácora y Backup")
         opciones_menu.insert(1, "👑 Centro de Mando")
         
-    if st.session_state.rol == "Docente" and "📜 Boletines" in opciones_menu:
+    # 🎯 SEGURIDAD: Solo se remueven los boletines si el usuario NO es Admin
+    if st.session_state.rol != "Admin" and "📜 Boletines" in opciones_menu:
         opciones_menu.remove("📜 Boletines")
         
     menu = st.radio("SECCIONES:", opciones_menu)
     st.markdown("---")
 
-    # 🎯 EL PARCHE DE IDENTIDAD PARA NELLYS MARTÍNEZ Y EL RESTO
     docente_identidad = st.session_state.nombre_completo_usuario
 
     cursos = []
@@ -255,7 +313,6 @@ with st.sidebar:
         st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = False, "", ""
         st.rerun()
 
-# --- FILTRO MAESTRO PARA LOS MÓDULOS ---
 df_temp = df_m.copy() if df_m is not None else pd.DataFrame()
 if curso_sel != "TODOS": df_temp = df_temp[df_temp['Grado'].astype(str) == str(curso_sel)]
 if materia_sel != "TODAS" and materia_sel != "Sin asignación" and 'Materia' in df_temp.columns:
@@ -263,10 +320,36 @@ if materia_sel != "TODAS" and materia_sel != "Sin asignación" and 'Materia' in 
 df_filtrado = df_temp.copy()
 
 # ---------------------------------------------------------
-# 🚀 7. ENRUTADOR HACIA LOS MÓDULOS (HANGARES)
+# 🚀 7. ENRUTADOR Y ENCABEZADO (RESTURADOS)
 # ---------------------------------------------------------
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h1></div>", unsafe_allow_html=True)
 
+# --- 🤖 CAJA DE ASISTENTE VIRTUAL ---
+if menu == "🏠 Inicio": msg_bot = "Sistema persistente y sincronizado con éxito."
+elif menu == "🕒 Horarios y Asignaciones": msg_bot = "Radar de cuadrícula temporal activo. Cero colisiones."
+elif menu == "👑 Centro de Mando": msg_bot = "Visión satelital activada. Datos exclusivos de Rectoría."
+elif menu == "🛡️ Bitácora y Backup": msg_bot = "Descargue aquí el Excel con el historial de trabajo."
+elif menu == "📊 Inteligencia Académica": msg_bot = "Análisis de pelotón en español activo."
+elif menu == "📈 Dashboard Estudiantil": msg_bot = "Radar táctico de rendimiento individual activo."
+elif menu == "🚦 Semáforo Académico": msg_bot = "Balizas de alerta en tiempo real."
+elif menu == "✍️ Digitar Notas": msg_bot = "El sistema protege las notas. Rango válido: 1.0 a 10.0"
+elif menu == "📚 Logros": msg_bot = "Diccionario protegido."
+elif menu == "📝 Asistencias y Reportes": msg_bot = "Registre fallas y observaciones disciplinarias."
+elif menu == "📜 Boletines": msg_bot = "Generador de impresión VIP activo."
+elif menu in ["📖 Manual de Usuario", "📸 Eventos Institucionales"]: msg_bot = "Módulos de información listos."
+else: msg_bot = "Módulo en línea y operando."
+
+st.markdown(f"""
+<div class="asistente-box">
+   <img src="https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png" width="30" style="margin-right:15px;">
+   <div style="display:flex; align-items:center;">
+       <span style="color:#000000; font-weight:900; margin-right:10px;">Génesis:</span>
+       <span style="color:#000000; font-size:14px; font-weight:bold; font-style:italic;">"{msg_bot}"</span>
+   </div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- ENRUTADOR HACIA HANGARES ---
 try:
     if menu == "🏠 Inicio": m0.renderizar()
     elif menu == "👑 Centro de Mando": m_admin.render_mando(df_filtrado, periodo_sel, conn)
