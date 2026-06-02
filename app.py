@@ -220,7 +220,7 @@ if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None o
         df_notas = df_notas.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo', 'ASIGNATURA': 'Materia', 'LOGROS': 'LOGRO'})
         
         try:
-            df_estud = conn.read(worksheet='DATA_ESTUDIANTES', ttl=600)
+            df_estud = conn.query("SELECT * FROM data_estudiantes;")
         except Exception:
             df_estud = pd.DataFrame(columns=['Nombre_Completo', 'Grado'])
             
@@ -241,9 +241,9 @@ if 'df_logros' not in st.session_state or st.session_state.df_logros is None or 
             st.session_state.df_logros = pd.DataFrame(columns=["NIVEL", "MATERIA", "DESEMPEÑO", "LOGRO_TEXTO"])
             
 if 'df_asistencia' not in st.session_state or st.session_state.df_asistencia is None or st.session_state.df_asistencia.empty:
-    try: st.session_state.df_asistencia = conn.read(worksheet='DB_ASISTENCIA', ttl=600)
+    try: st.session_state.df_asistencia = conn.query("SELECT * FROM db_asistencia;")
     except: st.session_state.df_asistencia = pd.DataFrame(columns=['Nombre_Completo', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
-
+        
 df_m = st.session_state.df_maestro
 if df_m is not None and not df_m.empty:
     df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
