@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta, timezone
-from streamlit_gsheets import GSheetsConnection
 
 # ---------------------------------------------------------
 # 📋 1. MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS
@@ -134,7 +133,7 @@ def registrar_bitacora(usuario, rol, accion):
 # ---------------------------------------------------------
 # 🔐 3. LOGIN BLINDADO
 # ---------------------------------------------------------
-conn = st.connection("gsheets", type=GSheetsConnection)
+conn = st.connection("postgresql", type="sql")
 
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
