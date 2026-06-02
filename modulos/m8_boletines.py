@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import io
 import base64
-import streamlit.components.v1 as components
 from xhtml2pdf import pisa
 
 # 🚀 CACHÉ PARA LOGO (Acelera la carga de imágenes)
@@ -36,23 +35,22 @@ def renderizar(df, curso_sel, periodo_sel):
     col_n = periodo_sel if periodo_sel != "CONSOLIDADO FINAL" else "PROMEDIO"
     modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
     
-    css_vip = """<style>body { font-family: Arial, sans-serif; background: white; color: black; } .b-print { position: relative; padding: 30px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; } .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: -1; pointer-events: none; } .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; } .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; } .table-custom td { border: 1px solid #000; padding: 8px; background-color: rgba(255, 255, 255, 0.85); text-align: center; } .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; } .header-table td { border: none; } .firmas-container { display: flex; justify-content: space-around; margin-top: 60px; font-size: 14px; z-index: 2; position: relative; page-break-inside: avoid; } .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; } @media print { @page { size: legal portrait; margin: 10mm; } body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } .b-print { border: none; box-shadow: none; padding: 0; } .salto-pagina { page-break-after: always; } } </style>"""    
-    
+    # 🚀 OPTIMIZACIÓN 1: CSS Nativo sin Iframes
+    css_vip = """<style> .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; background: white; color: black; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); } .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; } .table-custom th { background-color: #0d1b2a !important; color: #d4af37 !important; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; } .table-custom td { border: 1px solid #000; padding: 8px; text-align: center; color: black; } .header-table { width: 100%; border: none; margin-bottom: 15px; } .header-table td { border: none; } .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 14px; } .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; } </style>"""
+
     URL_LOGO_OFICIAL = get_logo_base64()
 
-    # 🚀 OPTIMIZACIÓN TURBO: Diccionario de Logros en Memoria O(1)
-    # Esto elimina miles de búsquedas lentas en Pandas dentro de los ciclos for.
+    # 🚀 OPTIMIZACIÓN 2: Diccionario Vectorizado en RAM (Adiós al bucle iterrows)
     dict_logros = {}
     if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
-        df_l = st.session_state.df_logros
-        for _, fila_l in df_l.iterrows():
-            try:
-                lvl = str(fila_l.iloc[0]).strip().upper()
-                mat = str(fila_l.iloc[1]).strip().upper()
-                des = str(fila_l.iloc[2]).strip().upper()
-                txt = str(fila_l.iloc[3])
-                dict_logros[(lvl, mat, des)] = txt
-            except: pass
+        try:
+            df_l = st.session_state.df_logros.copy()
+            df_l.iloc[:,0] = df_l.iloc[:,0].astype(str).str.strip().str.upper()
+            df_l.iloc[:,1] = df_l.iloc[:,1].astype(str).str.strip().str.upper()
+            df_l.iloc[:,2] = df_l.iloc[:,2].astype(str).str.strip().str.upper()
+            df_l.iloc[:,3] = df_l.iloc[:,3].astype(str)
+            dict_logros = df_l.set_index([df_l.columns[0], df_l.columns[1], df_l.columns[2]])[df_l.columns[3]].to_dict()
+        except: pass
 
     if modo_impresion == "👤 Individual":
         lista_alumnos = sorted(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else []
@@ -67,12 +65,9 @@ def renderizar(df, curso_sel, periodo_sel):
             
             th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
             
-            html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
-            <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;">
-                <button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR REPORTE OFICIAL</button>
-            </div>
+            # 🚀 OPTIMIZACIÓN 3: Renderizado HTML limpio y directo
+            html_cuerpo = f"""
             <div class="b-print">
-                <img src="{URL_LOGO_OFICIAL}" class="watermark">
                 <table class="header-table">
                     <tr>
                         <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="90"></td>
@@ -110,29 +105,31 @@ def renderizar(df, curso_sel, periodo_sel):
                     p1 = nota_limpia(row.get('P1', 0)); p2 = nota_limpia(row.get('P2', 0))
                     p3 = nota_limpia(row.get('P3', 0)); p4 = nota_limpia(row.get('P4', 0))
                     prom = nota_limpia(row.get('PROMEDIO', 0))
-                    td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
+                    td = f"<td style='color:black;'>{p1:.1f}</td><td style='color:black;'>{p2:.1f}</td><td style='color:black;'>{p3:.1f}</td><td style='color:black;'>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
                     col_span = 7
                 else:
                     td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
                     col_span = 3
                 
-                html_boletin += f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"                    
+                html_cuerpo += f"<tr><td style='text-align:left; color:black;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"                    
                 
-                # 🚀 RECUPERACIÓN DE LOGRO ULTRARRÁPIDA (Sin buscar en DataFrames)
+                # Búsqueda ultra rápida en el diccionario
                 llave_logro = (nivel_alumno, str(row['Materia']).strip().upper(), desp)
                 logro_texto = dict_logros.get(llave_logro, "Logro no registrado")
 
-                html_boletin += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                html_cuerpo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa; color:black;'><b>LOGRO:</b> {logro_texto}</td></tr>"
             
-            html_boletin += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div></body></html>"""
+            html_cuerpo += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>"""
 
-            components.html(html_boletin, height=600, scrolling=True)
+            # 🎯 DIBUJO INSTANTÁNEO EN LA PANTALLA
+            st.markdown(css_vip + html_cuerpo, unsafe_allow_html=True)
             
-            # 🚀 PDF SEPARADO: Ya no bloquea la interfaz
+            # 🎯 GENERACIÓN DEL PDF SOLO SI EL USUARIO LO PIDE
             with st.expander("📥 Generar Archivo PDF Descargable"):
                 if st.button("Generar archivo .pdf (Toma unos segundos)"):
                     with st.spinner("Compilando Documento PDF Oficial..."):
-                        pdf_data = generar_pdf(html_boletin)
+                        html_pdf = f"<html><head><style>@page {{ size: legal portrait; margin: 10mm; }} {css_vip.replace('<style>','').replace('</style>','')}</style></head><body>{html_cuerpo}</body></html>"
+                        pdf_data = generar_pdf(html_pdf)
                         if pdf_data:
                             st.download_button(label="📥 DESCARGAR PDF AHORA", data=pdf_data, file_name=f"Boletin_{alumno}_{periodo_sel}.pdf", mime="application/pdf", type="primary", use_container_width=True)
             
@@ -143,17 +140,16 @@ def renderizar(df, curso_sel, periodo_sel):
         if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary"):
             with st.spinner("Construyendo lote masivo ultrarrápido..."):
                 th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
-                html_masivo = f"""<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR LOTE MASIVO</button></div>"""
                 
+                html_masivo = ""
                 for i, alum in enumerate(estudiantes):
                     res = df[df['Nombre_Completo'] == alum].drop_duplicates(subset=['Materia'])
                     res = res[res['PROMEDIO'] > 0.0] if 'PROMEDIO' in res.columns else res
                     promedios = [nota_limpia(x) for x in res[col_n]] if col_n in res.columns else []
                     p_prom = sum(promedios) / len(promedios) if len(promedios) > 0 else 0.0
-                    salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
+                    salto = "<div style='page-break-after: always;'></div>" if i < len(estudiantes) - 1 else ""
                     
-                    html_masivo += f"""<div class="b-print {salto}">
-                    <img src="{URL_LOGO_OFICIAL}" class="watermark">
+                    html_masivo += f"""<div class="b-print">
                     <table class="header-table"><tr><td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="90"></td>
                     <td style="text-align:center;"><h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL OMEGA 2026</h2>
                     <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p></td>
@@ -180,21 +176,22 @@ def renderizar(df, curso_sel, periodo_sel):
                             p1 = nota_limpia(row.get('P1', 0)); p2 = nota_limpia(row.get('P2', 0))
                             p3 = nota_limpia(row.get('P3', 0)); p4 = nota_limpia(row.get('P4', 0))
                             prom = nota_limpia(row.get('PROMEDIO', 0))
-                            td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
+                            td = f"<td style='color:black;'>{p1:.1f}</td><td style='color:black;'>{p2:.1f}</td><td style='color:black;'>{p3:.1f}</td><td style='color:black;'>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
                             col_span = 7
                         else:
                             td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
                             col_span = 3
 
-                        html_masivo += f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
+                        html_masivo += f"<tr><td style='text-align:left; color:black;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
                         
-                        # 🚀 RECUPERACIÓN DE LOGRO ULTRARRÁPIDA
                         llave_logro = (nivel_alumno, str(row['Materia']).strip().upper(), desp)
                         logro_texto = dict_logros.get(llave_logro, "Logro no registrado")
                             
-                        html_masivo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                        html_masivo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa; color:black;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                         
-                    html_masivo += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>"""
+                    html_masivo += f"</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>{salto}"
                     
-                html_masivo += "</body></html>"
-                components.html(html_masivo, height=600, scrolling=True)
+                html_pdf = f"<html><head><style>@page {{ size: legal portrait; margin: 10mm; }} {css_vip.replace('<style>','').replace('</style>','')}</style></head><body>{html_masivo}</body></html>"
+                pdf_data = generar_pdf(html_pdf)
+                if pdf_data:
+                    st.download_button(label="📥 DESCARGAR LOTE EN PDF", data=pdf_data, file_name=f"Boletines_Masivos_{curso_sel}_{periodo_sel}.pdf", mime="application/pdf", type="primary", use_container_width=True)
