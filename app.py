@@ -56,13 +56,6 @@ div[data-baseweb="select"] > div * { color: #000000 !important; }
 .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
 .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
 .footer-legal { font-size: 10px; color: #888888; text-align: center; margin-top: 50px; border-top: 1px solid #eeeeee; padding-top: 10px; font-family: 'Arial', sans-serif; }
-
-/* 🚨 ESCUDO GLOBAL ANTI-MÁRGENES DEL NAVEGADOR (Para aniquilar fecha y URL) 🚨 */
-@media print {
-    @page { margin: 0 !important; size: letter portrait; }
-    body, html { margin: 0 !important; padding: 0 !important; }
-    header, footer, .stApp > header { display: none !important; }
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -130,7 +123,7 @@ if not st.session_state.logueado:
                         else: st.error("🚨 Acceso Denegado: Cuenta inactiva.")
                     else: st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
                 except Exception as e:
-                    st.error(f"🚨 Error de connection. {e}")
+                    st.error(f"🚨 Error de conexión. {e}")
     st.stop() 
 
 # ---------------------------------------------------------
@@ -220,18 +213,41 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (ANIQUILACIÓN DE TEXTOS DE NAVEGADOR)
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (SCRIPT DE EXTRACCIÓN ANTI-NAVEGADOR)
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
         
+        # 🚀 LA TRAMPA: Script de extracción que lanza el boletín en una pestaña fantasma para burlar a Chrome
+        js_extractor = """
+        <script>
+        function imprimirOficial() {
+            var ventana = window.open('', '_blank');
+            ventana.document.write('<html><head><title>Boletín Oficial Génesis AGH</title>');
+            var estilos = document.getElementsByTagName('style');
+            for(var i=0; i<estilos.length; i++) {
+                ventana.document.write('<style>' + estilos[i].innerHTML + '</style>');
+            }
+            ventana.document.write('</head><body>');
+            var clon = document.body.cloneNode(true);
+            var botones = clon.getElementsByClassName('no-print');
+            while(botones.length > 0) { botones[0].parentNode.removeChild(botones[0]); }
+            ventana.document.write(clon.innerHTML);
+            ventana.document.write('</body></html>');
+            ventana.document.close();
+            ventana.focus();
+            setTimeout(function() { ventana.print(); ventana.close(); }, 500);
+        }
+        </script>
+        """
+
         # 🖨️ HOJA DE ESTILOS VIP
         css_vip = """<style>
             body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
             .b-print { position: relative; padding: 25px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
             .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 50%; z-index: -1; pointer-events: none; }
             .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; z-index: 2; position: relative; }
-            .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 8px; font-family: 'Arial Black'; font-size: 11.5px; }
+            .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 8px; font-family: 'Arial Black'; font-size: 11.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .table-custom td { border: 1px solid #000; padding: 6px; background-color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 11px; }
             .header-table { width: 100%; border: none; margin-bottom: 10px; z-index: 2; position: relative; }
             .header-table td { border: none; }
@@ -239,21 +255,20 @@ try:
             .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
             
             @media print { 
-                /* 1. MÁRGEN CERO ABSOLUTO: Aniquila la fecha, link y número de página que pone el navegador web */
+                /* 1. MÁRGEN CERO ABSOLUTO EN VENTANA FANTASMA: Aniquila 100% los textos del navegador */
                 @page { size: letter portrait; margin: 0mm !important; } 
                 
-                /* 2. RECONSTRUCCIÓN DEL MARGEN: Movemos el aire al interior del contenedor para que las tablas no choquen con el borde */
                 body, html { background: white; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
-                
                 .no-print { display: none !important; } 
                 
+                /* 2. RECONSTRUCCIÓN DEL MARGEN INTERNO */
                 .b-print { border: none !important; box-shadow: none !important; padding: 12mm 15mm 12mm 15mm !important; width: 100% !important; margin: 0 !important; box-sizing: border-box !important;} 
                 .table-custom th { padding: 6px !important; font-size: 11px !important; }
                 .table-custom td { padding: 5px !important; font-size: 10.5px !important; }
                 .logro-texto-clase { padding: 4px 8px !important; font-size: 10px !important; line-height: 1.15 !important; }
                 
-                /* 3. EXPANSIÓN DE FIRMAS HACIA EL FONDO: Les damos oxígeno para que no se peguen a la tabla */
-                .firmas-container { margin-top: 60px !important; font-size: 12px !important; }
+                /* 3. EXPANSIÓN DE FIRMAS RESTAURADA PARA ESTÉTICA PERFECTA */
+                .firmas-container { margin-top: 50px !important; font-size: 12px !important; }
                 .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             }
         </style>"""    
@@ -265,7 +280,6 @@ try:
             except:
                 return 0.0
 
-        # ESCUDO DE INTERCEPCIÓN LÁSER: Leemos de la base completa para traer todas las asignaturas
         df_boletines_base = df_m.copy() if df_m is not None else pd.DataFrame()
         if curso_sel != "TODOS":
             df_boletines_base = df_boletines_base[df_boletines_base['Grado'].astype(str) == str(curso_sel)]
@@ -273,7 +287,6 @@ try:
         if modo_impresion == "👤 Individual":
             alumno = st.selectbox("👤 Estudiante:", sorted(df_boletines_base['Nombre_Completo'].dropna().unique()))
             if alumno:
-                import base64
                 try:
                     with open("logo.png", "rb") as img_file:
                         b64_string = base64.b64encode(img_file.read()).decode()
@@ -290,9 +303,9 @@ try:
                 
                 th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper() else f"<th>{periodo_sel}</th>"
                 
-                html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
+                html_boletin = f"""<html><head>{js_extractor}{css_vip}</head><body>
                 <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;">
-                    <button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR REPORTE OFICIAL</button>
+                    <button onclick="imprimirOficial()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR REPORTE OFICIAL</button>
                 </div>
                 <div class="b-print">
                     <img src="{URL_LOGO_OFICIAL}" class="watermark">
@@ -379,7 +392,6 @@ try:
             st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP en formato CARTA para el grado {curso_sel}.")
             
             if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary", use_container_width=True):
-                import base64
                 try:
                     with open("logo.png", "rb") as img_file:
                         b64_string = base64.b64encode(img_file.read()).decode()
@@ -388,7 +400,7 @@ try:
                     URL_LOGO_OFICIAL = ""
                     
                 th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper() else f"<th>{periodo_sel}</th>"
-                html_masivo = f"""<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR LOTE MASIVO</button></div>"""
+                html_masivo = f"""<html><head>{js_extractor}{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;"><button onclick="imprimirOficial()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR LOTE MASIVO</button></div>"""
                 
                 for i, alum in enumerate(estudiantes):
                     res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alum]
