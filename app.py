@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+import streamlit.components.v1 as components  # ⚡ SOLDADURA DE SEGURIDAD INTERNA
+import base64
+import os
 from datetime import datetime, timedelta, timezone
 
 # ---------------------------------------------------------
