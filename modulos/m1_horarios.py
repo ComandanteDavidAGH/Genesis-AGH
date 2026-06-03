@@ -10,6 +10,27 @@ def limpiar_caracteres(txt):
     return ''.join(c for c in unicodedata.normalize('NFD', txt_str) if unicodedata.category(c) != 'Mn')
 
 def renderizar(conn_sql):
+    # 👑 INYECTOR DE ESTILEMA 3D GLOBAL PARA TODOS LOS GRÁFICOS
+    st.markdown("""
+        <style>
+            div[data-testid="stPlotlyChart"] {
+                background-color: #ffffff !important;
+                padding: 18px !important;
+                border-radius: 14px !important;
+                border: 3px solid #0d1b2a !important;
+                /* ⚡ EFECTO DE RELIEVE SÓLIDO ISOMÉTRICO 3D ⚡ */
+                box-shadow: 7px 7px 0px #0d1b2a, 12px 12px 25px rgba(0,0,0,0.15) !important;
+                margin-top: 15px !important;
+                margin-bottom: 30px !important;
+                transition: transform 0.2s ease;
+            }
+            div[data-testid="stPlotlyChart"]:hover {
+                transform: translate(-2px, -2px);
+                box-shadow: 9px 9px 0px #d4af37, 15px 15px 30px rgba(0,0,0,0.2) !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>🕒 Horarios y Asignaciones Académicas</h3>", unsafe_allow_html=True)
     
     # 🛡️ ESCUDO PROTECTOR SQL
@@ -133,7 +154,7 @@ def renderizar(conn_sql):
         carga_docentes = df_carga[col_docente].value_counts().reset_index()
         carga_docentes.columns = ['Docente', 'Bloques Asignados']
         
-        # 🔄 MANIOBRA A LA INVERSA: Cambiamos ascending=True por False para voltear la orientación
+        # Orientación inversa original
         carga_docentes = carga_docentes.sort_values(by='Bloques Asignados', ascending=False)
         
         fig = px.bar(
@@ -143,7 +164,7 @@ def renderizar(conn_sql):
             orientation='h',
             title='Distribución de Intensidad Horaria Semanal por Profesor',
             labels={'Bloques Asignados': 'Número de Horas / Bloques a la Semana', 'Docente': 'Profesor'},
-            text='Bloques Asignados', # ⚡ ACTIVACIÓN DE ETIQUETA DE DATOS NATIVA
+            text='Bloques Asignados',
             color_discrete_sequence=['#0d1b2a']
         )
         
@@ -153,9 +174,9 @@ def renderizar(conn_sql):
             title_font_color="#0d1b2a",
             xaxis=dict(tickmode='linear', dtick=2, gridcolor='#e0e0e0'),
             yaxis=dict(gridcolor='rgba(0,0,0,0)'),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            margin=dict(l=150, r=50, t=50, b=50), # Más espacio derecho para la etiqueta de texto
+            plot_bgcolor='rgba(0,0,0,0)', # Transparente para que adopte el fondo del marco 3D
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=150, r=50, t=50, b=50),
             height=400
         )
         
@@ -163,7 +184,7 @@ def renderizar(conn_sql):
             marker_line_color='#d4af37',
             marker_line_width=1.5,
             opacity=0.95,
-            textposition='outside', # ⚡ IMPRIMIR ETIQUETAS POR FUERA DE LAS BARRAS
+            textposition='outside',
             textfont=dict(family="Arial Black", size=11, color="#0d1b2a")
         )
         
