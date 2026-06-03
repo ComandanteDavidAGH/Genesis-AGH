@@ -32,55 +32,50 @@ def renderizar(*args, **kwargs):
             pass
 
     if logo_base64:
-        escudo_html = f'<img src="data:image/png;base64,{logo_base64}" style="width:75px; height:auto; filter: drop-shadow(1px 1px 3px rgba(0,0,0,0.15));">'
+        escudo_html = f'<img src="data:image/png;base64,{logo_base64}" style="width:70px; height:auto; filter: drop-shadow(1px 1px 3px rgba(0,0,0,0.15));">'
     else:
-        escudo_html = '<div style="width:70px; height:70px; background-color:#0d1b2a; border:2px solid #d4af37; border-radius:50%;"></div>'
+        escudo_html = '<div style="width:65px; height:65px; background-color:#0d1b2a; border:2px solid #d4af37; border-radius:50%;"></div>'
 
-    # 👑 ESCUDO DE PRESIÓN RECTÓRICO: Forzado absoluto a una sola hoja limpia
+    # 👑 MÁSCARA DE IMPRESIÓN INVERSA: Forzado absoluto a 1 sola hoja carta sin filtraciones
     st.markdown("""
         <style>
             @media print {
-                /* 1. Ocultar absolutamente toda la estructura del software, títulos, fondos laterales y botones */
-                header, footer, [data-testid="stSidebar"], [data-testid="stHeader"], h3,
-                .no-print, .stButton, div.block-container button, div.row-widget, .stSelectbox {
-                    display: none !important;
+                /* 1. Ocultar de forma fulminante absolutamente todo el universo de la página web */
+                body * {
+                    visibility: hidden !important;
                 }
-                
-                /* 2. PURGA DE FONDOS PARÁSITOS: Evita que marcas de agua externas generen hojas extras */
-                body, .main, .block-container, div[data-testid="stVerticalBlock"] {
-                    background-image: none !important;
-                    background-color: #ffffff !important;
-                    padding: 0px !important;
-                    margin: 0px !important;
-                    top: 0px !important;
+                /* 2. Hacer visible única y exclusivamente nuestra tarjeta del boletín insignia */
+                .boletin-insignia-box, .boletin-insignia-box * {
+                    visibility: visible !important;
                 }
-                
-                /* 3. Ajustar la caja insignia para que llene la hoja carta de forma milimétrica */
+                /* 3. Clavar el boletín en la esquina superior izquierda del papel anulando el espacio muerto */
                 .boletin-insignia-box {
+                    position: absolute !important;
+                    left: 0px !important;
+                    top: 0px !important;
+                    width: 100% !important;
+                    margin: 0px !important;
+                    padding: 15px !important;
                     border: 3px solid #0d1b2a !important;
                     box-shadow: none !important;
-                    margin: 0px auto !important;
-                    padding: 18px !important;
-                    width: 100% !important;
+                    box-sizing: border-box !important;
                     page-break-inside: avoid !important;
                     page-break-after: avoid !important;
                 }
+                /* 4. COMPACTACIÓN DE ALTA DENSIDAD: Forzar empaquetado vertical para las 12 materias */
+                .boletin-insignia-box table { margin-bottom: 6px !important; }
+                .boletin-insignia-box th { padding: 4px !important; font-size: 10.5px !important; }
+                .boletin-insignia-box td { padding: 2px 5px !important; font-size: 9.5px !important; line-height: 1.05 !important; }
+                .boletin-insignia-box .logro-text { padding: 2px 8px 3px 8px !important; font-size: 8.5px !important; line-height: 1.1 !important; }
+                .boletin-insignia-box .seccion-firmas { margin-top: 18px !important; }
                 
-                /* 4. Compactación de tipografías y celdas para prevenir saltos de página */
-                .boletin-insignia-box table { margin-bottom: 8px !important; }
-                .boletin-insignia-box th { padding: 5px !important; font-size: 11px !important; }
-                .boletin-insignia-box td { padding: 3px 6px !important; font-size: 10px !important; line-height: 1.1 !important; }
-                .boletin-insignia-box .logro-row { padding: 3px 8px 4px 8px !important; font-size: 9.5px !important; }
-                .boletin-insignia-box .seccion-firmas { margin-top: 30px !important; }
-
-                /* 5. Forzar al controlador del navegador a bloquear el lienzo en 1 sola hoja */
                 @page {
                     size: letter portrait;
                     margin: 0.3in !important;
                 }
             }
             
-            /* Estilización elegante de los botones ejecutivos nativos en pantalla */
+            /* Estilización de los botones nativos en pantalla */
             div.stButton > button {
                 background-color: #0d1b2a !important;
                 color: white !important;
@@ -103,7 +98,7 @@ def renderizar(*args, **kwargs):
 
     st.markdown("<h3 class='no-print' style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
     
-    # 🔄 RECEPTOR EXCLUSIVO DE ENLACE DE CALIFICACIONES
+    # RECEPTOR DE ENLACE DE CALIFICACIONES
     df_notas = args[0] if len(args) >= 1 and isinstance(args[0], pd.DataFrame) else None
     conn_sql = args[2] if len(args) >= 3 else None
 
@@ -122,7 +117,7 @@ def renderizar(*args, **kwargs):
     col_materia = "MATERIA"
     col_grado = "GRADO"
 
-    # ⚡ SECCIÓN DE MANDOS COMPACTA HORIZONTAL CENTRAL
+    # ⚡ SECCIÓN DE MANDOS COMPACTA HORIZONTAL CENTRAL ORIGINAL
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
     c_modo, c_per, c_grad, c_est = st.columns([1.1, 1.4, 1.1, 2.2])
     
@@ -183,7 +178,7 @@ def renderizar(*args, **kwargs):
         html_boletin = f"""
         <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:22px; margin-top:5px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.06);">
             
-            <table style="width:100%; border-collapse:collapse; margin-bottom:12px;">
+            <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
                 <tr>
                     <td style="width:12%; text-align:left; vertical-align:middle;">{escudo_html}</td>
                     <td style="width:68%; text-align:center; vertical-align:middle;">
@@ -199,12 +194,12 @@ def renderizar(*args, **kwargs):
                 </tr>
             </table>
             
-            <table style="width:100%; border-collapse:collapse; margin-bottom:12px; border:2px solid #0d1b2a; background-color:#f8f9fa; box-shadow: 2px 2px 0px #0d1b2a;">
+            <table style="width:100%; border-collapse:collapse; margin-bottom:10px; border:2px solid #0d1b2a; background-color:#f8f9fa; box-shadow: 2px 2px 0px #0d1b2a;">
                 <tr>
-                    <td style="padding:7px; border:1px solid #0d1b2a; font-family:'Arial Black'; font-size:11px; color:#0d1b2a; width:15%;">ESTUDIANTE:</td>
-                    <td style="padding:7px; border:1px solid #0d1b2a; font-family:'Arial'; font-weight:bold; font-size:12px; color:#000000; width:55%;">{estudiante}</td>
-                    <td style="padding:7px; border:1px solid #0d1b2a; font-family:'Arial Black'; font-size:11px; color:#0d1b2a; width:12%;">GRADO:</td>
-                    <td style="padding:7px; border:1px solid #0d1b2a; font-family:'Arial'; font-weight:bold; font-size:12px; color:#000000; width:18%; text-align:center;">{grado_est}</td>
+                    <td style="padding:6px; border:1px solid #0d1b2a; font-family:'Arial Black'; font-size:11px; color:#0d1b2a; width:15%;">ESTUDIANTE:</td>
+                    <td style="padding:6px; border:1px solid #0d1b2a; font-family:'Arial'; font-weight:bold; font-size:12px; color:#000000; width:55%;">{estudiante}</td>
+                    <td style="padding:6px; border:1px solid #0d1b2a; font-family:'Arial Black'; font-size:11px; color:#0d1b2a; width:12%;">GRADO:</td>
+                    <td style="padding:6px; border:1px solid #0d1b2a; font-family:'Arial'; font-weight:bold; font-size:12px; color:#000000; width:18%; text-align:center;">{grado_est}</td>
                 </tr>
             </table>
         """
@@ -214,13 +209,13 @@ def renderizar(*args, **kwargs):
             <table style="width:100%; border-collapse:collapse; font-family:'Arial', sans-serif; border: 2px solid #0d1b2a;">
                 <thead>
                     <tr style="background-color:#0d1b2a; color:white; border:2px solid #0d1b2a; text-align:center; font-size:11px;">
-                        <th style="padding:7px; border:1px solid #d4af37; text-align:left; font-family:'Arial Black';">MATERIA</th>
-                        <th style="padding:7px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P1</th>
-                        <th style="padding:7px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P2</th>
-                        <th style="padding:7px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P3</th>
-                        <th style="padding:7px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P4</th>
-                        <th style="padding:7px; border:1px solid #d4af37; font-family:'Arial Black'; width:9%;">DEF</th>
-                        <th style="padding:7px; border:1px solid #d4af37; font-family:'Arial Black'; width:16%;">DESEMPEÑO</th>
+                        <th style="padding:6px; border:1px solid #d4af37; text-align:left; font-family:'Arial Black';">MATERIA</th>
+                        <th style="padding:6px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P1</th>
+                        <th style="padding:6px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P2</th>
+                        <th style="padding:6px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P3</th>
+                        <th style="padding:6px; border:1px solid #d4af37; font-family:'Arial Black'; width:7%;">P4</th>
+                        <th style="padding:6px; border:1px solid #d4af37; font-family:'Arial Black'; width:9%;">DEF</th>
+                        <th style="padding:6px; border:1px solid #d4af37; font-family:'Arial Black'; width:16%;">DESEMPEÑO</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -230,9 +225,9 @@ def renderizar(*args, **kwargs):
             <table style="width:100%; border-collapse:collapse; font-family:'Arial', sans-serif; border: 2px solid #0d1b2a;">
                 <thead>
                     <tr style="background-color:#0d1b2a; color:white; border:2px solid #0d1b2a; font-size:11px;">
-                        <th style="padding:8px; border:1px solid #d4af37; text-align:left; font-family:'Arial Black';">MATERIA</th>
-                        <th style="padding:8px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; width:18%;">NOTA {periodo_activo}</th>
-                        <th style="padding:8px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; width:22%;">DESEMPEÑO</th>
+                        <th style="padding:6px; border:1px solid #d4af37; text-align:left; font-family:'Arial Black';">MATERIA</th>
+                        <th style="padding:6px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; width:18%;">NOTA {periodo_activo}</th>
+                        <th style="padding:6px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; width:22%;">DESEMPEÑO</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -254,17 +249,17 @@ def renderizar(*args, **kwargs):
                 color_des = "#cc0000" if n_def < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
 
                 html_boletin += f"""
-                    <tr style="text-align:center; background-color:#ffffff; font-size:11.5px;">
-                        <td style="padding:5px; font-weight:bold; color:#0d1b2a; border-left:1px solid #0d1b2a; border-right:1px solid #e0e0e0; text-align:left;">{materia_nom}</td>
-                        <td style="padding:5px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p1 < 6.0 else '#000000'}">{n_p1:.1f}</td>
-                        <td style="padding:5px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p2 < 6.0 else '#000000'}">{n_p2:.1f}</td>
-                        <td style="padding:5px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p3 < 6.0 else '#000000'}">{n_p3:.1f}</td>
-                        <td style="padding:5px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p4 < 6.0 else '#000000'}">{n_p4:.1f}</td>
-                        <td style="padding:5px; font-family:'Arial Black'; font-weight:900; border-right:1px solid #e0e0e0; color:{color_def}">{n_def:.1f}</td>
-                        <td style="padding:5px; font-family:'Arial Black'; font-weight:bold; border-right:1px solid #0d1b2a; color:{color_des}">{des_txt}</td>
+                    <tr style="text-align:center; background-color:#ffffff; font-size:11px;">
+                        <td style="padding:4px; font-weight:bold; color:#0d1b2a; border-left:1px solid #0d1b2a; border-right:1px solid #e0e0e0; text-align:left;">{materia_nom}</td>
+                        <td style="padding:4px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p1 < 6.0 else '#000000'}">{n_p1:.1f}</td>
+                        <td style="padding:4px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p2 < 6.0 else '#000000'}">{n_p2:.1f}</td>
+                        <td style="padding:4px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p3 < 6.0 else '#000000'}">{n_p3:.1f}</td>
+                        <td style="padding:4px; border-right:1px solid #e0e0e0; color:{'#cc0000' if n_p4 < 6.0 else '#000000'}">{n_p4:.1f}</td>
+                        <td style="padding:4px; font-family:'Arial Black'; font-weight:900; border-right:1px solid #e0e0e0; color:{color_def}">{n_def:.1f}</td>
+                        <td style="padding:4px; font-family:'Arial Black'; font-weight:bold; border-right:1px solid #0d1b2a; color:{color_des}">{des_txt}</td>
                     </tr>
                     <tr style="background-color:#ffffff;">
-                        <td colspan="7" class="logro-row" style="padding:3px 10px 5px 10px; font-style:italic; font-size:10px; color:#4a4a4a; border-left:1px solid #0d1b2a; border-right:1px solid #0d1b2a; border-bottom:2px solid #0d1b2a; text-align:left; background-color:#fafafa; line-height:1.2;">
+                        <td colspan="7" class="logro-text" style="padding:2px 8px 3px 8px; font-style:italic; font-size:9.5px; color:#4a4a4a; border-left:1px solid #0d1b2a; border-right:1px solid #0d1b2a; border-bottom:2px solid #0d1b2a; text-align:left; background-color:#fafafa; line-height:1.1;">
                             <strong style="color:#cc8800;">LOGRO:</strong> {logro_render}
                         </td>
                     </tr>
@@ -278,13 +273,13 @@ def renderizar(*args, **kwargs):
                 color_des = "#cc0000" if nota_val < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
 
                 html_boletin += f"""
-                    <tr style="background-color:#ffffff; font-size:11.5px;">
-                        <td style="padding:6px 10px; font-weight:bold; color:#0d1b2a; border-left:1px solid #0d1b2a; border-right:1px solid #e0e0e0;">{materia_nom}</td>
-                        <td style="padding:6px 10px; text-align:center; font-family:'Arial Black'; font-weight:900; color:{color_nota}; border-right:1px solid #e0e0e0;">{nota_val:.1f}</td>
-                        <td style="padding:6px 10px; text-align:center; font-family:'Arial Black'; font-weight:bold; color:{color_des}; border-right:1px solid #0d1b2a;">{des_txt}</td>
+                    <tr style="background-color:#ffffff; font-size:11px;">
+                        <td style="padding:4px 8px; font-weight:bold; color:#0d1b2a; border-left:1px solid #0d1b2a; border-right:1px solid #e0e0e0;">{materia_nom}</td>
+                        <td style="padding:4px 8px; text-align:center; font-family:'Arial Black'; font-weight:900; color:{color_nota}; border-right:1px solid #e0e0e0;">{nota_val:.1f}</td>
+                        <td style="padding:4px 8px; text-align:center; font-family:'Arial Black'; font-weight:bold; color:{color_des}; border-right:1px solid #0d1b2a;">{des_txt}</td>
                     </tr>
                     <tr style="background-color:#ffffff;">
-                        <td colspan="3" class="logro-row" style="padding:3px 10px 5px 10px; font-style:italic; font-size:10px; color:#4a4a4a; border-left:1px solid #0d1b2a; border-right:1px solid #0d1b2a; border-bottom:2px solid #0d1b2a; text-align:left; background-color:#fafafa; line-height:1.2;">
+                        <td colspan="3" class="logro-text" style="padding:2px 8px 3px 8px; font-style:italic; font-size:9.5px; color:#4a4a4a; border-left:1px solid #0d1b2a; border-right:1px solid #0d1b2a; border-bottom:2px solid #0d1b2a; text-align:left; background-color:#fafafa; line-height:1.1;">
                             <strong style="color:#cc8800;">LOGRO:</strong> {logro_render}
                         </td>
                     </tr>
@@ -294,14 +289,14 @@ def renderizar(*args, **kwargs):
                 </tbody>
             </table>
             
-            <div class="seccion-firmas" style="margin-top:30px; display:flex; justify-content:space-between; padding:0 30px;" class="page-break-avoid">
+            <div class="seccion-firmas" style="margin-top:20px; display:flex; justify-content:space-between; padding:0 30px;" class="page-break-avoid">
                 <div style="text-align:center; width:38%;">
-                    <div style="border-bottom:1.5px solid #0d1b2a; width:100%; height:25px;"></div>
-                    <div style="font-size:9.5px; font-family:'Arial Black'; color:#0d1b2a; margin-top:5px; text-transform:uppercase;">RECTORÍA INSTITUCIONAL</div>
+                    <div style="border-bottom:1.5px solid #0d1b2a; width:100%; height:22px;"></div>
+                    <div style="font-size:9px; font-family:'Arial Black'; color:#0d1b2a; margin-top:4px; text-transform:uppercase;">RECTORÍA INSTITUCIONAL</div>
                 </div>
                 <div style="text-align:center; width:38%;">
-                    <div style="border-bottom:1.5px solid #0d1b2a; width:100%; height:25px;"></div>
-                    <div style="font-size:9.5px; font-family:'Arial Black'; color:#0d1b2a; margin-top:5px; text-transform:uppercase;">COORDINACIÓN ACADÉMICA</div>
+                    <div style="border-bottom:1.5px solid #0d1b2a; width:100%; height:22px;"></div>
+                    <div style="font-size:9px; font-family:'Arial Black'; color:#0d1b2a; margin-top:4px; text-transform:uppercase;">COORDINACIÓN ACADÉMICA</div>
                 </div>
             </div>
         </div>
