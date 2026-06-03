@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import unicodedata
 
 def limpiar_caracteres(txt):
@@ -26,14 +27,14 @@ def renderizar(conn_sql):
     # Estandarizamos los nombres de las columnas a mayúsculas limpias
     df_horarios.columns = [str(c).upper().strip() for c in df_horarios.columns]
     
-    # Mapeo automatizado de columnas por posición absoluta (Inmune a cambios)
+    # Mapeo automatizado de columnas por posición absoluta
     col_dia = df_horarios.columns[0]      # DÍA
     col_bloque = df_horarios.columns[1]   # BLOQUE_HORARIO
     col_grado = df_horarios.columns[2]    # GRADO
     col_materia = df_horarios.columns[3]  # MATERIA
     col_docente = df_horarios.columns[4]  # DOCENTE
 
-    # 🎯 CONTROLADOR DUAL: Alternar vistas respetando la simetría visual
+    # 🎯 CONTROLADOR DUAL: Alternar vistas
     tipo_filtro = st.radio(
         "🛠️ **Seleccione la Modalidad de Consulta:**", 
         ["🔍 Ver por Curso / Grado", "👤 Ver por Docente / Profesor"], 
@@ -61,8 +62,6 @@ def renderizar(conn_sql):
 
     # Días de la semana normalizados
     dias_secuencia = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES"]
-    
-    # Conservamos el orden cronológico general de las horas del Excel completo
     bloques_ordenados = [str(b).strip() for b in list(df_horarios[col_bloque].dropna().unique())]
 
     # 👑 CONSTRUCCIÓN DE LA TABLA BELLA INTEGRADA
@@ -106,7 +105,6 @@ def renderizar(conn_sql):
                     docente = str(celda[col_docente].iloc[0]).strip()
                     grado = str(celda[col_grado].iloc[0]).strip()
                     
-                    # 💡 DINAMISMO TÁCTICO: Muestra el Grado si consulta por Docente, o el Docente si consulta por Grado
                     sub_texto = f"🏫 Grado: {grado}" if modo_docente else f"👤 {docente}"
                     
                     html_table += (
@@ -121,3 +119,54 @@ def renderizar(conn_sql):
 
     html_table += '</tbody></table><br>'
     st.html(html_table)
+
+    # 📊 RESTAURACIÓN DE ASIGNACIONES (Gráfico de Carga Laboral Docente)
+    st.markdown("---")
+    st.markdown("<h4 style='color:#0d1b2a; font-family:Arial Black;'>📊 Análisis Estadístico de Carga Laboral Docente</h4>", unsafe_allow_html=True)
+    
+    # Filtramos la base completa quitando los descansos para calcular la carga real
+    df_carga = df_horarios[
+        (~df_horarios[col_materia].astype(str).str.upper().str.strip().isin(['DESCANSO', 'RECREO', '-', ''])) & 
+        (~df_horarios[col_bloque].astype(str).str.upper().str.strip().str.contains('DESCANSO|RECREO'))
+    ].copy()
+    
+    if not df_carga.empty:
+        # Contamos cuántos bloques tiene asignado cada profesor
+        carga_docentes = df_carga[col_docente].value_counts().reset_index()
+        carga_docentes.columns = ['Docente', 'Bloques Asignados']
+        carga_docentes = carga_docentes.sort_values(by='Bloques Asignados', ascending=True)
+        
+        # Generamos el gráfico de barras ejecutivas
+        fig = px.bar(
+            carga_docentes, 
+            x='Bloques Asignados', 
+            y='Docente', 
+            orientation='h',
+            title='Distribución de Intensidad Horaria Semanal por Profesor',
+            labels={'Bloques Asignados': 'Número de Horas / Bloques a la Semana', 'Docente': 'Profesor'},
+            color_discrete_sequence=['#0d1b2a'] # Color institucional azul oscuro
+        )
+        
+        # Estilizado premium de alta definición del lienzo gráfico
+        fig.update_layout(
+            font_family="Arial",
+            title_font_family="Arial Black",
+            title_font_color="#0d1b2a",
+            xaxis=dict(tickmode='linear', dtick=2, gridcolor='#e0e0e0'),
+            yaxis=dict(gridcolor='rgba(0,0,0,0)'),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            margin=dict(l=150, r=20, t=50, b=50),
+            height=400
+        )
+        
+        # Efecto de resaltado en bordes para emular relieve ejecutivo
+        fig.update_traces(
+            marker_line_color='#d4af37', # Borde Dorado institucional
+            marker_line_width=1.5,
+            opacity=0.95
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No hay suficientes datos de asignaciones para estructurar el gráfico estadístico.")
