@@ -14,10 +14,11 @@ def registrar_bitacora(usuario, rol, accion):
     })
 
 def renderizar(df, periodo_sel, conn):
-    # 🚀 ENVOLTORIO EXTERNO PREMIUM PARA EL EDITOR (stDataEditor)
+    # 🚀 ENVOLTORIO EXTERNO PREMIUM (Caja fuerte para la tabla)
     st.markdown("""
     <style>
-    div[data-testid="stDataEditor"] {
+    /* Aplica el blindaje oscuro y la sombra a la tabla de edición */
+    div[data-testid="stDataEditor"], div[data-testid="stDataFrame"] {
         border: 3px solid #0d1b2a !important;
         border-radius: 0 0 8px 8px !important;
         box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
@@ -29,19 +30,16 @@ def renderizar(df, periodo_sel, conn):
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>✍️ Registro de Calificaciones</h3>", unsafe_allow_html=True)
 
-    # --- 🛡️ ESCUDO DE SEGURIDAD (TRADUCIDO A SQL SUPABASE) ---
+    # --- 🛡️ ESCUDO DE SEGURIDAD ---
     try:
-        # Consultamos a Supabase la tabla de configuración
         if 'df_config_seguridad' not in st.session_state:
             st.session_state.df_config_seguridad = conn.query("SELECT * FROM configuracion;", ttl=600)
             
         df_conf_shield = st.session_state.df_config_seguridad
         
-        # En SQL las columnas a veces bajan en minúsculas, aseguramos el cruce:
         col_periodo = 'periodo' if 'periodo' in df_conf_shield.columns else 'Periodo'
         col_estado = 'estado' if 'estado' in df_conf_shield.columns else 'Estado'
         
-        # Buscamos el estado del periodo actual
         filtro_estado = df_conf_shield[df_conf_shield[col_periodo].astype(str).str.upper() == str(periodo_sel).upper()]
         
         if not filtro_estado.empty:
@@ -57,7 +55,7 @@ def renderizar(df, periodo_sel, conn):
         st.warning("No hay estudiantes asignados para este grado y materia.")
         return
 
-    # 🎯 CORTE DE DECIMALES: format="%.1f" restringe la vista a 1 solo número
+    # 🎯 CORTE DE DECIMALES A 1 POSICIÓN (Format="%.1f")
     config_notas = { 
         'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
         'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
@@ -75,7 +73,6 @@ def renderizar(df, periodo_sel, conn):
             
             if cambios:
                 with st.spinner("🚀 Transmitiendo datos a la Bóveda SQL..."):
-                    # Aplicamos cambios locales
                     for fila_posicional, valores_nuevos in cambios.items():
                         idx_real = df.index[int(fila_posicional)]
                         for columna, valor in valores_nuevos.items():
@@ -83,7 +80,6 @@ def renderizar(df, periodo_sel, conn):
                     
                     st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
 
-                    # Preparamos el empaquetado final
                     df_para_sql = st.session_state.df_maestro.copy()
                     if 'Grado' in df_para_sql.columns: 
                         df_para_sql = df_para_sql.drop(columns=['Grado'])
@@ -95,14 +91,10 @@ def renderizar(df, periodo_sel, conn):
                     })
                     
                     try:
-                        # ⚡ ESCRITURA DIRECTA A SUPABASE USANDO EL MOTOR SQL
                         df_para_sql.to_sql('notas_consolidadas', con=conn.engine, if_exists='replace', index=False)
-                        
                         st.success("✅ ¡SATÉLITE SQL SINCRONIZADO!")
                         registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
                         st.balloons()
-                        
-                        # Vaciamos la memoria caché para que los boletines reflejen los cambios al instante
                         st.cache_data.clear()
                         st.rerun()
                     except Exception as e:
@@ -110,25 +102,21 @@ def renderizar(df, periodo_sel, conn):
             else:
                 st.warning("⚠️ No hay cambios para guardar.")
 
-    # ⚡ MOTOR DE PINTURA PANDAS STYLER
+    # ⚡ MOTOR DE PINTURA INTERNA PANDAS STYLER
     def pintar_celdas(val):
         try:
             n = float(val)
-            if n < 6.0:
-                return 'color: #cc0000; font-weight: bold; background-color: #ffe6e6;'
-            elif n >= 9.0:
-                return 'color: #00994c; font-weight: bold; background-color: #e6ffe6;'
-            elif n >= 6.0:
-                return 'color: #0d1b2a; font-weight: bold;'
+            if n < 6.0: return 'color: #cc0000; font-weight: bold; background-color: #ffe6e6;'
+            elif n >= 9.0: return 'color: #00994c; font-weight: bold; background-color: #e6ffe6;'
+            elif n >= 6.0: return 'color: #0d1b2a; font-weight: bold;'
             return ''
-        except:
-            return ''
+        except: return ''
 
     columnas_notas = [c for c in ['P1', 'P2', 'P3', 'P4', 'PROMEDIO'] if c in df.columns]
     df_pintado = df.style.map(pintar_celdas, subset=columnas_notas).format("{:.1f}", subset=columnas_notas)
 
-    # 👑 FALSO ENCABEZADO VIP
+    # 👑 FALSO ENCABEZADO VIP PARA CORONAR LA TABLA
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
     
-    # 🖨️ RENDERIZADO DEL EDITOR
+    # 🖨️ RENDERIZADO DEL EDITOR ENCAPSULADO
     st.data_editor(df_pintado, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
