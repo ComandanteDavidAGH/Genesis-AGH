@@ -213,12 +213,12 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP TAMAÑO CARTA DIRECTO EN EL NÚCLEO
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP TAMAÑO CARTA ALTA DENSIDAD
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
         
-        # 🖨️ HOJA DE ESTILOS VIP: Calibrada geométricamente para subir el boletín y llenar 1 SOLA HOJA TAMAÑO CARTA
+        # 🖨️ HOJA DE ESTILOS VIP: ANULACIÓN DE ENCABEZADOS DEL NAVEGADOR (Margin Cero Absoluto)
         css_vip = """<style>
             body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
             .b-print { position: relative; padding: 25px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
@@ -232,21 +232,21 @@ try:
             .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
             
             @media print { 
-                /* 1. MÁRGENES FÍSICOS AL MÍNIMO PARA EXPULSAR ENCABEZADOS DEL NAVEGADOR */
-                @page { size: letter portrait; margin: 8mm !important; } 
+                /* 1. MÁRGENES CERO ABSOLUTO: Obliga al navegador a NO imprimir sus textos predeterminados de fecha y URL */
+                @page { size: letter portrait; margin: 0 !important; } 
                 
-                body, html { background: white; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+                /* 2. RECREACIÓN DEL MARGEN VIRTUAL: Le damos aire interno a la hoja para que la tabla no toque el borde del papel */
+                body, html { background: white; margin: 0 !important; padding: 10mm 12mm 10mm 12mm !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+                
                 .no-print { display: none !important; } 
                 
-                /* 2. ELEVACIÓN TÁCTICA DEL CONTENEDOR HACIA ARRIBA */
-                .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin-top: -15px !important; margin-bottom: 0 !important; } 
-                
-                /* 3. EXPANSIÓN GEOMÉTRICA DE CELDAS PARA LLENAR EL ESPACIO VACÍO */
+                /* 3. EXPANSIÓN Y COMPRESIÓN TÁCTICA DE CELDAS */
+                .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; } 
                 .table-custom th { padding: 6px !important; font-size: 11px !important; }
                 .table-custom td { padding: 5px !important; font-size: 10.5px !important; }
                 .logro-texto-clase { padding: 4px 8px !important; font-size: 10px !important; line-height: 1.15 !important; }
                 
-                /* 4. REDUCCIÓN DEL AIRE DE LAS FIRMAS PARA EVITAR SALTO A PÁGINA 2 */
+                /* 4. SECCIÓN DE FIRMAS ELEVADA PARA NO ROMPER LA HOJA */
                 .firmas-container { margin-top: 30px !important; font-size: 12px !important; }
                 .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             }
@@ -267,6 +267,7 @@ try:
         if modo_impresion == "👤 Individual":
             alumno = st.selectbox("👤 Estudiante:", sorted(df_boletines_base['Nombre_Completo'].dropna().unique()))
             if alumno:
+                import base64
                 try:
                     with open("logo.png", "rb") as img_file:
                         b64_string = base64.b64encode(img_file.read()).decode()
@@ -294,7 +295,7 @@ try:
                             <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="80"></td>
                             <td style="text-align:center;">
                                 <h2 style="margin:0; color:#0d1b2a; font-size:18px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                                <p style="margin:0; font-size:13px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                                <p style="margin:0; font-size:13px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                             </td>
                             <td style="text-align:right; width:15%;">
                                 <div style="border:3px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
@@ -372,6 +373,7 @@ try:
             st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP en formato CARTA para el grado {curso_sel}.")
             
             if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary", use_container_width=True):
+                import base64
                 try:
                     with open("logo.png", "rb") as img_file:
                         b64_string = base64.b64encode(img_file.read()).decode()
@@ -460,7 +462,7 @@ try:
                         except:
                             logro_texto = row.get('LOGRO', 'Error al buscar logro')
                         
-                        html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                        html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.15;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
                     html_masivo += """
                         </table>
