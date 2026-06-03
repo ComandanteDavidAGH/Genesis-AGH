@@ -35,6 +35,7 @@ def renderizar(conn_sql):
     
     # 🛡️ ESCUDO PROTECTOR SQL
     try:
+        # Se asume que conn_sql cuenta con el método query optimizado
         df_horarios = conn_sql.query("SELECT * FROM db_horarios;")
     except Exception as e:
         st.error(f"❌ Error crítico de enlace SQL: {e}")
@@ -45,10 +46,10 @@ def renderizar(conn_sql):
         st.info("💡 *Nota de Rectoría:* Recuerde subir el archivo Excel de respaldo en la sección de 'Bitácora y Backup'.")
         return
 
-    # Estandarizamos los nombres de las columnas a mayúsculas limpias
-    df_horarios.columns = [str(c).upper().strip() for c in df_horarios.columns]
+    # Estandarizamos los nombres de las columnas a mayúsculas limpias en una sola línea vectorizada
+    df_horarios.columns = df_horarios.columns.str.upper().str.strip()
     
-    # Mapeo automatizado de columnas por posición absoluta
+    # Mapeo automatizado de columnas por posición absoluta de forma segura
     col_dia = df_horarios.columns[0]      # DÍA
     col_bloque = df_horarios.columns[1]   # BLOQUE_HORARIO
     col_grado = df_horarios.columns[2]    # GRADO
@@ -77,16 +78,23 @@ def renderizar(conn_sql):
         st.info("No se encontraron registros de horarios para la selección actual.")
         return
 
-    # Filtro extractor de caracteres para blindar los cruces
+    # Normalización rápida indexada
     df_filtrado['DIA_CLEAN'] = df_filtrado[col_dia].apply(limpiar_caracteres)
     df_filtrado['BLOQUE_CLEAN'] = df_filtrado[col_bloque].astype(str).str.strip()
 
-    # Días de la semana normalizados
+    # Días de la semana normalizados y orden secuencial estable
     dias_secuencia = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES"]
     bloques_ordenados = [str(b).strip() for b in list(df_horarios[col_bloque].dropna().unique())]
 
-    # 👑 CONSTRUCCIÓN DE LA TABLA BELLA INTEGRADA
-    html_table = (
+    # 🚀 MAPEO EN O(1): Construimos un mapa llave -> registro para no volver a consultar a Pandas en el bucle
+    # Llave: (BLOQUE_CLEAN, DIA_CLEAN)
+    mapa_horario = {}
+    for _, fila in df_filtrado.iterrows():
+        llave = (fila['BLOQUE_CLEAN'], fila['DIA_CLEAN'])
+        mapa_horario[llave] = fila
+
+    # 👑 CONSTRUCCIÓN DE LA TABLA BELLA INTEGRADA (Uso de listas para velocidad de memoria)
+    html_lineas = [
         '<table style="width:100%; border-collapse:collapse; margin-top:20px; font-family:\'Arial\', sans-serif; '
         'box-shadow:4px 4px 15px rgba(0,0,0,0.1); border:3px solid #0d1b2a; border-radius:8px; overflow:hidden;">'
         '<thead>'
@@ -100,51 +108,54 @@ def renderizar(conn_sql):
         '</tr>'
         '</thead>'
         '<tbody>'
-    )
+    ]
 
     for bloque in bloques_ordenados:
-        df_bloque_actual = df_filtrado[df_filtrado['BLOQUE_CLEAN'] == bloque]
         es_recreo = "DESCANSO" in bloque.upper() or "RECREO" in bloque.upper()
         
         if es_recreo:
-            html_table += (
+            html_lineas.append(
                 f'<tr style="background-color:#fff4e6; text-align:center;">'
                 f'<td style="padding:12px; font-weight:bold; color:#0d1b2a; border:1px solid #0d1b2a; background-color:#f0f2f6; font-size:12px; font-family:\'Arial Black\';">{bloque}</td>'
                 f'<td colspan="5" style="padding:12px; font-family:\'Arial Black\'; color:#cc8800; font-size:13px; letter-spacing:5px; text-transform:uppercase; border:1px solid #0d1b2a; font-weight:900;">☕ ✨ D E S C A N S O ✨ ☕</td>'
                 f'</tr>'
             )
         else:
-            html_table += (
+            html_lineas.append(
                 f'<tr style="text-align:center; background-color:#ffffff;">'
                 f'<td style="padding:12px; font-weight:bold; color:#0d1b2a; border:1px solid #0d1b2a; background-color:#f8f9fa; font-size:12px; font-family:\'Arial Black\';">{bloque}</td>'
             )
             for dia in dias_secuencia:
-                celda = df_bloque_actual[df_bloque_actual['DIA_CLEAN'] == dia]
+                # 🚀 Extracción directa desde el mapa de RAM sin recorrer Pandas (Ultra Veloz)
+                celda = mapa_horario.get((bloque, dia))
                 
-                if not celda.empty:
-                    materia = str(celda[col_materia].iloc[0]).strip()
-                    docente = str(celda[col_docente].iloc[0]).strip()
-                    grado = str(celda[col_grado].iloc[0]).strip()
+                if celda is not None:
+                    materia = str(celda[col_materia]).strip()
+                    docente = str(celda[col_docente]).strip()
+                    grado = str(celda[col_grado]).strip()
                     
                     sub_texto = f"🏫 Grado: {grado}" if modo_docente else f"👤 {docente}"
                     
-                    html_table += (
+                    html_lineas.append(
                         f'<td style="padding:12px; border:1px solid #e0e0e0; background-color:#ffffff; vertical-align:middle;">'
                         f'<div style="color:#000000; font-weight:900; font-size:13px; font-family:\'Arial\', sans-serif; line-height:1.2;">{materia}</div>'
                         f'<div style="color:#cc8800; font-size:11px; font-weight:bold; margin-top:5px; font-family:\'Arial\';">{sub_texto}</div>'
                         f'</td>'
                     )
                 else:
-                    html_table += '<td style="padding:12px; border:1px solid #e0e0e0; background-color:#ffffff; color:#b0b0b0; font-weight:bold;">-</td>'
-            html_table += '</tr>'
+                    html_lineas.append('<td style="padding:12px; border:1px solid #e0e0e0; background-color:#ffffff; color:#b0b0b0; font-weight:bold;">-</td>')
+            html_lineas.append('</tr>')
 
-    html_table += '</tbody></table><br>'
-    st.html(html_table)
+    html_lineas.append('</tbody></table><br>')
+    
+    # Renderizado seguro e instantáneo usando markdown estándar
+    st.markdown("".join(html_lineas), unsafe_allow_html=True)
 
-    # 📊 RESTAURACIÓN DE ASIGNACIONES CORREGIDA COLOQUIAL
+    # 📊 ANALÍTICA DE CARGA ACADÉMICA
     st.markdown("---")
     st.markdown("<h4 style='color:#0d1b2a; font-family:Arial Black;'>📊 Análisis Estadístico de Carga Laboral Docente</h4>", unsafe_allow_html=True)
     
+    # Filtrado vectorizado de alta velocidad
     df_carga = df_horarios[
         (~df_horarios[col_materia].astype(str).str.upper().str.strip().isin(['DESCANSO', 'RECREO', '-', ''])) & 
         (~df_horarios[col_bloque].astype(str).str.upper().str.strip().str.contains('DESCANSO|RECREO'))
@@ -153,9 +164,11 @@ def renderizar(conn_sql):
     if not df_carga.empty:
         carga_docentes = df_carga[col_docente].value_counts().reset_index()
         carga_docentes.columns = ['Docente', 'Bloques Asignados']
-        
-        # Orientación inversa original
         carga_docentes = carga_docentes.sort_values(by='Bloques Asignados', ascending=False)
+        
+        # Calcular altura dinámica del gráfico según el número de docentes para evitar solapamiento
+        num_docentes = len(carga_docentes)
+        altura_dinamica = max(350, num_docentes * 35)
         
         fig = px.bar(
             carga_docentes, 
@@ -163,7 +176,7 @@ def renderizar(conn_sql):
             y='Docente', 
             orientation='h',
             title='Distribución de Intensidad Horaria Semanal por Profesor',
-            labels={'Bloques Asignados': 'Número de Horas / Bloques a la Semana', 'Docente': 'Profesor'},
+            labels={'Bloques Asignados': 'Horas / Bloques Semanales', 'Docente': 'Profesor'},
             text='Bloques Asignados',
             color_discrete_sequence=['#0d1b2a']
         )
@@ -173,11 +186,11 @@ def renderizar(conn_sql):
             title_font_family="Arial Black",
             title_font_color="#0d1b2a",
             xaxis=dict(tickmode='linear', dtick=2, gridcolor='#e0e0e0'),
-            yaxis=dict(gridcolor='rgba(0,0,0,0)'),
-            plot_bgcolor='rgba(0,0,0,0)', # Transparente para que adopte el fondo del marco 3D
+            yaxis=dict(gridcolor='rgba(0,0,0,0)', autocrange="reversed"), # Se mantiene orden top descendente natural
+            plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=150, r=50, t=50, b=50),
-            height=400
+            height=altura_dinamica
         )
         
         fig.update_traces(
@@ -190,4 +203,4 @@ def renderizar(conn_sql):
         
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No hay suficientes datos de asignaciones para estructurar el gráfico estadístico.")
+        st.info("No hay suficientes datos de asignaciones para estructurar el gráfico de análisis.")
