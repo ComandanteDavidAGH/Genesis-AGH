@@ -15,10 +15,10 @@ def renderizar(conn_sql):
         st.info("💡 *Nota de Rectoría:* Recuerde subir el archivo Excel de respaldo en la sección de 'Bitácora y Backup'.")
         return
 
-    # Normalizar nombres de columnas a mayúsculas para evitar conflictos
+    # Normalizar nombres de columnas a mayúsculas para evitar conflictos de lectura
     df_horarios.columns = [str(c).upper().strip() for c in df_horarios.columns]
     
-    # Mapeo flexible e inteligente de columnas (Inmune a cambios de tildes o nombres)
+    # Mapeo inteligente de columnas
     col_grado = next((c for c in df_horarios.columns if c in ['GRADO', 'CURSO', 'NIVEL']), None)
     col_dia = next((c for c in df_horarios.columns if c in ['DÍA', 'DIA']), None)
     col_bloque = next((c for c in df_horarios.columns if c in ['BLOQUE_HORARIO', 'BLOQUE', 'HORA', 'HORARIO', 'BLOQUE HORARIO / JORNADA']), None)
@@ -29,7 +29,7 @@ def renderizar(conn_sql):
         st.error("🚨 **Error de Estructura:** Las columnas de la tabla en Supabase no coinciden con el formato requerido.")
         return
 
-    # Selector de Grado corporativo alineado al centro
+    # Selector institucional de Curso
     lista_grados = sorted(df_horarios[col_grado].dropna().unique().astype(str).tolist())
     grado_horario = st.selectbox("🔍 Seleccione el Grado para desplegar el Horario Oficial:", lista_grados)
     
@@ -39,15 +39,16 @@ def renderizar(conn_sql):
         st.info("No se encontraron registros de horarios para el grado seleccionado.")
         return
 
-    # Secuencia maestra de días y bloques cronológicos
+    # Días de la semana estándar
     dias_ordenados = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES"]
     
+    # Extraer el orden cronológico de las horas tal y como vienen en la base de datos
     bloques_ordenados = []
     for b in df_filtrado[col_bloque].dropna().tolist():
         if b not in bloques_ordenados:
             bloques_ordenados.append(b)
 
-    # 👑 MAQUETACIÓN DE LA "TABLA BELLA" EN ALTA DEFINICIÓN HTML/CSS
+    # 👑 ESTRUCTURA MAESTRA DE LA TABLA BELLA ORIGINAL
     html_table = """
     <table style="width:100%; border-collapse:collapse; margin-top:20px; font-family:'Arial', sans-serif; box-shadow:4px 4px 15px rgba(0,0,0,0.1); border:3px solid #0d1b2a; border-radius:8px; overflow:hidden;">
         <thead>
@@ -64,12 +65,13 @@ def renderizar(conn_sql):
     """
 
     for bloque in bloques_ordenados:
-        # Extraer registros del bloque actual para verificar si es hora de descanso general
         df_bloque_actual = df_filtrado[df_filtrado[col_bloque] == bloque]
-        es_recreo = any(str(m).upper().strip() in ['DESCANSO', 'RECREO', 'N/A'] for m in df_bloque_actual[col_materia].tolist())
+        
+        # Detectar si el bloque actual es el descanso general de la institución
+        es_recreo = "DESCANSO" in str(bloque).upper() or any(str(m).upper().strip() in ['DESCANSO', 'RECREO', 'N/A'] for m in df_bloque_actual[col_materia].tolist())
         
         if es_recreo:
-            # 🔔 FILA DE DESCANSO UNIFICADA (Estilo Premium con fondo dorado suave)
+            # ☕ RÉPLICA EXACTA DE TU FILA DE DESCANSO
             html_table += f"""
             <tr style="background-color:#fff4e6; text-align:center;">
                 <td style="padding:12px; font-weight:bold; color:#0d1b2a; border:1px solid #0d1b2a; background-color:#f0f2f6; font-size:12px; font-family:'Arial Black';">{bloque}</td>
@@ -77,12 +79,14 @@ def renderizar(conn_sql):
             </tr>
             """
         else:
-            html_table += f"""
+            # 📅 FILA NORMAL DE CLASES CON TU ESTILO PROPIO
+            html_table += """
             <tr style="text-align:center; background-color:#ffffff;">
-                <td style="padding:12px; font-weight:bold; color:#0d1b2a; border:1px solid #0d1b2a; background-color:#f8f9fa; font-size:12px; font-family:'Arial Black';">{bloque}</td>
-            """
+                <td style="padding:12px; font-weight:bold; color:#0d1b2a; border:1px solid #0d1b2a; background-color:#f8f9fa; font-size:12px; font-family:'Arial Black';">{}</td>
+            """.format(bloque)
+            
             for dia in dias_ordenados:
-                # Buscar la materia asignada a este día y hora específicos
+                # Filtrar celda específica por Día y Hora
                 celda = df_filtrado[(df_filtrado[col_bloque] == bloque) & (df_filtrado[col_dia].astype(str).str.upper().str.strip() == dia)]
                 
                 if not celda.empty:
@@ -92,6 +96,7 @@ def renderizar(conn_sql):
                     if materia.upper() in ['DESCANSO', 'RECREO', 'N/A']:
                         html_table += '<td style="padding:12px; border:1px solid #e0e0e0; background-color:#fff4e6; color:#cc8800; font-weight:bold; font-size:12px;">DESCANSO</td>'
                     else:
+                        # 📝 RÉPLICA EXACTA DE TUS CELDAS INTERNAS DE MATERIAS
                         html_table += f"""
                         <td style="padding:12px; border:1px solid #e0e0e0; background-color:#ffffff; vertical-align:middle;">
                             <div style="color:#000000; font-weight:900; font-size:13px; font-family:'Arial', sans-serif; line-height:1.2;">{materia}</div>
@@ -99,14 +104,11 @@ def renderizar(conn_sql):
                         </td>
                         """
                 else:
+                    # Celda vacía con rejilla uniforme
                     html_table += '<td style="padding:12px; border:1px solid #e0e0e0; background-color:#ffffff; color:#b0b0b0; font-weight:bold;">-</td>'
             html_table += "</tr>"
 
     html_table += "</tbody></table><br>"
     
-    # Inyección de la obra de arte visual en la interfaz de Streamlit
+    # Inyección directa del HTML corporativo puro en Streamlit
     st.markdown(html_table, unsafe_allow_html=True)
-    
-    # Historial de respaldo expandible por si se requiere realizar auditorías técnicas
-    with st.expander("📋 Ver registros en formato de lista plana (Auditoría SQL)"):
-        st.dataframe(df_filtrado[[col_dia, col_bloque, col_materia, col_docente]], use_container_width=True, hide_index=True)
