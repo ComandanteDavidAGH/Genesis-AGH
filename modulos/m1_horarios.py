@@ -63,21 +63,26 @@ def renderizar(conn_sql):
         horizontal=True
     )
     
-    if tipo_filtro == "🔍 Ver por Curso / Grado":
-        lista_opciones = sorted(df_horarios[col_grado].dropna().unique().astype(str).tolist())
-        seleccion = st.selectbox("🎯 Seleccione el Grado para desplegar el Horario:", lista_opciones)
-        df_filtrado = df_horarios[df_horarios[col_grado].astype(str) == seleccion].copy()
-        modo_docente = False
-    else:
-        lista_opciones = sorted(df_horarios[col_docente].dropna().unique().astype(str).tolist())
-        seleccion = st.selectbox("🎯 Seleccione el Docente para desplegar su Agenda:", lista_opciones)
-        df_filtrado = df_horarios[df_horarios[col_docente].astype(str) == seleccion].copy()
-        modo_docente = True
+    # 🛡️ AJUSTE DE UI: Creamos columnas para limitar el ancho del selector
+    # [4, 6] significa: 40% para el selector, 60% de espacio vacío a la derecha. 
+    # (Puedes cambiarlo a [1, 1] si lo quieres a la mitad exacta).
+    col_selector, col_vacio = st.columns([4, 6])
+    
+    with col_selector:
+        if tipo_filtro == "🔍 Ver por Curso / Grado":
+            lista_opciones = sorted(df_horarios[col_grado].dropna().unique().astype(str).tolist())
+            seleccion = st.selectbox("🎯 Seleccione el Grado:", lista_opciones)
+            df_filtrado = df_horarios[df_horarios[col_grado].astype(str) == seleccion].copy()
+            modo_docente = False
+        else:
+            lista_opciones = sorted(df_horarios[col_docente].dropna().unique().astype(str).tolist())
+            seleccion = st.selectbox("🎯 Seleccione el Docente:", lista_opciones)
+            df_filtrado = df_horarios[df_horarios[col_docente].astype(str) == seleccion].copy()
+            modo_docente = True
 
     if df_filtrado.empty:
         st.info("No se encontraron registros de horarios para la selección actual.")
         return
-
     # Normalización rápida indexada
     df_filtrado['DIA_CLEAN'] = df_filtrado[col_dia].apply(limpiar_caracteres)
     df_filtrado['BLOQUE_CLEAN'] = df_filtrado[col_bloque].astype(str).str.strip()
