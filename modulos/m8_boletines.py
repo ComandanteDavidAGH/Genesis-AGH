@@ -9,7 +9,7 @@ def limpiar_texto(txt):
     return ''.join(c for c in unicodedata.normalize('NFD', txt_str) if unicodedata.category(c) != 'Mn')
 
 def renderizar(*args, **kwargs):
-    # 👑 INYECTOR DE ESTILOS PREMIUM: Réplica exacta del Boletín Insignia y ocultamiento de controles
+    # 👑 INYECTOR DE ESTILOS PREMIUM: Réplica exacta del Boletín Insignia
     st.markdown("""
         <style>
             @media print {
@@ -60,25 +60,32 @@ def renderizar(*args, **kwargs):
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
     
-    # 🔄 TRACKER DE SINCRONIZACIÓN: Detectar periodo desde los argumentos de app.py o desde la barra lateral global
+    # 🔄 DETECTOR AUTOMÁTICO DE MEMORIA (Escanea y separa Periodo, Grado y Base de datos)
     df_notas = None
     periodo_sel = "P1"
     conn_sql = None
 
-    if len(args) >= 1: df_notas = args[0] if isinstance(args[0], pd.DataFrame) else None
-    if len(args) >= 2 and args[1]: periodo_sel = str(args[1]).upper().strip()
-    if len(args) >= 3: conn_sql = args[2]
+    # 1. Escanear argumentos posicionales enviados por app.py
+    for arg in args:
+        if isinstance(arg, pd.DataFrame):
+            df_notas = arg
+        elif hasattr(arg, 'query'):
+            conn_sql = arg
+        elif isinstance(arg, str):
+            arg_clean = arg.upper().strip()
+            if any(p in arg_clean for p in ["P1", "P2", "P3", "P4", "CONSOLIDADO", "FINAL"]):
+                periodo_sel = arg_clean
 
-    # Escudo de acople para interceptar el selector de periodo de la barra lateral izquierda de Streamlit
+    # 2. Escanear la memoria de sesión lateral global de Streamlit para sincronización en tiempo real
     for key in st.session_state.keys():
-        if "PERIOD" in key.upper() or key.lower() == "periodo":
-            periodo_sel = str(st.session_state[key]).upper().strip()
-            break
+        val_str = str(st.session_state[key]).upper().strip()
+        if any(p in val_str for p in ["P1", "P2", "P3", "P4", "CONSOLIDADO", "FINAL"]):
+            periodo_sel = val_str
 
     # Ajuste de nombre visual para periodos consolidados
-    periodo_visual = "CONSOLIDADO FINAL" if "CONSOLID" in periodo_sel or "TODO" in periodo_sel else f"PERIODO {periodo_sel}"
+    periodo_visual = "CONSOLIDADO FINAL" if "CONSOLID" in periodo_sel or "FINAL" in periodo_sel else f"PERIODO {periodo_sel}"
 
-    # Enlace de contingencia a la base satelital
+    # Enlace de contingencia a Supabase
     if (df_notas is None or df_notas.empty) and conn_sql is not None:
         try: df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
         except Exception: pass
@@ -101,19 +108,17 @@ def renderizar(*args, **kwargs):
     col_grado = next((c for c in df_trabajo.columns if c in ['GRADO', 'CURSO']), None)
     col_materia = next((c for c in df_trabajo.columns if c in ['MATERIA', 'ASIGNATURA']), None)
     
-    # Mapeo dinámico de la columna de notas alineada con el filtro lateral
+    # Mapeo dinámico e inteligente de la columna de notas real
     col_p = None
-    if periodo_sel in df_trabajo.columns:
-        col_p = periodo_sel
-    else:
-        for c in df_trabajo.columns:
-            if limpiar_texto(c) == limpiar_texto(periodo_sel):
-                col_p = c
-                break
+    p_buscar = "CONSOLIDADO" if "CONSOLID" in periodo_sel else periodo_sel
+    for c in df_trabajo.columns:
+        if p_buscar in limpiar_texto(c):
+            col_p = c
+            break
     if not col_p:
         col_p = next((c for c in df_trabajo.columns if c in ['PROMEDIO', 'DEF', 'NOTA', 'P1', 'P2', 'P3', 'P4']), df_trabajo.columns[-1])
 
-    # ⚡ OPERACIÓN REJILLA HORIZONTAL: Ajuste de filtros pequeños uno al lado del otro
+    # ⚡ DISEÑO DE CASILLAS PEQUEÑAS HORIZONTALES (Uno al lado de la otra)
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
     c_modo, c_grad, c_est = st.columns([1.2, 1.8, 2.5])
     
@@ -134,7 +139,7 @@ def renderizar(*args, **kwargs):
     else:
         df_alumnos = sorted(df_trabajo[col_nombre].dropna().unique().tolist())
         with c_est:
-            st.markdown("<p style='margin-top:28px; font-weight:bold; color:#0d1b2a;'>📦 Lote Masivo Activo</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='margin-top:28px; font-weight:bold; color:#0d1b2a;'>📦 Lote de {len(df_alumnos)} Boletines Activo</p>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Preparación de la matriz de logros si existe
@@ -167,20 +172,16 @@ def renderizar(*args, **kwargs):
                 </div>
             """, unsafe_allow_html=True)
 
-        # 👑 RÉPLICA IDÉNTICA DE SU BOLETÍN INSIGNIA CON ESCUDO VECTORIAL EMBEBIDO
+        # 👑 MAQUETACIÓN OFICIAL CON EL ESCUDO EMBEBIDO GARANTIZADO
         html_boletin = f"""
         <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08);">
             
             <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                 <tr>
                     <td style="width:15%; text-align:left; vertical-align:middle;">
-                        <svg width="85" height="85" viewBox="0 0 100 100" style="display:block;">
-                            <path d="M50,5 L90,25 L90,65 C90,80 50,95 50,95 C50,95 10,80 10,65 L10,25 Z" fill="#0d1b2a" stroke="#d4af37" stroke-width="3"/>
-                            <path d="M50,12 L82,28 L82,62 C82,74 50,86 50,86 C50,86 18,74 18,62 L18,28 Z" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-dasharray="3,3"/>
-                            <polygon points="50,25 54,37 67,37 57,45 60,57 50,50 40,57 43,45 33,37 46,37" fill="#d4af37"/>
-                            <path d="M30,65 Q50,55 70,65" fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round"/>
-                            <text x="50" y="77" font-family="'Arial Black', sans-serif" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle">PEGO</text>
-                        </svg>
+                        <div style="width:80px; height:80px; background-color:#0d1b2a; border:3px solid #d4af37; border-radius:50%; box-shadow: 3px 3px 0px #0d1b2a; display:flex; align-items:center; justify-content:center; text-align:center;">
+                            <div style="font-family:'Arial Black', sans-serif; font-size:12px; font-weight:900; color:#ffffff; letter-spacing:0.5px; line-height:1.1; padding:5px;">P.E.G.O.<br><span style="color:#d4af37; font-size:9px;">2026</span></div>
+                        </div>
                     </td>
                     <td style="width:65%; text-align:center; vertical-align:middle;">
                         <h2 style="margin:0; color:#0d1b2a; font-family:'Arial Black'; font-size:21px; letter-spacing:0.5px;">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
@@ -208,7 +209,7 @@ def renderizar(*args, **kwargs):
                 <thead>
                     <tr style="background-color:#0d1b2a; color:white; border:2px solid #0d1b2a;">
                         <th style="padding:12px; border:1px solid #d4af37; text-align:left; font-family:'Arial Black'; font-size:12px;">MATERIA</th>
-                        <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:15%;">{periodo_sel}</th>
+                        <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:18%;">{periodo_visual}</th>
                         <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:25%;">DESEMPEÑO</th>
                     </tr>
                 </thead>
