@@ -47,6 +47,26 @@ footer { display: none !important; visibility: hidden !important; }
 .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
 [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
 [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: white !important; font-weight: bold; }
+
+/* 🚀 REPARACIÓN DEL BOTÓN DE CERRAR SESIÓN EN EL PANEL LATERAL */
+[data-testid="stSidebar"] .stButton > button {
+    background-color: #990000 !important; 
+    border: 2px solid #ff4d4d !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    transition: all 0.3s ease !important;
+}
+[data-testid="stSidebar"] .stButton > button * {
+    color: #ffffff !important; 
+    font-weight: 900 !important;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background-color: #ff3333 !important; 
+    border-color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(255, 51, 51, 0.6) !important;
+    transform: scale(1.02);
+}
+
 div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
 div[data-baseweb="select"] > div * { color: #000000 !important; }
 .metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
