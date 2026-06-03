@@ -22,7 +22,7 @@ def obtener_desempeno_dinamico(nota):
         return "BÁSICO"
 
 def renderizar(*args, **kwargs):
-    # 🛡️ EXTRACTOR DEL LOGO REAL DE LA APLICACIÓN (Conversión Base64 Blindada)
+    # 🛡️ EXTRACTOR DEL LOGO REAL DE LA APLICACIÓN (Conversión Base64)
     logo_base64 = ""
     if os.path.exists("logo.png"):
         try:
@@ -36,40 +36,32 @@ def renderizar(*args, **kwargs):
     else:
         escudo_html = '<div style="width:80px; height:80px; background-color:#0d1b2a; border:2px solid #d4af37; border-radius:50%;"></div>'
 
-    # 👑 INYECTOR DE REGLAS DE IMPRESIÓN OFICIAL
+    # 👑 INYECTOR DE REGLAS DE IMPRESIÓN OFICIAL CSS
     st.markdown("""
         <style>
             @media print {
                 header, [data-testid="stSidebar"], [data-testid="stHeader"], 
                 .stRadio, .stSelectbox, .no-print, .stButton, div.block-container button,
-                div[data-testid="stVerticalBlock"] > div.no-print {
+                div[data-testid="stVerticalBlock"] > div.no-print, div.barra-impresion-mando {
                     display: none !important;
                 }
                 .main .block-container { padding-top: 0px !important; padding-bottom: 0px !important; }
                 .boletin-insignia-box { border: none !important; box-shadow: none !important; margin: 0px !important; padding: 0px !important; width: 100% !important; }
             }
-            .barra-comandos { display: flex; gap: 15px; margin-top: 5px; margin-bottom: 25px; }
-            .btn-premium-print {
-                background-color: #0d1b2a; color: white !important; font-family: 'Arial Black', sans-serif; font-size: 13px;
-                padding: 10px 22px; border: 2px solid #d4af37; border-radius: 6px; cursor: pointer; text-decoration: none;
-                box-shadow: 3px 3px 0px #0d1b2a; font-weight: bold;
-            }
-            .btn-premium-print:hover { background-color: #1e3551; box-shadow: 3px 3px 0px #d4af37; }
         </style>
     """, unsafe_allow_html=True)
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
     
-    # 🔄 ANCLAJE LÁSER AL MENÚ LATERAL: Lee directamente el parámetro enviado por app.py
+    # 🔄 RECEPTOR CONECTADO AL RADAR LATERAL (Inmune a congelamientos)
     df_notas = args[0] if len(args) >= 1 and isinstance(args[0], pd.DataFrame) else None
     periodo_seleccionado = str(args[1]).upper().strip() if len(args) >= 2 and args[1] else "P1"
     conn_sql = args[2] if len(args) >= 3 else None
 
-    # Detectar el estado de consolidación final desde el menú lateral
-    es_consolidado = "CONSOLID" in periodo_seleccionado or "FINAL" in periodo_seleccionado or "TODO" in periodo_seleccionado
+    # Evaluación de estado matricial
+    es_consolidado = "CONSOLID" in periodo_seleccionado or "FINAL" in periodo_seleccionado
     periodo_visual = "CONSOLIDADO FINAL" if es_consolidado else f"PERIODO {periodo_seleccionado}"
 
-    # Recuperación de base de datos en caso de desconexión
     if (df_notas is None or df_notas.empty) and conn_sql is not None:
         try: df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
         except Exception: pass
@@ -78,48 +70,49 @@ def renderizar(*args, **kwargs):
         st.warning("⚠️ **Base de datos de calificaciones no disponible en este cuadrante.**")
         return
 
-    # Estandarización absoluta de columnas
+    # Estandarización absoluta de columnas verificadas por la trampa
     df_trabajo = df_notas.copy()
     df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
 
-    col_nombre = next((c for c in df_trabajo.columns if c in ['NOMBRE_COMPLETO', 'ESTUDIANTE', 'NOMBRE']), df_trabajo.columns[1])
-    col_grado = next((c for c in df_trabajo.columns if c in ['GRADO', 'CURSO']), df_trabajo.columns[-1])
-    col_materia = next((c for c in df_trabajo.columns if c in ['MATERIA', 'ASIGNATURA']), df_trabajo.columns[2])
-    col_logro_db = next((c for c in df_trabajo.columns if c in ['LOGRO', 'DESCRIPCION']), None)
+    col_nombre = "NOMBRE_COMPLETO"
+    col_materia = "MATERIA"
+    col_grado = "GRADO"
 
-    # Buscar la columna del periodo activo si no estamos consolidando
-    col_p_activa = None
-    if not es_consolidado:
-        for c in df_trabajo.columns:
-            if limpiar_texto(c) == limpiar_texto(periodo_seleccionado):
-                col_p_activa = c
-                break
-        if not col_p_activa:
-            col_p_activa = "P1"
-
-    # ⚡ DISEÑO DE CASILLAS PEQUEÑAS HORIZONTALES CON MÁXIMO ESPACIO
+    # ⚡ CASILLAS PEQUEÑAS HORIZONTALES PARA DAR MÁXIMO ESPACIO AL BOLETÍN
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
     c_modo, c_grad, c_est = st.columns([1.2, 1.5, 3.3])
     
     with c_modo:
         modo = st.selectbox("Generación:", ["👤 Individual", "📦 Masivo"])
     
-    if col_grado:
-        lista_grados = sorted(df_trabajo[col_grado].dropna().unique().astype(str).tolist())
-        with c_grad:
-            grado_sel = st.selectbox("📂 Grado:", lista_grados)
-        df_trabajo = df_trabajo[df_trabajo[col_grado].astype(str) == grado_sel]
+    # Filtro Dinámico de Grado conectado al Excel
+    lista_grados = sorted(df_trabajo[col_grado].dropna().unique().astype(str).tolist())
+    with c_grad:
+        grado_sel = st.selectbox("📂 Grado:", lista_grados)
+    df_trabajo = df_trabajo[df_trabajo[col_grado].astype(str) == grado_sel]
 
     if modo == "👤 Individual":
         lista_estudiantes = sorted(df_trabajo[col_nombre].dropna().unique().tolist())
         with c_est:
-            estudiante_sel = st.selectbox("👤 Estudiante:", lista_estudiantes)
+            estudiante_sel = st.selectbox("👤 Seleccione el Estudiante:", lista_estudiantes)
         df_alumnos = [estudiante_sel]
     else:
         df_alumnos = sorted(df_trabajo[col_nombre].dropna().unique().tolist())
         with c_est:
-            st.text_input("Estado de Lote:", f"📦 Masivo: {len(df_alumnos)} Boletines listos para impresión", disabled=True)
+            st.text_input("Estado de Lote:", f"📦 Masivo: {len(df_alumnos)} Boletines consolidados listos", disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # 🖨️ BOTONES NATIVOS DE CONTROL DE IMPRESIÓN CON ACTIVADOR DIGITAL
+    if modo == "👤 Individual":
+        c_print, c_pdf = st.columns(2)
+        with c_print:
+            if st.button("🖨️ IMPRIMIR INFORME ACADÉMICO", use_container_width=True):
+                st.components.v1.html("<script>window.parent.print();</script>", height=0, width=0)
+                st.info("💡 *Soporte Directivo:* Si la ventana no abre de inmediato, use el comando universal **Ctrl + P** en su teclado.")
+        with c_pdf:
+            if st.button("📥 GENERAR / GUARDAR COMO PDF", use_container_width=True):
+                st.components.v1.html("<script>window.parent.print();</script>", height=0, width=0)
+                st.info("💡 *Soporte Directivo:* Seleccione 'Guardar como PDF' en la casilla de Destino de la ventana emergente.")
 
     # Renderizado en cadena de los Boletines Insignias
     for estudiante in df_alumnos:
@@ -128,31 +121,22 @@ def renderizar(*args, **kwargs):
         
         grado_est = df_est[col_grado].iloc[0] if col_grado in df_est.columns else "N/A"
 
-        # Barra de botones de acciones en pantalla
-        if modo == "👤 Individual":
-            st.markdown(f"""
-                <div class="barra-comandos no-print">
-                    <button class="btn-premium-print" onclick="window.print();">🖨️ IMPRIMIR INFORME ACADÉMICO</button>
-                    <button class="btn-premium-print" onclick="window.print();" style="background-color:#cc8800;">📥 GUARDAR COMO PDF</button>
-                </div>
-            """, unsafe_allow_html=True)
-
-        # Forzar formato numérico en los 4 periodos
-        for cp in ['P1', 'P2', 'P3', 'P4']:
+        # Asegurar formato numérico en las columnas de la base de datos
+        columnas_validas = ['P1', 'P2', 'P3', 'P4']
+        for cp in columnas_validas:
             if cp in df_est.columns:
                 df_est[cp] = pd.to_numeric(df_est[cp], errors='coerce').fillna(0.0)
             
-        # Calcular promedio general en tiempo real
-        prom_col = next((c for c in df_est.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF']), None)
-        if prom_col:
+        prom_col = "PROMEDIO"
+        if prom_col in df_est.columns:
             df_est[prom_col] = pd.to_numeric(df_est[prom_col], errors='coerce').fillna(0.0)
             promedio_institucional = df_est[prom_col].mean()
         else:
-            promedio_institucional = df_est[['P1', 'P2', 'P3', 'P4']].mean(axis=1).mean()
+            promedio_institucional = df_est[columnas_validas].mean(axis=1).mean()
 
         # Cabecera del Boletín Insignia
         html_boletin = f"""
-        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08);">
+        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:15px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08);">
             <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                 <tr>
                     <td style="width:15%; text-align:left; vertical-align:middle;">{escudo_html}</td>
@@ -179,7 +163,7 @@ def renderizar(*args, **kwargs):
             </table>
         """
 
-        # 👑 CAMBIO DINÁMICO DE COLUMNAS MATRICIALES SEGÚN EL MENÚ LATERAL
+        # 👑 CAMBIO DINÁMICO DE COLUMNAS MATRICIALES ASIGNADAS AL RADAR LATERAL
         if es_consolidado:
             html_boletin += """
             <table style="width:100%; border-collapse:collapse; font-family:'Arial', sans-serif; border: 2px solid #0d1b2a;">
@@ -209,19 +193,18 @@ def renderizar(*args, **kwargs):
                 <tbody>
             """
 
-        # Inyección de filas de materias y descriptores de logros
+        # Inyección dinámica de filas de materias y descriptores de logros
         for _, fila in df_est.iterrows():
             materia_nom = str(fila[col_materia]).strip()
-            logro_render = str(fila[col_logro_db]).strip() if col_logro_db and not pd.isna(fila[col_logro_db]) else "Descriptor de logro oficial registrado en la bitácora escolar."
+            logro_render = str(fila['LOGRO']).strip() if 'LOGRO' in df_est.columns and not pd.isna(fila['LOGRO']) else "Descriptor de logro oficial registrado en la bitácora escolar."
             
             if es_consolidado:
                 n_p1 = float(fila['P1']) if 'P1' in df_est.columns else 0.0
                 n_p2 = float(fila['P2']) if 'P2' in df_est.columns else 0.0
                 n_p3 = float(fila['P3']) if 'P3' in df_est.columns else 0.0
                 n_p4 = float(fila['P4']) if 'P4' in df_est.columns else 0.0
-                n_def = float(fila[prom_col]) if prom_col else ((n_p1+n_p2+n_p3+n_p4)/4)
+                n_def = float(fila[prom_col]) if prom_col in df_est.columns else ((n_p1+n_p2+n_p3+n_p4)/4)
 
-                # Procesamiento dinámico del desempeño sin errores
                 des_txt = obtener_desempeno_dinamico(n_def)
                 color_def = "#cc0000" if n_def < 6.0 else "#000000"
                 color_des = "#cc0000" if n_def < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
@@ -243,7 +226,7 @@ def renderizar(*args, **kwargs):
                     </tr>
                 """
             else:
-                nota_val = float(fila[col_p_activa]) if col_p_activa in df_est.columns else 0.0
+                nota_val = float(fila[periodo_seleccionado]) if periodo_seleccionado in df_est.columns else 0.0
                 
                 des_txt = obtener_desempeno_dinamico(nota_val)
                 color_nota = "#cc0000" if nota_val < 6.0 else "#000000"
