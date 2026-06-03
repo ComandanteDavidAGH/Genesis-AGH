@@ -26,7 +26,7 @@ def clasificar_desempeno(nota):
         return "SIN ASIGNAR"
 
 def renderizar(df, periodo_sel, conn):
-    # 🚀 MOTOR VISUAL: Borde y sombra
+    # 🚀 MOTOR VISUAL
     st.markdown("""
     <style>
     div[data-testid="stDataEditor"] {
@@ -57,17 +57,18 @@ def renderizar(df, periodo_sel, conn):
         st.warning("No hay estudiantes asignados.")
         return
 
-    # --- 🛠️ LIMPIEZA Y ASEGURAMIENTO DE DATOS ---
-    # Si LOGROS no existe, lo creamos vacío. Si es NaN, lo volvemos texto vacío.
+    # --- 🛠️ LIMPIEZA AGRESIVA DE LOGROS (Fuerza visualización) ---
     if 'LOGROS' not in df.columns:
         df['LOGROS'] = ""
-    df['LOGROS'] = df['LOGROS'].fillna("") 
     
-    # Asegurar desempeño (Solución anterior)
+    # Convierte todo a string, luego reemplaza las variaciones de vacío/nulo por un texto real
+    df['LOGROS'] = df['LOGROS'].astype(str).replace(['nan', 'NaN', 'None', 'null'], '').fillna('')
+
+    # Asegurar desempeño
     if 'DESEMPEÑO' in df.columns:
         df['DESEMPEÑO'] = df['PROMEDIO'].apply(clasificar_desempeno)
 
-    # --- 🎯 CONFIGURACIÓN DE COLUMNAS (Incluyendo LOGROS) ---
+    # --- 🎯 CONFIGURACIÓN ---
     config_notas = { 
         'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
         'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
@@ -90,22 +91,24 @@ def renderizar(df, periodo_sel, conn):
                     for col, val in valores.items():
                         st.session_state.df_maestro.at[idx_real, col] = val
                 
-                # Recalcular
+                # Recalcular antes de enviar
                 st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
                 st.session_state.df_maestro['DESEMPEÑO'] = st.session_state.df_maestro['PROMEDIO'].apply(clasificar_desempeno)
                 
                 try:
                     st.session_state.df_maestro.to_sql('notas_consolidadas', con=conn.engine, if_exists='replace', index=False)
-                    st.success("✅ ¡Sincronizado correctamente!")
+                    st.success("✅ ¡Sincronizado!")
                     registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
                     st.rerun()
                 except Exception as e:
                     st.error(f"🚨 Error SQL: {e}")
         else:
-            st.warning("⚠️ Sin cambios pendientes.")
+            st.warning("⚠️ Sin cambios.")
 
     # 👑 RENDERIZADO FINAL
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
+    
+    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
     
     st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
     
