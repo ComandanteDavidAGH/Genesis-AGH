@@ -1,212 +1,208 @@
 import streamlit as st
 import pandas as pd
-import io
-import base64
-import streamlit.components.v1 as components
-from xhtml2pdf import pisa
 
-# 🚀 CACHÉ PARA LOGO (Solo para el PDF)
-@st.cache_data
-def get_logo_base64():
-    try:
-        with open("logo.png", "rb") as img_file:
-            return f"data:image/png;base64,{base64.b64encode(img_file.read()).decode()}"
-    except: return ""
-
-def generar_pdf(html_contenido):
-    result = io.BytesIO()
-    pdf = pisa.pisaDocument(io.BytesIO(html_contenido.encode("UTF-8")), result)
-    if not pdf.err:
-        return result.getvalue()
-    return None
-
-def nota_limpia(valor):
-    try:
-        n = float(valor)
-        return 0.0 if pd.isna(n) else n
-    except: return 0.0
-
-def renderizar(df, curso_sel, periodo_sel):
-    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
+def renderizar(*args, **kwargs):
+    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
     
-    if df.empty:
-        st.warning("No hay datos para generar boletines en este filtro.")
+    # 👑 INYECTOR DE REGLAS DE IMPRESIÓN Y BOTONES PREMIUM
+    st.markdown("""
+        <style>
+            /* 🖨️ ESCUDO DE IMPRESIÓN RECTÓRICO: Oculta la app y deja solo el boletín */
+            @media print {
+                header, [data-testid="stSidebar"], [data-testid="stHeader"], 
+                .stRadio, .stSelectbox, .no-print, .stButton, div.block-container button {
+                    display: none !important;
+                }
+                .main .block-container {
+                    padding-top: 0px !important;
+                    padding-bottom: 0px !important;
+                }
+                .boletin-print-box {
+                    border: none !important;
+                    box-shadow: none !important;
+                    margin: 0px !important;
+                    padding: 0px !important;
+                    width: 100% !important;
+                }
+            }
+            
+            /* Estilos de la barra de acciones en pantalla */
+            .barra-acciones-boletin {
+                display: flex;
+                gap: 15px;
+                margin-top: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .btn-accion-print {
+                background-color: #0d1b2a;
+                color: white !important;
+                font-family: 'Arial Black', sans-serif;
+                font-size: 13px;
+                padding: 10px 20px;
+                border: 2px solid #d4af37;
+                border-radius: 8px;
+                cursor: pointer;
+                text-decoration: none;
+                box-shadow: 3px 3px 0px #d4af37;
+                transition: all 0.2s ease;
+            }
+            .btn-accion-print:hover {
+                transform: translate(-1px, -1px);
+                box-shadow: 4px 4px 0px #0d1b2a;
+                background-color: #1e3551;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Desempaquetado seguro de los datos enviados por app.py
+    df_notas = None
+    periodo_sel = "P1"
+    conn_sql = None
+
+    if len(args) >= 1: df_notas = args[0] if isinstance(args[0], pd.DataFrame) else None
+    if len(args) >= 2: periodo_sel = args[1] if isinstance(args[1], str) else None
+    if len(args) >= 3: conn_sql = args[2]
+
+    # Recuperación autónoma en caso de desconexión temporal
+    if (df_notas is None or df_notas.empty) and conn_sql is not None:
+        try: df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
+        except Exception: pass
+
+    if df_notas is None or df_notas.empty:
+        st.warning("⚠️ **Base de datos de calificaciones no disponible en este cuadrante.**")
         return
 
-    col_n = periodo_sel if periodo_sel != "CONSOLIDADO FINAL" else "PROMEDIO"
-    modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
+    df_trabajo = df_notas.copy()
+    df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
+
+    col_nombre = next((c for c in df_trabajo.columns if c in ['NOMBRE_COMPLETO', 'ESTUDIANTE', 'NOMBRE']), df_trabajo.columns[0])
+    col_grado = next((c for c in df_trabajo.columns if c in ['GRADO', 'CURSO']), None)
+    col_materia = next((c for c in df_trabajo.columns if c in ['MATERIA', 'ASIGNATURA']), None)
     
-    # 🛑 CLAVE DEL RENDIMIENTO: Separar la imagen de la pantalla y la imagen del PDF
-    URL_LOGO_PDF = get_logo_base64()
-    URL_LOGO_PREVIEW = "https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png"
+    col_p = str(periodo_sel).upper().strip()
+    if col_p not in df_trabajo.columns:
+        col_p = next((c for c in df_trabajo.columns if c in ['PROMEDIO', 'DEF', 'NOTA']), None)
 
-    # CSS SEGURO PARA PANTALLA (Renderizado ultrarrápido en IFrame)
-    css_preview = """<style> body { background: white; color: black; font-family: Arial, sans-serif; } .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; background: white; color: black; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; } .watermark-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: 0; pointer-events: none; } .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; } .table-custom th { background-color: #0d1b2a !important; color: #d4af37 !important; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; } .table-custom td { border: 1px solid #000; padding: 8px; text-align: center; color: black; } .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; } .header-table td { border: none; } .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 14px; z-index: 2; position: relative; } .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; } </style>"""
+    # Selectores de Configuración en Pantalla
+    modo = st.radio("Seleccione el modo de generación:", ["👤 Individual", "📦 Masivo (Todo el Grado)"], horizontal=True)
+    
+    if col_grado:
+        lista_grados = sorted(df_trabajo[col_grado].dropna().unique().astype(str).tolist())
+        grado_sel = st.selectbox("📂 Seleccione el Grado:", lista_grados)
+        df_trabajo = df_trabajo[df_trabajo[col_grado].astype(str) == grado_sel]
 
-    # CSS PARA PDF
-    css_para_pdf = css_preview.replace(".b-print {", ".b-print { border:none; box-shadow:none; padding:0;").replace("position: relative;", "")
-
-    # 🚀 DICCIONARIO O(1) PARA VELOCIDAD EXTREMA EN LOS LOGROS
-    dict_logros = {}
-    if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
-        try:
-            df_l = st.session_state.df_logros.copy()
-            df_l.iloc[:,0] = df_l.iloc[:,0].astype(str).str.strip().str.upper()
-            df_l.iloc[:,1] = df_l.iloc[:,1].astype(str).str.strip().str.upper()
-            df_l.iloc[:,2] = df_l.iloc[:,2].astype(str).str.strip().str.upper()
-            df_l.iloc[:,3] = df_l.iloc[:,3].astype(str)
-            dict_logros = df_l.set_index([df_l.columns[0], df_l.columns[1], df_l.columns[2]])[df_l.columns[3]].to_dict()
-        except: pass
-
-    if modo_impresion == "👤 Individual":
-        lista_alumnos = sorted(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else []
-        alumno = st.selectbox("👤 Estudiante:", lista_alumnos)
-        
-        if alumno:
-            res = df[df['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
-            res = res[res['PROMEDIO'] > 0.0] if 'PROMEDIO' in res.columns else res
-            
-            promedios = [nota_limpia(x) for x in res[col_n]] if col_n in res.columns else []
-            p_prom = sum(promedios) / len(promedios) if len(promedios) > 0 else 0.0
-            
-            th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
-            
-            html_cuerpo = f"""
-            <div class="b-print">
-                <img src="__LOGO_URL__" class="watermark-img">
-                <table class="header-table">
-                    <tr>
-                        <td style="width:15%;"><img src="__LOGO_URL__" width="90"></td>
-                        <td style="text-align:center;">
-                            <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL OMEGA 2026</h2>
-                            <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
-                        </td>
-                        <td style="text-align:right; width:15%;">
-                            <div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;">
-                                <b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-                <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px; position: relative; z-index: 2;">
-                    <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alumno}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0] if not res.empty else 'N/A'}</span>
-                </div>
-                <table class="table-custom">
-                    <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
-            
-            grado_str = str(res['Grado'].iloc[0]).upper() if not res.empty else ""
-            es_primaria = any(k in grado_str for k in ["1", "2", "3", "4", "5", "PRIMER", "SEGUND", "TERCER", "CUART", "QUINT"]) and not any(k in grado_str for k in ["10", "11", "DECIMO", "ONCE"])
-            nivel_alumno = "PRIMARIA" if es_primaria else "BACHILLERATO"
-
-            for index, row in res.iterrows():
-                nota_final = nota_limpia(row.get(col_n, 0))
-                if nota_final >= 9.1: desp = "SUPERIOR"
-                elif nota_final >= 7.6: desp = "ALTO"
-                elif nota_final >= 6.0: desp = "BÁSICO"
-                else: desp = "BAJO"
-
-                color = "#155724" if nota_final >= 6.0 else "#721c24"
-                
-                if periodo_sel == "CONSOLIDADO FINAL":
-                    p1 = nota_limpia(row.get('P1', 0)); p2 = nota_limpia(row.get('P2', 0))
-                    p3 = nota_limpia(row.get('P3', 0)); p4 = nota_limpia(row.get('P4', 0))
-                    prom = nota_limpia(row.get('PROMEDIO', 0))
-                    td = f"<td style='color:black;'>{p1:.1f}</td><td style='color:black;'>{p2:.1f}</td><td style='color:black;'>{p3:.1f}</td><td style='color:black;'>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
-                    col_span = 7
-                else:
-                    td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
-                    col_span = 3
-                
-                html_cuerpo += f"<tr><td style='text-align:left; color:black;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"                    
-                
-                # Búsqueda ultra rápida en el diccionario
-                llave_logro = (nivel_alumno, str(row['Materia']).strip().upper(), desp)
-                logro_texto = dict_logros.get(llave_logro, "Logro no registrado")
-
-                html_cuerpo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa; color:black;'><b>LOGRO:</b> {logro_texto}</td></tr>"
-            
-            html_cuerpo += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>"""
-
-            # 🎯 DIBUJO INSTANTÁNEO EN LA PANTALLA MEDIANTE COMPONENTS.HTML
-            html_pantalla = f"<html><head>{css_preview}</head><body>{html_cuerpo.replace('__LOGO_URL__', URL_LOGO_PREVIEW)}</body></html>"
-            components.html(html_pantalla, height=600, scrolling=True)
-            
-            # 🎯 GENERADOR DE PDF
-            with st.expander("📥 Generar Archivo PDF Descargable"):
-                if st.button("Generar archivo .pdf (Toma unos segundos)"):
-                    with st.spinner("Compilando Documento PDF Oficial..."):
-                        html_para_pdf = html_cuerpo.replace("__LOGO_URL__", URL_LOGO_PDF)
-                        html_completo_pdf = f"<html><head><style>@page {{ size: legal portrait; margin: 10mm; }} {css_para_pdf.replace('<style>','').replace('</style>','')}</style></head><body style='background:white;'>{html_para_pdf}</body></html>"
-                        
-                        pdf_data = generar_pdf(html_completo_pdf)
-                        if pdf_data:
-                            st.download_button(label="📥 DESCARGAR PDF AHORA", data=pdf_data, file_name=f"Boletin_{alumno}_{periodo_sel}.pdf", mime="application/pdf", type="primary", use_container_width=True)
-            
+    if modo == "👤 Individual":
+        lista_estudiantes = sorted(df_trabajo[col_nombre].dropna().unique().tolist())
+        estudiante_sel = st.selectbox("👤 Estudiante:", lista_estudiantes)
+        df_alumnos = [estudiante_sel]
     else:
-        # MODO MASIVO EXACTAMENTE IGUAL OPTIMIZADO
-        estudiantes = sorted(df['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df.columns else []
-        st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP para el grado {curso_sel}.")
+        df_alumnos = sorted(df_trabajo[col_nombre].dropna().unique().tolist())
+        st.info(f"Se procesará un lote consolidado de {len(df_alumnos)} boletines para el grado seleccionado.")
+
+    if not df_alumnos:
+        st.info("No hay registros para la selección actual.")
+        return
+
+    # Proceso de renderizado para los alumnos seleccionados
+    for estudiante in df_alumnos:
+        df_est = df_trabajo[df_trabajo[col_nombre] == estudiante].copy()
+        if df_est.empty: continue
         
-        if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary"):
-            with st.spinner("Construyendo lote masivo ultrarrápido..."):
-                th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
-                
-                html_masivo = ""
-                for i, alum in enumerate(estudiantes):
-                    res = df[df['Nombre_Completo'] == alum].drop_duplicates(subset=['Materia'])
-                    res = res[res['PROMEDIO'] > 0.0] if 'PROMEDIO' in res.columns else res
-                    promedios = [nota_limpia(x) for x in res[col_n]] if col_n in res.columns else []
-                    p_prom = sum(promedios) / len(promedios) if len(promedios) > 0 else 0.0
-                    salto = "<div style='page-break-after: always;'></div>" if i < len(estudiantes) - 1 else ""
-                    
-                    html_masivo += f"""<div class="b-print">
-                    <img src="__LOGO_URL__" class="watermark-img">
-                    <table class="header-table"><tr><td style="width:15%;"><img src="__LOGO_URL__" width="90"></td>
-                    <td style="text-align:center;"><h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL OMEGA 2026</h2>
-                    <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p></td>
-                    <td style="text-align:right; width:15%;"><div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;">
-                    <b style="font-size:12px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b></div></td></tr></table>
-                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px; position: relative; z-index: 2;">
-                    <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0] if not res.empty else 'N/A'}</span></div>
-                    <table class="table-custom"><tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
-                    
-                    grado_str = str(res['Grado'].iloc[0]).upper() if not res.empty else ""
-                    es_primaria = any(k in grado_str for k in ["1", "2", "3", "4", "5", "PRIMER", "SEGUND", "TERCER", "CUART", "QUINT"]) and not any(k in grado_str for k in ["10", "11", "DECIMO", "ONCE"])
-                    nivel_alumno = "PRIMARIA" if es_primaria else "BACHILLERATO"
+        df_est[col_p] = pd.to_numeric(df_est[col_p], errors='coerce').fillna(0.0)
+        promedio_general = df_est[col_p].mean()
+        grado_est = df_est[col_grado].iloc[0] if col_grado in df_est.columns else "N/A"
 
-                    for _, row in res.iterrows():
-                        nota_final = nota_limpia(row.get(col_n, 0))
-                        if nota_final >= 9.1: desp = "SUPERIOR"
-                        elif nota_final >= 7.6: desp = "ALTO"
-                        elif nota_final >= 6.0: desp = "BÁSICO"
-                        else: desp = "BAJO"
-                        color = "#155724" if nota_final >= 6.0 else "#721c24"
+        # 👑 RENDERIZACIÓN DE LOS BOTONES DE IMPRESIÓN (Sólo visibles en modo individual y no salen en el papel)
+        if modo == "👤 Individual":
+            st.markdown(f"""
+                <div class="barra-acciones-boletin no-print">
+                    <button class="btn-accion-print" onclick="window.print();">🖨️ IMPRIMIR INFORME ACADÉMICO</button>
+                    <button class="btn-accion-print" onclick="window.print();" style="background-color:#cc8800; box-shadow: 3px 3px 0px #0d1b2a;">📥 GUARDAR COMO PDF</button>
+                </div>
+            """, unsafe_allow_html=True)
 
-                        if periodo_sel == "CONSOLIDADO FINAL":
-                            p1 = nota_limpia(row.get('P1', 0)); p2 = nota_limpia(row.get('P2', 0))
-                            p3 = nota_limpia(row.get('P3', 0)); p4 = nota_limpia(row.get('P4', 0))
-                            prom = nota_limpia(row.get('PROMEDIO', 0))
-                            td = f"<td style='color:black;'>{p1:.1f}</td><td style='color:black;'>{p2:.1f}</td><td style='color:black;'>{p3:.1f}</td><td style='color:black;'>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
-                            col_span = 7
-                        else:
-                            td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
-                            col_span = 3
-
-                        html_masivo += f"<tr><td style='text-align:left; color:black;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
-                        
-                        llave_logro = (nivel_alumno, str(row['Materia']).strip().upper(), desp)
-                        logro_texto = dict_logros.get(llave_logro, "Logro no registrado")
-                            
-                        html_masivo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:11px; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa; color:black;'><b>LOGRO:</b> {logro_texto}</td></tr>"
-                        
-                    html_masivo += f"</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>{salto}"
-                    
-                html_pantalla_masiva = f"<html><head>{css_preview}</head><body>{html_masivo.replace('__LOGO_URL__', URL_LOGO_PREVIEW)}</body></html>"
-                components.html(html_pantalla_masiva, height=600, scrolling=True)
-
-                html_para_pdf = html_masivo.replace("__LOGO_URL__", URL_LOGO_PDF)
-                html_pdf = f"<html><head><style>@page {{ size: legal portrait; margin: 10mm; }} {css_para_pdf.replace('<style>','').replace('</style>','')}</style></head><body style='background:white;'>{html_para_pdf}</body></html>"
-                
-                pdf_data = generar_pdf(html_pdf)
-                if pdf_data:
-                    st.download_button(label="📥 DESCARGAR LOTE EN PDF", data=pdf_data, file_name=f"Boletines_Masivos_{curso_sel}_{periodo_sel}.pdf", mime="application/pdf", type="primary", use_container_width=True)
+        # 👑 MAQUETACIÓN ESTRUCTURAL DEL BOLETÍN DEL COLEGIO
+        html_boletin = f"""
+        <div class="boletin-print-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08); position:relative;">
+            
+            <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+                <tr>
+                    <td style="width:15%; text-align:left; vertical-align:middle;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2211/2211571.png" style="width:80px; height:80px;">
+                    </td>
+                    <td style="width:65%; text-align:center; vertical-align:middle;">
+                        <h2 style="margin:0; color:#0d1b2a; font-family:'Arial Black'; font-size:22px; letter-spacing:1px;">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                        <h4 style="margin:5px 0 0 0; color:#cc8800; font-family:'Arial'; font-weight:bold; font-size:14px; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</h4>
+                    </td>
+                    <td style="width:20%; text-align:right; vertical-align:middle;">
+                        <div style="border:3px solid #0d1b2a; border-radius:8px; padding:8px; background-color:#f8f9fa; text-align:center; min-width:100px;">
+                            <div style="font-size:10px; font-family:'Arial Black'; color:#0d1b2a; text-transform:uppercase;">PROMEDIO</div>
+                            <div style="font-size:22px; font-family:'Arial Black'; color:#cc8800; font-weight:900; margin-top:2px;">{promedio_general:.1f}</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            
+            <table style="width:100%; border-collapse:collapse; margin-bottom:25px; border:2px solid #0d1b2a; background-color:#f8f9fa;">
+                <tr>
+                    <td style="padding:10px; border:1px solid #0d1b2a; font-family:'Arial Black'; font-size:12px; color:#0d1b2a; width:15%;">ESTUDIANTE:</td>
+                    <td style="padding:10px; border:1px solid #0d1b2a; font-family:'Arial'; font-weight:bold; font-size:13px; color:#000000; width:55%;">{estudiante}</td>
+                    <td style="padding:10px; border:1px solid #0d1b2a; font-family:'Arial Black'; font-size:12px; color:#0d1b2a; width:12%;">GRADO:</td>
+                    <td style="padding:10px; border:1px solid #0d1b2a; font-family:'Arial'; font-weight:bold; font-size:13px; color:#000000; width:18%; text-align:center;">{grado_est}</td>
+                </tr>
+            </table>
+            
+            <table style="width:100%; border-collapse:collapse; font-family:'Arial', sans-serif;">
+                <thead>
+                    <tr style="background-color:#0d1b2a; color:white; border:2px solid #0d1b2a;">
+                        <th style="padding:12px; border:1px solid #d4af37; text-align:left; font-family:'Arial Black'; font-size:12px;">MATERIA / JORNADA</th>
+                        <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:15%;">{periodo_sel}</th>
+                        <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:25%;">DESEMPEÑO</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+        
+        for _, fila in df_est.iterrows():
+            materia_nom = str(fila[col_materia]).strip()
+            nota_val = float(fila[col_p])
+            
+            # Clasificador de Desempeños Institucionales
+            if nota_val >= 9.0: des_txt = "SUPERIOR"
+            elif nota_val >= 7.6: des_txt = "ALTO"
+            elif nota_val >= 6.0: des_txt = "BÁSICO"
+            else: des_txt = "BAJO"
+            
+            color_nota = "#cc0000" if nota_val < 6.0 else "#000000"
+            color_des = "#cc0000" if nota_val < 6.0 else ("#00994c" if nota_val >= 7.6 else "#cc8800")
+            
+            html_boletin += f"""
+                <tr style="border-bottom:1px solid #e0e0e0;">
+                    <td style="padding:10px; font-weight:bold; color:#0d1b2a; border-left:2px solid #0d1b2a; border-right:1px solid #e0e0e0; font-size:13px;">{materia_nom}</td>
+                    <td style="padding:10px; text-align:center; font-family:'Arial Black'; font-weight:900; color:{color_nota}; border-right:1px solid #e0e0e0; font-size:14px;">{nota_val:.1f}</td>
+                    <td style="padding:10px; text-align:center; font-family:'Arial Black'; font-weight:bold; color:{color_des}; border-right:2px solid #0d1b2a; font-size:12px;">{des_txt}</td>
+                </tr>
+            """
+            
+        html_boletin += """
+                </tbody>
+            </table>
+            
+            <div style="margin-top:60px; display:flex; justify-content:space-between; padding:0 40px;" class="page-break-avoid">
+                <div style="text-align:center; width:40%;">
+                    <div style="border-bottom:2px solid #0d1b2a; width:100%; height:40px;"></div>
+                    <div style="font-size:11px; font-family:'Arial Black'; color:#0d1b2a; margin-top:8px; text-transform:uppercase;">RECTORÍA INSTITUCIONAL</div>
+                </div>
+                <div style="text-align:center; width:40%;">
+                    <div style="border-bottom:2px solid #0d1b2a; width:100%; height:40px;"></div>
+                    <div style="font-size:11px; font-family:'Arial Black'; color:#0d1b2a; margin-top:8px; text-transform:uppercase;">COORDINACIÓN ACADÉMICA</div>
+                </div>
+            </div>
+            
+        </div>
+        <br class="no-print">
+        <hr style="border:1px dashed #b0b0b0;" class="no-print">
+        <br class="no-print">
+        """
+        st.html(html_boletin)
