@@ -41,6 +41,7 @@ def obtener_nivel(grado):
 def renderizar(df, periodo_sel, conn):
     key_editor = f"editor_notas_{periodo_sel}"
 
+    # 🚀 MOTOR VISUAL 3D Y ESTILOS DE HUD
     st.markdown("""
     <style>
     div[data-testid="stDataEditor"] {
@@ -48,6 +49,24 @@ def renderizar(df, periodo_sel, conn):
         border-radius: 0 0 8px 8px !important;
         box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
     }
+    
+    /* Mini-KPIs del Docente */
+    .hud-box {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 5px solid #d4af37;
+        padding: 10px 15px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+    }
+    .hud-item { text-align: center; }
+    .hud-title { font-size: 11px; color: #6c757d; font-family: 'Arial Black', sans-serif; text-transform: uppercase; margin: 0; }
+    .hud-value { font-size: 18px; color: #0d1b2a; font-weight: 900; margin: 0; font-family: Arial, sans-serif; }
+    .hud-value-gold { color: #d4af37; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -64,13 +83,13 @@ def renderizar(df, periodo_sel, conn):
         
         filtro = df_conf[df_conf[col_periodo].astype(str).str.upper() == str(periodo_sel).upper()]
         if not filtro.empty and str(filtro[col_estado].values[0]).strip().upper() == "CERRADO":
-            st.error(f"🚫 ACCESO DENEGADO: El {periodo_sel} ha sido CERRADO.")
+            st.error(f"🚫 ACCESO DENEGADO: El {periodo_sel} ha sido CERRADO por Rectoría.")
             st.stop()
     except Exception:
         st.warning("⚠️ Módulo de seguridad no detectado.")
 
     if df.empty:
-        st.warning("No hay estudiantes asignados.")
+        st.warning("No hay estudiantes asignados a esta vista.")
         return
 
     df_render = df.copy()
@@ -85,7 +104,34 @@ def renderizar(df, periodo_sel, conn):
     df_render['LOGROS'] = df_render['LOGROS'].astype(str).replace(['nan', 'None', '<NA>', 'null', 'NONE'], '', regex=True).str.strip()
     
     if 'PROMEDIO' in df_render.columns:
+        df_render['PROMEDIO'] = pd.to_numeric(df_render['PROMEDIO'], errors='coerce').fillna(0.0)
         df_render['DESEMPEÑO'] = df_render['PROMEDIO'].apply(clasificar_desempeno)
+
+    # 📊 HUD DE RENDIMIENTO (Mini KPIs)
+    if 'PROMEDIO' in df_render.columns:
+        promedio_grupo = df_render['PROMEDIO'].mean()
+        aprobados = len(df_render[df_render['PROMEDIO'] >= 6.0])
+        total_est = len(df_render)
+        tasa_aprobacion = (aprobados / total_est) * 100 if total_est > 0 else 0
+        
+        color_tasa = "green" if tasa_aprobacion >= 70 else ("orange" if tasa_aprobacion >= 50 else "red")
+        
+        st.markdown(f"""
+        <div class="hud-box">
+            <div class="hud-item">
+                <p class="hud-title">Estudiantes</p>
+                <p class="hud-value">{total_est}</p>
+            </div>
+            <div class="hud-item">
+                <p class="hud-title">Promedio Grupo</p>
+                <p class="hud-value hud-value-gold">{promedio_grupo:.1f}</p>
+            </div>
+            <div class="hud-item">
+                <p class="hud-title">Aprobación</p>
+                <p class="hud-value" style="color: {color_tasa};">{tasa_aprobacion:.1f}%</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # 2. Carga Táctica del Diccionario de Logros
     diccionario_logros = {}
@@ -111,8 +157,6 @@ def renderizar(df, periodo_sel, conn):
             desempeno = str(row.get('DESEMPEÑO', 'BAJO'))
             
             llave = (limpiar_texto(nivel), limpiar_texto(materia), limpiar_texto(desempeno))
-            
-            # Si encuentra el logro lo pone. Si no, le avisa exactamente qué combinación falta en la base de datos.
             logro_sugerido = diccionario_logros.get(llave, f"⚠️ Configurar en Logros: {nivel} | {materia} | {desempeno}")
             df_render.at[idx, 'LOGROS'] = logro_sugerido
 
@@ -143,9 +187,10 @@ def renderizar(df, periodo_sel, conn):
         'LOGROS': st.column_config.TextColumn("Logros (Autocompletado)", disabled=False, width="large")
     }
 
-    col_btn, _ = st.columns([2, 8])
+    # Interfaz de Guardado alineada a la derecha
+    col_vacia, col_btn = st.columns([7, 3])
     with col_btn:
-        if st.button("💾 GUARDAR EN BD", key=f"btn_guardar_{periodo_sel}", type="primary", use_container_width=True):
+        if st.button("💾 GUARDAR EN BASE DE DATOS", key=f"btn_guardar_{periodo_sel}", type="primary", use_container_width=True):
             cambios = st.session_state.get(key_editor, {}).get('edited_rows', {})
             if cambios:
                 with st.spinner("🚀 Sincronizando al Satélite SQL..."):
@@ -168,15 +213,18 @@ def renderizar(df, periodo_sel, conn):
                         })
 
                         df_para_sql.to_sql('notas_consolidadas', con=conn.engine, if_exists='replace', index=False)
-                        st.success("✅ ¡Sincronizado exitosamente!")
+                        st.toast("✅ ¡Notas sincronizadas exitosamente en el búnker SQL!", icon="🚀")
                         registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
                         st.cache_data.clear()
+                        # Un pequeño delay para que el usuario alcance a ver el toast antes de recargar
+                        import time
+                        time.sleep(1)
                         st.rerun()
                     except Exception as e:
                         st.error(f"🚨 Error SQL: {e}")
             else:
-                st.warning("⚠️ Sin cambios registrados para guardar.")
+                st.toast("⚠️ No detecté cambios en la matriz para guardar.", icon="👀")
 
-    st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
+    st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:5px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
     
     st.data_editor(df_pintado, use_container_width=True, height=450, key=key_editor, column_config=config_notas)
