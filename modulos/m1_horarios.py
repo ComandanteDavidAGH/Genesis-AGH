@@ -26,38 +26,46 @@ def renderizar(conn_sql):
     # Estandarizamos los nombres de las columnas a mayúsculas limpias
     df_horarios.columns = [str(c).upper().strip() for c in df_horarios.columns]
     
-    # Mapeo automatizado de columnas por posición absoluta (Inmune a cualquier cambio)
-    col_dia = df_horarios.columns[0]      # Columna 1: DÍA
-    col_bloque = df_horarios.columns[1]   # Columna 2: BLOQUE_HORARIO
-    col_grado = df_horarios.columns[2]    # Columna 3: GRADO
-    col_materia = df_horarios.columns[3]  # Columna 4: MATERIA
-    col_docente = df_horarios.columns[4]  # Columna 5: DOCENTE
+    # Mapeo automatizado de columnas por posición absoluta (Inmune a cambios)
+    col_dia = df_horarios.columns[0]      # DÍA
+    col_bloque = df_horarios.columns[1]   # BLOQUE_HORARIO
+    col_grado = df_horarios.columns[2]    # GRADO
+    col_materia = df_horarios.columns[3]  # MATERIA
+    col_docente = df_horarios.columns[4]  # DOCENTE
 
-    # Selector de grado institucional
-    lista_grados = sorted(df_horarios[col_grado].dropna().unique().astype(str).tolist())
-    grado_horario = st.selectbox("🔍 Seleccione el Grado para desplegar el Horario Oficial:", lista_grados)
+    # 🎯 CONTROLADOR DUAL: Alternar vistas respetando la simetría visual
+    tipo_filtro = st.radio(
+        "🛠️ **Seleccione la Modalidad de Consulta:**", 
+        ["🔍 Ver por Curso / Grado", "👤 Ver por Docente / Profesor"], 
+        horizontal=True
+    )
     
-    df_filtrado = df_horarios[df_horarios[col_grado].astype(str) == grado_horario].copy()
-    
+    if tipo_filtro == "🔍 Ver por Curso / Grado":
+        lista_opciones = sorted(df_horarios[col_grado].dropna().unique().astype(str).tolist())
+        seleccion = st.selectbox("🎯 Seleccione el Grado para desplegar el Horario:", lista_opciones)
+        df_filtrado = df_horarios[df_horarios[col_grado].astype(str) == seleccion].copy()
+        modo_docente = False
+    else:
+        lista_opciones = sorted(df_horarios[col_docente].dropna().unique().astype(str).tolist())
+        seleccion = st.selectbox("🎯 Seleccione el Docente para desplegar su Agenda:", lista_opciones)
+        df_filtrado = df_horarios[df_horarios[col_docente].astype(str) == seleccion].copy()
+        modo_docente = True
+
     if df_filtrado.empty:
-        st.info("No se encontraron registros de horarios para el grado seleccionado.")
+        st.info("No se encontraron registros de horarios para la selección actual.")
         return
 
-    # Aplicamos el filtro extractor para una coincidencia limpia del 100%
+    # Filtro extractor de caracteres para blindar los cruces
     df_filtrado['DIA_CLEAN'] = df_filtrado[col_dia].apply(limpiar_caracteres)
     df_filtrado['BLOQUE_CLEAN'] = df_filtrado[col_bloque].astype(str).str.strip()
 
-    # Secuencia de días escolares
+    # Días de la semana normalizados
     dias_secuencia = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES"]
     
-    # Conservamos la lista de bloques en orden cronológico real
-    bloques_ordenados = []
-    for b in df_filtrado[col_bloque].dropna().tolist():
-        b_str = str(b).strip()
-        if b_str not in bloques_ordenados:
-            bloques_ordenados.append(b_str)
+    # Conservamos el orden cronológico general de las horas del Excel completo
+    bloques_ordenados = [str(b).strip() for b in list(df_horarios[col_bloque].dropna().unique())]
 
-    # 👑 CONSTRUCCIÓN DEL HORARIO SIN SANGRIAS REBELDES
+    # 👑 CONSTRUCCIÓN DE LA TABLA BELLA INTEGRADA
     html_table = (
         '<table style="width:100%; border-collapse:collapse; margin-top:20px; font-family:\'Arial\', sans-serif; '
         'box-shadow:4px 4px 15px rgba(0,0,0,0.1); border:3px solid #0d1b2a; border-radius:8px; overflow:hidden;">'
@@ -96,11 +104,15 @@ def renderizar(conn_sql):
                 if not celda.empty:
                     materia = str(celda[col_materia].iloc[0]).strip()
                     docente = str(celda[col_docente].iloc[0]).strip()
+                    grado = str(celda[col_grado].iloc[0]).strip()
+                    
+                    # 💡 DINAMISMO TÁCTICO: Muestra el Grado si consulta por Docente, o el Docente si consulta por Grado
+                    sub_texto = f"🏫 Grado: {grado}" if modo_docente else f"👤 {docente}"
                     
                     html_table += (
                         f'<td style="padding:12px; border:1px solid #e0e0e0; background-color:#ffffff; vertical-align:middle;">'
                         f'<div style="color:#000000; font-weight:900; font-size:13px; font-family:\'Arial\', sans-serif; line-height:1.2;">{materia}</div>'
-                        f'<div style="color:#cc8800; font-size:11px; font-weight:bold; margin-top:5px; font-family:\'Arial\';">👤 {docente}</div>'
+                        f'<div style="color:#cc8800; font-size:11px; font-weight:bold; margin-top:5px; font-family:\'Arial\';">{sub_texto}</div>'
                         f'</td>'
                     )
                 else:
@@ -108,6 +120,4 @@ def renderizar(conn_sql):
             html_table += '</tr>'
 
     html_table += '</tbody></table><br>'
-    
-    # ⚡ EXTRACCIÓN DIRECTA NATIVA: Salta las restricciones de Markdown ⚡
     st.html(html_table)
