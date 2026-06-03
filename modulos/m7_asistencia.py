@@ -15,6 +15,26 @@ def registrar_bitacora(usuario, rol, accion):
     })
 
 def renderizar(df, conn):
+    # 🚀 ENVOLTORIO EXTERNO PREMIUM PARA LAS TABLAS DE HISTORIAL
+    st.markdown("""
+    <style>
+    div[data-testid="stDataFrame"] {
+        border: 3px solid #0d1b2a !important;
+        border-radius: 8px !important;
+        box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
+        padding: 2px !important;
+        background-color: #f0f2f6 !important;
+    }
+    div[data-testid="stDataFrame"] th {
+        background-color: #0d1b2a !important;
+        color: #d4af37 !important;
+        font-family: 'Arial Black', sans-serif !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Control de Asistencia y Observaciones</h3>", unsafe_allow_html=True)
     
     tab1, tab2 = st.tabs(["✍️ Registrar Novedad", "🖨️ Generar Observador Oficial"])
@@ -38,11 +58,14 @@ def renderizar(df, conn):
                 st.session_state.df_asistencia = pd.concat([st.session_state.df_asistencia, nuevo_registro], ignore_index=True)
                 
                 registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, f"📝 Reporte: {alum_sel}")
+                
+                # ⚡ ESCRITURA DIRECTA A SUPABASE (SQL)
                 try: 
-                    conn.update(worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia)
-                    st.success(f"✅ Reporte guardado.")
-                except: 
-                    st.warning("Guardado localmente.")
+                    st.session_state.df_asistencia.to_sql('db_asistencia', con=conn.engine, if_exists='replace', index=False)
+                    st.success(f"✅ Reporte guardado y asegurado en la Bóveda SQL.")
+                    st.cache_data.clear() # Limpia caché para lectura fresca
+                except Exception as e: 
+                    st.error(f"🚨 Falla en el satélite SQL: {e}")
         
         st.markdown("---")
         col_h1, col_h2 = st.columns([7, 3])
@@ -52,12 +75,15 @@ def renderizar(df, conn):
             if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty:
                 if st.button("↩️ DESHACER ÚLTIMO REPORTE", help="Elimina el último registro guardado por error"):
                     st.session_state.df_asistencia = st.session_state.df_asistencia.iloc[:-1] 
+                    
+                    # ⚡ ESCRITURA DIRECTA A SUPABASE (SQL)
                     try: 
-                        conn.update(worksheet="DB_ASISTENCIA", data=st.session_state.df_asistencia)
+                        st.session_state.df_asistencia.to_sql('db_asistencia', con=conn.engine, if_exists='replace', index=False)
                         registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "↩️ Revirtió último reporte")
+                        st.cache_data.clear() # Limpia caché
                         st.rerun()
-                    except: 
-                        st.warning("No se pudo conectar con el satélite.")
+                    except Exception as e: 
+                        st.error(f"🚨 Falla en el satélite SQL: {e}")
                         
         if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty: 
             st.dataframe(st.session_state.df_asistencia.iloc[::-1], use_container_width=True, hide_index=True)
