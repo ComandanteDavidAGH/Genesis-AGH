@@ -1,3 +1,6 @@
+import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta, timezone
 def renderizar(df, periodo_sel, conn):
     # 🚀 MOTOR VISUAL RESTAURADO: Recuadro y Cabecera VIP
     st.markdown("""
