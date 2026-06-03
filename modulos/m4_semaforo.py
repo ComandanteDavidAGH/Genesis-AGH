@@ -1,18 +1,24 @@
 import streamlit as st
 import pandas as pd
+import unicodedata
 
-def renderizar(conn_sql):
-    # 👑 INYECTOR DE ANIMACIÓN TITILANTE Y PANELS 3D EXECUTIVE
+def limpiar_caracteres(txt):
+    """ Filtro extractor: Elimina tildes, espacios y estandariza a mayúsculas puras """
+    if pd.isna(txt): return ""
+    txt_str = str(txt).strip().upper()
+    return ''.join(c for c in unicodedata.normalize('NFD', txt_str) if unicodedata.category(c) != 'Mn')
+
+def renderizar(*args, **kwargs):
+    # 👑 INYECTOR DE ANIMACIÓN TITILANTE Y PANELES 3D EXECUTIVE
     st.markdown("""
         <style>
             /* 🚨 ANIMACIÓN MAESTRA DE PARPADEO (EFECTO TITILANTE) */
             @keyframes titilar_critico {
-                0% { opacity: 1; transform: scale(1); text-shadow: 0 0 15px rgba(204, 0, 0, 0.6); }
-                50% { opacity: 0.2; transform: scale(1.05); text-shadow: 0 0 0px rgba(204, 0, 0, 0); }
-                100% { opacity: 1; transform: scale(1); text-shadow: 0 0 15px rgba(204, 0, 0, 0.6); }
+                0% { opacity: 1; transform: scale(1); text-shadow: 0 0 15px rgba(204, 0, 0, 0.7); }
+                50% { opacity: 0.15; transform: scale(1.03); text-shadow: 0 0 0px rgba(204, 0, 0, 0); }
+                100% { opacity: 1; transform: scale(1); text-shadow: 0 0 15px rgba(204, 0, 0, 0.7); }
             }
             
-            /* Clases de control estético */
             .titular-semaforo {
                 font-family: 'Arial Black', sans-serif;
                 font-size: 16px;
@@ -26,8 +32,8 @@ def renderizar(conn_sql):
                 font-weight: 900;
                 color: #cc0000;
                 display: inline-block;
-                /* Activar el efecto titilante original */
-                animation: titilar_critico 1.3s infinite ease-in-out;
+                /* Activar el efecto titilante solicitado */
+                animation: titilar_critico 1.2s infinite ease-in-out;
             }
             
             .numero-alerta-3d {
@@ -49,62 +55,96 @@ def renderizar(conn_sql):
             /* Tarjetas de contenedor con relieve rígido 3D */
             .card-semaforo-3d {
                 background-color: #ffffff;
-                padding: 15px;
-                border-radius: 12px;
+                padding: 20px;
+                border-radius: 14px;
                 border: 3px solid #0d1b2a;
-                box-shadow: 6px 6px 0px #0d1b2a;
+                /* ⚡ EFECTO DE RELIEVE SÓLIDO ISOMÉTRICO 3D ⚡ */
+                box-shadow: 7px 7px 0px #0d1b2a, 10px 10px 20px rgba(0,0,0,0.1) !important;
                 text-align: center;
                 margin-bottom: 20px;
+                transition: transform 0.2s ease;
+            }
+            .card-semaforo-3d:hover {
+                transform: translate(-2px, -2px);
+                box-shadow: 9px 9px 0px #d4af37, 12px 12px 25px rgba(0,0,0,0.15) !important;
             }
         </style>
     """, unsafe_allow_html=True)
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>🚦 Semáforo de Riesgo Académico</h3>", unsafe_allow_html=True)
     
-    # 🛡️ LECTURA EXTRACTORA DESDE EL BÚNKER DE SUPABASE
-    try:
-        df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
-    except Exception as e:
-        st.error(f"❌ Error al conectar con la bitácora de notas: {e}")
-        return
+    # 🪤 CONTROLADOR ANTIMISILES: Desempaquetado inteligente de argumentos enviados desde app.py
+    df_notas = None
+    periodo_sel = None
+    conn_sql = None
+
+    if len(args) >= 1:
+        df_notas = args[0] if isinstance(args[0], pd.DataFrame) else None
+    if len(args) >= 2:
+        periodo_sel = args[1] if isinstance(args[1], str) else None
+    if len(args) >= 3:
+        conn_sql = args[2]
+
+    # Si app.py no envió el dataframe precargado, lo extraemos de Supabase de forma autónoma
+    if (df_notas is None or df_notas.empty) and conn_sql is not None:
+        try:
+            df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
+        except Exception:
+            pass
 
     if df_notas is None or df_notas.empty:
-        st.warning("⚠️ Base de datos de notas vacía o no inicializada.")
+        st.warning("⚠️ **Base de datos de calificaciones no disponible para el Semáforo.**")
+        st.info("💡 *Nota de control:* Asegúrese de haber inyectado los datos en 'Bitácora y Backup'.")
         return
 
-    # Normalizar columnas
-    df_notas.columns = [str(c).upper().strip() for c in df_notas.columns]
-    
-    # Identificar columna promedio de forma flexible
-    col_promedio = next((c for c in df_notas.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF']), None)
-    col_nombre = next((c for c in df_notas.columns if c in ['NOMBRE_COMPLETO', 'ESTUDIANTE', 'NOMBRE']), None)
-    col_grado = next((c for c in df_notas.columns if c in ['GRADO', 'CURSO']), None)
-
-    if not all([col_promedio, col_nombre, col_grado]):
-        st.error("🚨 Las columnas de la tabla SQL no coinciden con el mapeo del Semáforo.")
-        return
-
-    # Conversión forzada de datos métricos
-    df_notas[col_promedio] = pd.to_numeric(df_notas[col_promedio], errors='coerce').fillna(0.0)
-    
-    # Filtros estructurales de barra lateral o cabecera
-    grados_validos = sorted(df_notas[col_grado].dropna().unique().astype(str).tolist())
-    grado_sel = st.selectbox("🔍 Seleccione el Grado para evaluar el Perímetro:", ["TODOS"] + grados_validos)
-    
+    # Clonamos la información para procesar de forma segura sin romper variables globales
     df_trabajo = df_notas.copy()
-    if grado_sel != "TODOS":
-        df_trabajo = df_trabajo[df_trabajo[col_grado].astype(str) == grado_sel]
+    df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
+    
+    # Mapeo automatizado de columnas críticas de la bitácora
+    col_nombre = next((c for c in df_trabajo.columns if c in ['NOMBRE_COMPLETO', 'ESTUDIANTE', 'NOMBRE']), df_trabajo.columns[0])
+    col_grado = next((c for c in df_trabajo.columns if c in ['GRADO', 'CURSO']), None)
+    
+    # Determinar dinámicamente qué columna de notas evaluar
+    col_nota = None
+    if periodo_sel:
+        p_norm = str(periodo_sel).upper().strip()
+        col_nota = next((c for c in df_trabajo.columns if c == p_norm), None)
+        
+    if not col_nota:
+        col_nota = next((c for c in df_trabajo.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF', 'NOTA']), None)
 
-    # Clasificación matemática de los Batallones Académicos
-    criticos = df_trabajo[df_trabajo[col_promedio] < 6.0]
-    alertas = df_trabajo[(df_trabajo[col_promedio] >= 6.0) & (df_trabajo[col_promedio] <= 7.5)]
-    optimos = df_trabajo[df_trabajo[col_promedio] > 7.5]
+    if not col_nota:
+        # Buscador de respaldo de columnas numéricas calificables
+        for c in df_trabajo.columns:
+            if c not in [col_nombre, col_grado, 'ID', 'USUARIO']:
+                col_nota = c
+                break
 
-    count_criticos = len(criticos[col_nombre].unique())
-    count_alertas = len(alertas[col_nombre].unique())
-    count_optimos = len(optimos[col_nombre].unique())
+    if not col_nota:
+        st.error("🚨 No se encontró una columna de notas procesable para el Semáforo.")
+        return
 
-    # 📅 MAQUETACIÓN EN COLUMNAS CON RELIEVE 3D ISOMÉTRICO
+    # Forzar el formato de los datos numéricos para el cálculo de rangos
+    df_trabajo[col_nota] = pd.to_numeric(df_trabajo[col_nota], errors='coerce').fillna(0.0)
+
+    # Menú desplegable institucional de Grados integrado
+    if col_grado:
+        grados_validos = sorted(df_trabajo[col_grado].dropna().unique().astype(str).tolist())
+        grado_sel = st.selectbox("🔍 Seleccione el Grado para evaluar el Perímetro:", ["TODOS"] + grados_validos)
+        if grado_sel != "TODOS":
+            df_trabajo = df_trabajo[df_trabajo[col_grado].astype(str) == grado_sel]
+
+    # Clasificación exacta de los Batallones Académicos
+    criticos = df_trabajo[df_trabajo[col_nota] < 6.0]
+    alertas = df_trabajo[(df_trabajo[col_nota] >= 6.0) & (df_trabajo[col_nota] <= 7.5)]
+    optimos = df_trabajo[df_trabajo[col_nota] > 7.5]
+
+    count_criticos = criticos[col_nombre].nunique()
+    count_alertas = alertas[col_nombre].nunique()
+    count_optimos = optimos[col_nombre].nunique()
+
+    # 📅 DESPLIEGUE EN COLUMNAS CON EL VERDADERO EFECTO 3D ISOMÉTRICO
     c1, c2, c3 = st.columns(3)
     
     with c1:
@@ -131,12 +171,22 @@ def renderizar(conn_sql):
             </div>
         """, unsafe_allow_html=True)
 
-    # 🚨 TABLA DE AUDITORÍA DE ESTUDIANTES EN RIESGO CRÍTICO
-    st.markdown("<br><div style='background-color:#ffe6e6; border:3px solid #cc0000; padding:10px; border-radius:8px; text-align:center; font-family:Arial Black; color:#cc0000; font-size:14px; letter-spacing:1px;'>🚨 LISTADO DE ESTUDIANTES EN RIESGO CRÍTICO</div><br>", unsafe_allow_html=True)
+    # 🚨 TABLA DE AUDITORÍA DE ESTUDIANTES EN CRISIS
+    st.markdown("<br><div style='background-color:#ffe6e6; border:3px solid #cc0000; padding:12px; border-radius:8px; text-align:center; font-family:Arial Black; color:#cc0000; font-size:14px; letter-spacing:1px;'>🚨 LISTADO DE ESTUDIANTES EN RIESGO CRÍTICO</div><br>", unsafe_allow_html=True)
     
     if not criticos.empty:
-        df_mostrar = criticos[[col_nombre, col_grado, col_promedio]].drop_duplicates().sort_values(by=col_promedio)
-        df_mostrar.columns = ['Nombre Completo', 'Grado', 'Promedio']
+        columnas_visibles = [col_nombre]
+        if col_grado: columnas_visibles.append(col_grado)
+        columnas_visibles.append(col_nota)
+        
+        df_mostrar = criticos[columnas_visibles].drop_duplicates().sort_values(by=col_nota)
+        
+        # Renombramos las cabeceras para una presentación de Rectoría impecable
+        nombres_cabeceras = ['Nombre Completo']
+        if col_grado: nombres_cabeceras.append('Grado')
+        nombres_cabeceras.append('Promedio')
+        df_mostrar.columns = nombres_cabeceras
+        
         st.dataframe(df_mostrar, use_container_width=True, hide_index=True)
     else:
-        st.success("✅ Excelente estabilidad operativa: Cero estudiantes detectados en Riesgo Crítico.")
+        st.success("✅ Perímetro estable: Cero estudiantes detectados en Riesgo Crítico.")
