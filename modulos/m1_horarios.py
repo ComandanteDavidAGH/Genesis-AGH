@@ -3,10 +3,9 @@ import pandas as pd
 import unicodedata
 
 def limpiar_caracteres(txt):
-    """ 🪤 Filtro extractor: Elimina tildes, espacios y estandariza a mayúsculas puras """
+    """ Filtro extractor: Elimina tildes, espacios y estandariza a mayúsculas puras """
     if pd.isna(txt): return ""
     txt_str = str(txt).strip().upper()
-    # Descompone caracteres con tilde para remover el acento dejando la letra base
     return ''.join(c for c in unicodedata.normalize('NFD', txt_str) if unicodedata.category(c) != 'Mn')
 
 def renderizar(conn_sql):
@@ -21,17 +20,8 @@ def renderizar(conn_sql):
         
     if df_horarios is None or df_horarios.empty:
         st.warning("⚠️ **Base de datos de horarios no inicializada en Supabase.**")
-        st.info("💡 *Nota de Rectoría:* Recomiendo volver a pasar el Excel por la sección de 'Bitácora y Backup'.")
+        st.info("💡 *Nota de Rectoría:* Recuerde subir el archivo Excel de respaldo en la sección de 'Bitácora y Backup'.")
         return
-
-    # 🪤 1. LA TRAMPA DE INSPECCIÓN (Expander en vivo para verificar el ADN de los datos)
-    with st.expander("🪤 TRAMPA DE DIAGNÓSTICO OPERATIVO (Inspección de Celdas)", expanded=True):
-        st.markdown("**Análisis de la estructura real guardada en Supabase:**")
-        st.write("📋 *Columnas de la tabla:*", list(df_horarios.columns))
-        st.write("📅 *Días registrados tal cual:*", list(df_horarios.iloc[:, 1].dropna().unique()) if df_horarios.shape[1] > 1 else "N/A")
-        st.write("⏰ *Bloques registrados tal cual:*", list(df_horarios.iloc[:, 2].dropna().unique()) if df_horarios.shape[1] > 2 else "N/A")
-        st.markdown("*Primeras 2 filas completas de la base de datos:*")
-        st.dataframe(df_horarios.head(2))
 
     # Estandarizamos los nombres de las columnas a mayúsculas limpias
     df_horarios.columns = [str(c).upper().strip() for c in df_horarios.columns]
@@ -44,7 +34,7 @@ def renderizar(conn_sql):
     col_docente = next((c for c in df_horarios.columns if c in ['DOCENTE', 'PROFESOR']), None)
 
     if not all([col_grado, col_dia, col_bloque, col_materia, col_docente]):
-        st.error("🚨 **Error de Desalineación:** Las columnas detectadas en la trampa no coinciden con los nombres maestros.")
+        st.error("🚨 **Error de Desalineación:** Las columnas detectadas no coinciden con los nombres maestros.")
         return
 
     # Selector de grado institucional
@@ -57,7 +47,7 @@ def renderizar(conn_sql):
         st.info("No se encontraron registros de horarios para el grado seleccionado.")
         return
 
-    # Aplicamos el filtro extractor a las columnas de cruce para que coincidan al 100%
+    # Aplicamos el filtro extractor a las columnas de cruce para coincidencia del 100%
     df_filtrado['DIA_CLEAN'] = df_filtrado[col_dia].apply(limpiar_caracteres)
     df_filtrado['BLOQUE_CLEAN'] = df_filtrado[col_bloque].astype(str).str.strip()
 
@@ -70,7 +60,7 @@ def renderizar(conn_sql):
         if b not in bloques_ordenados:
             bloques_ordenados.append(b)
 
-    # 👑 2. RENDERIZADOR BASADO EN SU PLANTILLA HTML FUENTE
+    # 👑 RENDERIZADOR BASADO EN SU PLANTILLA HTML FUENTE
     html_table = """
     <table style="width:100%; border-collapse:collapse; margin-top:20px; font-family:'Arial', sans-serif; box-shadow:4px 4px 15px rgba(0,0,0,0.1); border:3px solid #0d1b2a; border-radius:8px; overflow:hidden;">
         <thead>
@@ -87,10 +77,9 @@ def renderizar(conn_sql):
     """
 
     for bloque in bloques_ordenados:
-        # Extraer filas que pertenezcan a este bloque de tiempo específico
         df_bloque_actual = df_filtrado[df_filtrado['BLOQUE_CLEAN'] == str(bloque).strip()]
         
-        # Detectar de forma blindada si el bloque actual representa el descanso
+        # Detectar si el bloque actual representa el descanso institucional
         es_recreo = "DESCANSO" in str(bloque).upper() or "RECREO" in str(bloque).upper() or any(str(m).upper().strip() in ['DESCANSO', 'RECREO', 'N/A'] for m in df_bloque_actual[col_materia].tolist())
         
         if es_recreo:
@@ -106,7 +95,6 @@ def renderizar(conn_sql):
                 <td style="padding:12px; font-weight:bold; color:#0d1b2a; border:1px solid #0d1b2a; background-color:#f8f9fa; font-size:12px; font-family:'Arial Black';">{bloque}</td>
             """
             for dia in dias_secuencia:
-                # Intersección milimétrica usando los textos ya normalizados por el extractor
                 celda = df_bloque_actual[df_bloque_actual['DIA_CLEAN'] == dia]
                 
                 if not celda.empty:
