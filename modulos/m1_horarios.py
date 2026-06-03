@@ -35,8 +35,9 @@ def renderizar(conn_sql):
         if lista_grados:
             grado_horario = st.selectbox("🔍 Seleccione el Grado para visualizar el horario:", lista_grados)
             df_filtrado = df_horarios[df_horarios[col_grado].astype(str) == grado_horario]
-            st.dataframe(df_filtrado, use_container_width=True, index=False)
+            # 🔄 CORRECCIÓN DE INTERFAZ: Cambiamos index=False por hide_index=True
+            st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
         else:
-            st.dataframe(df_horarios, use_container_width=True, index=False)
+            st.dataframe(df_horarios, use_container_width=True, hide_index=True)
     else:
-        st.dataframe(df_horarios, use_container_width=True, index=False)
+        st.dataframe(df_horarios, use_container_width=True, hide_index=True)
