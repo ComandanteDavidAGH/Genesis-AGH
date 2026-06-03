@@ -184,6 +184,7 @@ with st.sidebar:
         materias_permitidas += sorted(st.session_state.df_maestro['Materia'].dropna().unique().astype(str).tolist())
     materia_sel = st.selectbox("Materia:", materias_permitidas)
     periodo_sel = st.selectbox("Periodo:", ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"])
+    col_n = periodo_sel if periodo_sel != "CONSOLIDADO FINAL" else "PROMEDIO"
     
     if st.button("🔴 CERRAR SESIÓN"): 
         st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = False, "", ""
@@ -208,7 +209,261 @@ try:
     elif menu == "✍️ Digitar Notas": import modulos.m5_notas as m5; m5.renderizar(df_filtrado, periodo_sel, conn_sql)
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
-    elif menu == "📜 Boletines": import modulos.m8_boletines as m8; m8.renderizar(df_filtrado, curso_sel, periodo_sel)
+    
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP TAMAÑO CARTA DIRECTO EN EL NÚCLEO
+    elif menu == "📜 Boletines":
+        st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
+        modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
+        
+        # 🖨️ HOJA DE ESTILOS VIP: Calibrada quirúrgicamente para encajar en 1 SOLA HOJA TAMAÑO CARTA
+        css_vip = """<style>
+            body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
+            .b-print { position: relative; padding: 18px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 12px; font-weight: bold; background: white; z-index: 1; margin-bottom: 15px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
+            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 45%; z-index: -1; pointer-events: none; }
+            .table-custom { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 8px; z-index: 2; position: relative; }
+            .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 6px; font-family: 'Arial Black'; font-size: 10.5px; }
+            .table-custom td { border: 1px solid #000; padding: 4px; background-color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 10.5px; }
+            .header-table { width: 100%; border: none; margin-bottom: 8px; z-index: 2; position: relative; }
+            .header-table td { border: none; }
+            .firmas-container { display: flex; justify-content: space-around; margin-top: 35px; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+            .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 4px; font-weight: bold; color: #0d1b2a; }
+            @media print { 
+                @page { size: letter portrait; margin: 5mm 8mm 5mm 8mm !important; } 
+                body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+                .no-print { display: none !important; } 
+                .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin-bottom: 0 !important; } 
+                .table-custom th { padding: 4px !important; font-size: 10px !important; }
+                .table-custom td { padding: 3px !important; font-size: 9.5px !important; }
+                .firmas-container { margin-top: 20px !important; font-size: 11px !important; }
+                .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
+            }
+        </style>"""    
+        
+        def def_nota_limpia(valor):
+            try:
+                n = float(valor)
+                return 0.0 if pd.isna(n) else n
+            except:
+                return 0.0
+
+        # ESCUDO DE INTERCEPCIÓN LÁSER: Leemos de la base completa para traer todas las asignaturas
+        df_boletines_base = df_m.copy() if df_m is not None else pd.DataFrame()
+        if curso_sel != "TODOS":
+            df_boletines_base = df_boletines_base[df_boletines_base['Grado'].astype(str) == str(curso_sel)]
+        
+        if modo_impresion == "👤 Individual":
+            alumno = st.selectbox("👤 Estudiante:", sorted(df_boletines_base['Nombre_Completo'].dropna().unique()))
+            if alumno:
+                import base64
+                try:
+                    with open("logo.png", "rb") as img_file:
+                        b64_string = base64.b64encode(img_file.read()).decode()
+                    URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
+                except:
+                    URL_LOGO_OFICIAL = ""
+
+                res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alumno]
+                res = res.drop_duplicates(subset=['Materia'])
+                res = res[res['PROMEDIO'] > 0.0]
+                
+                promedios = [def_nota_limpia(x) for x in res[col_n]] if col_n in res.columns else [0.0]
+                p_prom = sum(promedios) / len(promedios) if len(promedios) > 0 else 0.0
+                
+                th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
+                
+                html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
+                <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:20px; right:20px; z-index:99;">
+                    <button onclick="imprimirBoletin()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR REPORTE OFICIAL</button>
+                </div>
+                <div class="b-print">
+                    <img src="{URL_LOGO_OFICIAL}" class="watermark">
+                    <table class="header-table">
+                        <tr>
+                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="80"></td>
+                            <td style="text-align:center;">
+                                <h2 style="margin:0; color:#0d1b2a; font-size:18px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                                <p style="margin:0; font-size:13px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                            </td>
+                            <td style="text-align:right; width:15%;">
+                                <div style="border:3px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                                    <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="border:2px solid #0d1b2a; padding:8px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;">
+                        <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alumno}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0] if not res.empty else 'N/A'}</span>
+                    </div>
+                    <table class="table-custom">
+                        <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
+                
+                grado_str = str(res['Grado'].iloc[0]).upper() if not res.empty else ""
+                es_primaria = any(k in grado_str for k in ["1", "2", "3", "4", "5", "PRIMER", "SEGUND", "TERCER", "CUART", "QUINT"]) and not any(k in grado_str for k in ["10", "11", "DECIMO", "ONCE"])
+                nivel_alumno = "Primaria" if es_primaria else "Bachillerato"
+    
+                for index, row in res.iterrows():
+                    nota_final = def_nota_limpia(row.get(col_n, 0))
+                    
+                    if nota_final >= 9.1: desp = "SUPERIOR"
+                    elif nota_final >= 7.6: desp = "ALTO"
+                    elif nota_final >= 6.0: desp = "BÁSICO"
+                    else: desp = "BAJO"
+    
+                    color = "#155724" if nota_final >= 6.0 else "#721c24"
+                    
+                    if periodo_sel == "CONSOLIDADO FINAL":
+                        p1 = def_nota_limpia(row.get('P1', 0))
+                        p2 = def_nota_limpia(row.get('P2', 0))
+                        p3 = def_nota_limpia(row.get('P3', 0))
+                        p4 = def_nota_limpia(row.get('P4', 0))
+                        prom = def_nota_limpia(row.get('PROMEDIO', 0))
+                        td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
+                        col_span = 7
+                    else:
+                        td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
+                        col_span = 3
+                    
+                    html_boletin += f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
+                    
+                    logro_texto = 'Sin registro'
+                    try:
+                        if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
+                            df_l = st.session_state.df_logros
+                            filtro = df_l[
+                                (df_l.iloc[:, 0].astype(str).str.strip().str.upper() == nivel_alumno.upper()) & 
+                                (df_l.iloc[:, 1].astype(str).str.strip().str.upper() == str(row['Materia']).strip().upper()) & 
+                                (df_l.iloc[:, 2].astype(str).str.strip().str.upper() == desp.upper())
+                            ]
+                            if not filtro.empty:
+                                logro_texto = str(filtro.iloc[0, 3])
+                            else:
+                                logro_texto = "Logro no encontrado en base de datos"
+                        else:
+                            logro_texto = "Base de logros vacía"
+                    except:
+                        logro_texto = row.get('LOGRO', 'Error al buscar logro')
+    
+                    html_boletin += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:3px 6px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                
+                html_boletin += """
+                    </table>
+                    <div class='firmas-container'>
+                        <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
+                        <div class='firma-box'>Firma Director de Grupo</div>
+                    </div>
+                </div></body></html>"""
+                
+                components.html(html_boletin, height=680, scrolling=True)
+                
+        else:
+            estudiantes = sorted(df_boletines_base['Nombre_Completo'].dropna().unique())
+            st.warning(f"⚠️ Se generarán {len(estudiantes)} boletines VIP en formato CARTA para el grado {curso_sel}.")
+            
+            if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary", use_container_width=True):
+                import base64
+                try:
+                    with open("logo.png", "rb") as img_file:
+                        b64_string = base64.b64encode(img_file.read()).decode()
+                    URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
+                except:
+                    URL_LOGO_OFICIAL = ""
+                    
+                th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if periodo_sel == "CONSOLIDADO FINAL" else f"<th>{periodo_sel}</th>"
+                html_masivo = f"""<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;"><button onclick="imprimirLote()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR LOTE MASIVO</button></div>"""
+                
+                for i, alum in enumerate(estudiantes):
+                    res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alum]
+                    res = res.drop_duplicates(subset=['Materia'])
+                    res = res[res['PROMEDIO'] > 0.0]
+                    if res.empty: continue
+                    
+                    promedios = [def_nota_limpia(x) for x in res[col_n]] if col_n in res.columns else [0.0]
+                    p_prom = sum(promedios) / len(promedios) if len(promedios) > 0 else 0.0
+                    salto = "salto-pagina" if i < len(estudiantes) - 1 else ""
+                    
+                    html_masivo += f"""<div class="b-print {salto}">
+                    <img src="{URL_LOGO_OFICIAL}" class="watermark">
+                    <table class="header-table">
+                        <tr>
+                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="80"></td>
+                            <td style="text-align:center;">
+                                <h2 style="margin:0; color:#0d1b2a; font-size:18px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                                <p style="margin:0; font-size:13px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                            </td>
+                            <td style="text-align:right; width:15%;">
+                                <div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                                    <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;">
+                        <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0] if not res.empty else 'N/A'}</span>
+                    </div>
+                    <table class="table-custom">
+                        <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>"""
+                    
+                    grado_str = str(res['Grado'].iloc[0]).upper() if not res.empty else ""
+                    es_primaria = any(k in grado_str for k in ["1", "2", "3", "4", "5", "PRIMER", "SEGUND", "TERCER", "CUART", "QUINT"]) and not any(k in grado_str for k in ["10", "11", "DECIMO", "ONCE"])
+                    nivel_alumno = "Primaria" if es_primaria else "Bachillerato"
+    
+                    for _, row in res.iterrows():
+                        nota_final = def_nota_limpia(row.get(col_n, 0))
+                        
+                        if nota_final >= 9.1: desp = "SUPERIOR"
+                        elif nota_final >= 7.6: desp = "ALTO"
+                        elif nota_final >= 6.0: desp = "BÁSICO"
+                        else: desp = "BAJO"
+                        
+                        color = "#155724" if nota_final >= 6.0 else "#721c24"
+        
+                        if periodo_sel == "CONSOLIDADO FINAL":
+                            p1 = def_nota_limpia(row.get('P1', 0))
+                            p2 = def_nota_limpia(row.get('P2', 0))
+                            p3 = def_nota_limpia(row.get('P3', 0))
+                            p4 = def_nota_limpia(row.get('P4', 0))
+                            prom = def_nota_limpia(row.get('PROMEDIO', 0))
+                            td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
+                            col_span = 7
+                        else:
+                            td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
+                            col_span = 3
+        
+                        html_masivo += f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
+                        
+                        logro_texto = 'Sin registro'
+                        try:
+                            if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
+                                df_l = st.session_state.df_logros
+                                filtro = df_l[
+                                    (df_l.iloc[:, 0].astype(str).str.strip().str.upper() == nivel_alumno.upper()) & 
+                                    (df_l.iloc[:, 1].astype(str).str.strip().str.upper() == str(row['Materia']).strip().upper()) & 
+                                    (df_l.iloc[:, 2].astype(str).str.strip().str.upper() == desp.upper())
+                                ]
+                                if not filtro.empty:
+                                    logro_texto = str(filtro.iloc[0, 3])
+                                else:
+                                    logro_texto = "Logro no encontrado en base de datos"
+                            else:
+                                logro_texto = "Base de logros vacía"
+                        except:
+                            logro_texto = row.get('LOGRO', 'Error al buscar logro')
+                        
+                        html_masivo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:3px 6px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                    
+                    html_masivo += """
+                        </table>
+                        <div class='firmas-container'>
+                            <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
+                            <div class='firma-box'>Firma Director de Grupo</div>
+                        </div>
+                        </div>"""
+                        
+                html_masivo += "</body></html>"
+                components.html(html_masivo, height=650, scrolling=True)
+
+    elif menu == "📖 Manual de Usuario": import modulos.m9_manual as m9; m9.renderizar()
+    elif menu == "📸 Eventos Institucionales": import modulos.m10_eventos as m10; m10.renderizar()
 except Exception as e:
     st.info(f"🛠️ Sincronizando módulos... {e}")
 
