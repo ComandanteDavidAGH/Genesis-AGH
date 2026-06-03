@@ -26,7 +26,7 @@ def clasificar_desempeno(nota):
         return "SIN ASIGNAR"
 
 def renderizar(df, periodo_sel, conn):
-    # 🚀 MOTOR VISUAL: Borde y sombra para el editor
+    # 🚀 MOTOR VISUAL: Borde y sombra
     st.markdown("""
     <style>
     div[data-testid="stDataEditor"] {
@@ -57,11 +57,17 @@ def renderizar(df, periodo_sel, conn):
         st.warning("No hay estudiantes asignados.")
         return
 
-    # --- 🎯 ASEGURAR DESEMPEÑO (Solución a los 'None') ---
+    # --- 🛠️ LIMPIEZA Y ASEGURAMIENTO DE DATOS ---
+    # Si LOGROS no existe, lo creamos vacío. Si es NaN, lo volvemos texto vacío.
+    if 'LOGROS' not in df.columns:
+        df['LOGROS'] = ""
+    df['LOGROS'] = df['LOGROS'].fillna("") 
+    
+    # Asegurar desempeño (Solución anterior)
     if 'DESEMPEÑO' in df.columns:
         df['DESEMPEÑO'] = df['PROMEDIO'].apply(clasificar_desempeno)
 
-    # --- 🎯 CONFIGURACIÓN DE COLUMNAS ---
+    # --- 🎯 CONFIGURACIÓN DE COLUMNAS (Incluyendo LOGROS) ---
     config_notas = { 
         'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
         'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
@@ -70,7 +76,8 @@ def renderizar(df, periodo_sel, conn):
         'Nombre_Completo': st.column_config.TextColumn("Estudiante", disabled=True),
         'Materia': st.column_config.TextColumn("Asignatura", disabled=True),
         'PROMEDIO': st.column_config.NumberColumn("Definitiva", disabled=True, format="%.1f"),
-        'DESEMPEÑO': st.column_config.TextColumn("Desempeño", disabled=True)
+        'DESEMPEÑO': st.column_config.TextColumn("Desempeño", disabled=True),
+        'LOGROS': st.column_config.TextColumn("Logros", disabled=False)
     }
 
     # --- 💾 LÓGICA DE GUARDADO ---
@@ -83,7 +90,7 @@ def renderizar(df, periodo_sel, conn):
                     for col, val in valores.items():
                         st.session_state.df_maestro.at[idx_real, col] = val
                 
-                # Recalcular promedio y desempeño antes de guardar
+                # Recalcular
                 st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
                 st.session_state.df_maestro['DESEMPEÑO'] = st.session_state.df_maestro['PROMEDIO'].apply(clasificar_desempeno)
                 
@@ -97,7 +104,9 @@ def renderizar(df, periodo_sel, conn):
         else:
             st.warning("⚠️ Sin cambios pendientes.")
 
-    # 👑 ENCABEZADO VIP Y RENDERIZADO
+    # 👑 RENDERIZADO FINAL
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
+    
+    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
     
     st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
