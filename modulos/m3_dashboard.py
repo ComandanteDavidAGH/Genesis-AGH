@@ -3,6 +3,31 @@ import pandas as pd
 import plotly.express as px
 
 def renderizar(df, periodo_sel, conn):
+    # 🚀 INYECCIÓN DEL MOTOR DE ANIMACIÓN 3D (GRÁFICOS VIVOS)
+    st.markdown("""
+    <style>
+    /* Efecto base de las gráficas */
+    [data-testid="stPlotlyChart"] {
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+        border: 2px solid #0d1b2a !important;
+        box-shadow: 4px 4px 10px rgba(0,0,0,0.08) !important;
+        will-change: transform !important;
+        z-index: 1;
+        padding: 10px !important;
+    }
+    
+    /* Efecto de Agrandamiento y Levitación al pasar el mouse */
+    [data-testid="stPlotlyChart"]:hover {
+        transform: translateY(-8px) scale(1.035) !important;
+        box-shadow: 0 22px 45px rgba(212, 175, 55, 0.45) !important;
+        border-color: #d4af37 !important;
+        z-index: 999 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📈 Radar Táctico Individual</h3>", unsafe_allow_html=True)
     
     if df.empty:
