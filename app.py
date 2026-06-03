@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import streamlit.components.v1 as components  # ⚡ SOLDADURA DE SEGURIDAD INTERNA
+import streamlit.components.v1 as components  
 import base64
 import os
 from datetime import datetime, timedelta, timezone
@@ -213,31 +213,33 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP TAMAÑO CARTA DIRECTO EN EL NÚCLEO
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (FASE DE EXPANSIÓN Y AJUSTE CARTA)
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
         
-        # 🖨️ HOJA DE ESTILOS VIP: Calibrada quirúrgicamente para encajar en 1 SOLA HOJA TAMAÑO CARTA
+        # 🖨️ HOJA DE ESTILOS VIP EXPANDIDA: Más oxígeno (padding/margin) para que llene la hoja Carta
         css_vip = """<style>
             body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
-            .b-print { position: relative; padding: 18px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 12px; font-weight: bold; background: white; z-index: 1; margin-bottom: 15px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
-            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 45%; z-index: -1; pointer-events: none; }
-            .table-custom { width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 8px; z-index: 2; position: relative; }
-            .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 6px; font-family: 'Arial Black'; font-size: 10.5px; }
-            .table-custom td { border: 1px solid #000; padding: 4px; background-color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 10.5px; }
-            .header-table { width: 100%; border: none; margin-bottom: 8px; z-index: 2; position: relative; }
+            .b-print { position: relative; padding: 30px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
+            .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 60%; z-index: -1; pointer-events: none; }
+            .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; }
+            .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; font-size: 12px; }
+            .table-custom td { border: 1px solid #000; padding: 8px; background-color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 11.5px; }
+            .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; }
             .header-table td { border: none; }
-            .firmas-container { display: flex; justify-content: space-around; margin-top: 35px; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
-            .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 4px; font-weight: bold; color: #0d1b2a; }
+            .firmas-container { display: flex; justify-content: space-around; margin-top: 60px; font-size: 14px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+            .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 6px; font-weight: bold; color: #0d1b2a; }
             @media print { 
-                @page { size: letter portrait; margin: 5mm 8mm 5mm 8mm !important; } 
+                @page { size: letter portrait; margin: 10mm 15mm 10mm 15mm !important; } 
                 body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
                 .no-print { display: none !important; } 
                 .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin-bottom: 0 !important; } 
-                .table-custom th { padding: 4px !important; font-size: 10px !important; }
-                .table-custom td { padding: 3px !important; font-size: 9.5px !important; }
-                .firmas-container { margin-top: 20px !important; font-size: 11px !important; }
+                /* FASE DE EXPANSIÓN PARA IMPRESIÓN */
+                .table-custom th { padding: 9px !important; font-size: 12.5px !important; }
+                .table-custom td { padding: 7px !important; font-size: 11.5px !important; }
+                .logro-texto-clase { padding: 5px 8px !important; font-size: 11px !important; line-height: 1.2 !important; }
+                .firmas-container { margin-top: 80px !important; font-size: 13px !important; }
                 .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             }
         </style>"""    
@@ -249,7 +251,6 @@ try:
             except:
                 return 0.0
 
-        # ESCUDO DE INTERCEPCIÓN LÁSER: Leemos de la base completa para traer todas las asignaturas
         df_boletines_base = df_m.copy() if df_m is not None else pd.DataFrame()
         if curso_sel != "TODOS":
             df_boletines_base = df_boletines_base[df_boletines_base['Grado'].astype(str) == str(curso_sel)]
@@ -282,19 +283,19 @@ try:
                     <img src="{URL_LOGO_OFICIAL}" class="watermark">
                     <table class="header-table">
                         <tr>
-                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="80"></td>
+                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="95"></td>
                             <td style="text-align:center;">
-                                <h2 style="margin:0; color:#0d1b2a; font-size:18px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                                <p style="margin:0; font-size:13px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                                <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                                <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                             </td>
                             <td style="text-align:right; width:15%;">
-                                <div style="border:3px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
-                                    <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
+                                <div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                                    <b style="font-size:11px; color:#000;">PROMEDIO</b><br><b style="font-size:20px; color:#d4af37;">{p_prom:.1f}</b>
                                 </div>
                             </td>
                         </tr>
                     </table>
-                    <div style="border:2px solid #0d1b2a; padding:8px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;">
+                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:15px; border-radius:5px;">
                         <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alumno}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0] if not res.empty else 'N/A'}</span>
                     </div>
                     <table class="table-custom">
@@ -346,17 +347,17 @@ try:
                     except:
                         logro_texto = row.get('LOGRO', 'Error al buscar logro')
     
-                    html_boletin += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:3px 6px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                    html_boletin += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                 
                 html_boletin += """
                     </table>
                     <div class='firmas-container'>
-                        <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
+                        <div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div>
                         <div class='firma-box'>Firma Director de Grupo</div>
                     </div>
                 </div></body></html>"""
                 
-                components.html(html_boletin, height=680, scrolling=True)
+                components.html(html_boletin, height=800, scrolling=True)
                 
         else:
             estudiantes = sorted(df_boletines_base['Nombre_Completo'].dropna().unique())
@@ -388,19 +389,19 @@ try:
                     <img src="{URL_LOGO_OFICIAL}" class="watermark">
                     <table class="header-table">
                         <tr>
-                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="80"></td>
+                            <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="95"></td>
                             <td style="text-align:center;">
-                                <h2 style="margin:0; color:#0d1b2a; font-size:18px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                                <p style="margin:0; font-size:13px; color:#d4af37; font-family:'Arial Black';">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                                <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                                <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                             </td>
                             <td style="text-align:right; width:15%;">
                                 <div style="border:3px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px;">
-                                    <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
+                                    <b style="font-size:11px; color:#000;">PROMEDIO</b><br><b style="font-size:20px; color:#d4af37;">{p_prom:.1f}</b>
                                 </div>
                             </td>
                         </tr>
                     </table>
-                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:5px;">
+                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:15px; border-radius:5px;">
                         <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span><span><b style="color:#0d1b2a;">GRADO:</b> {res['Grado'].iloc[0] if not res.empty else 'N/A'}</span>
                     </div>
                     <table class="table-custom">
@@ -452,18 +453,18 @@ try:
                         except:
                             logro_texto = row.get('LOGRO', 'Error al buscar logro')
                         
-                        html_masivo += f"<tr><td colspan='{col_span}' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:3px 6px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                        html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:2px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
                     html_masivo += """
                         </table>
                         <div class='firmas-container'>
-                            <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
+                            <div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div>
                             <div class='firma-box'>Firma Director de Grupo</div>
                         </div>
                         </div>"""
                         
                 html_masivo += "</body></html>"
-                components.html(html_masivo, height=650, scrolling=True)
+                components.html(html_masivo, height=800, scrolling=True)
 
     elif menu == "📖 Manual de Usuario": import modulos.m9_manual as m9; m9.renderizar()
     elif menu == "📸 Eventos Institucionales": import modulos.m10_eventos as m10; m10.renderizar()
