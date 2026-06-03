@@ -22,7 +22,7 @@ def obtener_desempeno_dinamico(nota):
         return "BÁSICO"
 
 def renderizar(*args, **kwargs):
-    # 🛡️ EXTRECTOR DEL LOGO DE LA APLICACIÓN (Conversión Base64 Blindada)
+    # 🛡️ EXTRACTOR DEL LOGO REAL DE LA APLICACIÓN (Conversión Base64)
     logo_base64 = ""
     if os.path.exists("logo.png"):
         try:
@@ -31,13 +31,12 @@ def renderizar(*args, **kwargs):
         except Exception:
             pass
 
-    escudo_html = ""
     if logo_base64:
-        escudo_html = f'<img src="data:image/png;base64,{logo_base64}" style="width:85px; height:auto; filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.15));">'
+        escudo_html = f'<img src="data:image/png;base64,{logo_base64}" style="width:85px; height:auto; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.15));">'
     else:
         escudo_html = '<div style="width:80px; height:80px; background-color:#0d1b2a; border:2px solid #d4af37; border-radius:50%;"></div>'
 
-    # 👑 INYECTOR DE REGLAS PREMIUM Y VISTA DE IMPRESIÓN OFICIAL
+    # 👑 INYECTOR DE REGLAS DE IMPRESIÓN Y OCULTAMIENTO DE CONTROLES
     st.markdown("""
         <style>
             @media print {
@@ -61,21 +60,21 @@ def renderizar(*args, **kwargs):
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
     
-    # 🔄 DETECTOR DINÁMICO DE PERIODOS (Sincronización Multicanal)
-    df_notas = None
-    periodo_sel = "P1"
-    conn_sql = None
-
-    if len(args) >= 1: df_notas = args[0] if isinstance(args[0], pd.DataFrame) else None
-    if len(args) >= 3: conn_sql = args[2]
-
-    # Interceptamos la selección de la barra lateral izquierda global
-    for key in st.session_state.keys():
-        if "PERIOD" in key.upper() or key.lower() == "periodo":
-            periodo_sel = str(st.session_state[key]).upper().strip()
+    # 🔄 ANCLAJE DIRECTO AL MENÚ LATERAL (Escaneo profundo de st.session_state)
+    periodo_seleccionado = "P1"
+    for key, value in st.session_state.items():
+        val_str = str(value).upper().strip()
+        if val_str in ["P1", "P2", "P3", "P4"] or "CONSOLID" in val_str or "FINAL" in val_str:
+            periodo_seleccionado = val_str
             break
 
-    # Conexión de respaldo a Supabase
+    es_consolidado = "CONSOLID" in periodo_seleccionado or "FINAL" in periodo_seleccionado
+    periodo_visual = "CONSOLIDADO FINAL" if es_consolidado else f"PERIODO {periodo_seleccionado}"
+
+    # Desempaquetado seguro de argumentos de app.py
+    df_notas = args[0] if len(args) >= 1 and isinstance(args[0], pd.DataFrame) else None
+    conn_sql = args[2] if len(args) >= 3 else None
+
     if (df_notas is None or df_notas.empty) and conn_sql is not None:
         try: df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
         except Exception: pass
@@ -84,7 +83,7 @@ def renderizar(*args, **kwargs):
         st.warning("⚠️ **Base de datos de calificaciones no disponible en este cuadrante.**")
         return
 
-    # Estandarización absoluta de columnas
+    # Estandarización absoluta de columnas de la base de datos
     df_trabajo = df_notas.copy()
     df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
 
@@ -93,24 +92,13 @@ def renderizar(*args, **kwargs):
     col_materia = next((c for c in df_trabajo.columns if c in ['MATERIA', 'ASIGNATURA']), df_trabajo.columns[2])
     col_logro_db = next((c for c in df_trabajo.columns if c in ['LOGRO', 'DESCRIPCION']), None)
 
-    # ⚡ CASILLAS PEQUEÑAS HORIZONTALES COMPACTAS (Una al lado de la otra)
+    # ⚡ CASILLAS PEQUEÑAS HORIZONTALES ULTRA COMPACTAS (Sin el selector de periodo duplicado)
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
-    c_modo, c_per, c_grad, c_est = st.columns([1.1, 1.4, 1.1, 2.0])
+    c_modo, c_grad, c_est = st.columns([1.2, 1.5, 3.3])
     
     with c_modo:
         modo = st.selectbox("Generación:", ["👤 Individual", "📦 Masivo"])
     
-    with c_per:
-        lista_periodos_opt = ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"]
-        default_idx = 0
-        if "P2" in periodo_sel: default_idx = 1
-        elif "P3" in periodo_sel: default_idx = 2
-        elif "P4" in periodo_sel: default_idx = 3
-        elif "CONSOLID" in periodo_sel or "FINAL" in periodo_sel: default_idx = 4
-        
-        periodo_activo = st.selectbox("⏱️ Periodo:", lista_periodos_opt, index=default_idx)
-        es_consolidado = (periodo_activo == "CONSOLIDADO FINAL")
-
     if col_grado:
         lista_grados = sorted(df_trabajo[col_grado].dropna().unique().astype(str).tolist())
         with c_grad:
@@ -125,10 +113,8 @@ def renderizar(*args, **kwargs):
     else:
         df_alumnos = sorted(df_trabajo[col_nombre].dropna().unique().tolist())
         with c_est:
-            st.text_input("Estado de Lote:", f"📦 {len(df_alumnos)} Alumnos listos", disabled=True)
+            st.text_input("Estado de Lote:", f"📦 Masivo: {len(df_alumnos)} Boletines listos para impresión", disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
-
-    periodo_visual = "CONSOLIDADO FINAL" if es_consolidado else f"PERIODO {periodo_activo}"
 
     # Renderizado en cadena de los Boletines Insignias
     for estudiante in df_alumnos:
@@ -137,7 +123,7 @@ def renderizar(*args, **kwargs):
         
         grado_est = df_est[col_grado].iloc[0] if col_grado in df_est.columns else "N/A"
 
-        # Barra de botones de acciones
+        # Barra de botones de acciones en pantalla
         if modo == "👤 Individual":
             st.markdown(f"""
                 <div class="barra-comandos no-print">
@@ -147,17 +133,17 @@ def renderizar(*args, **kwargs):
             """, unsafe_allow_html=True)
 
         # Cálculo de Promedio General Dinámico
-        columnas_periodos = [c for c in ['P1', 'P2', 'P3', 'P4'] if c in df_est.columns]
+        columnas_periodos = ['P1', 'P2', 'P3', 'P4']
         for cp in columnas_periodos:
-            df_est[cp] = pd.to_numeric(df_est[cp], errors='coerce').fillna(0.0)
+            if cp in df_est.columns:
+                df_est[cp] = pd.to_numeric(df_est[cp], errors='coerce').fillna(0.0)
             
         prom_col = next((c for c in df_est.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF']), None)
         if prom_col:
             df_est[prom_col] = pd.to_numeric(df_est[prom_col], errors='coerce').fillna(0.0)
             promedio_institucional = df_est[prom_col].mean()
         else:
-            df_est['FINAL_CALC'] = df_est[columnas_periodos].mean(axis=1)
-            promedio_institucional = df_est['FINAL_CALC'].mean()
+            promedio_institucional = df_est[columnas_periodos].mean(axis=1).mean()
 
         # Cabecera del Boletín Insignia
         html_boletin = f"""
@@ -211,7 +197,7 @@ def renderizar(*args, **kwargs):
                 <thead>
                     <tr style="background-color:#0d1b2a; color:white; border:2px solid #0d1b2a;">
                         <th style="padding:12px; border:1px solid #d4af37; text-align:left; font-family:'Arial Black'; font-size:12px;">MATERIA</th>
-                        <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:18%;">NOTA {periodo_activo}</th>
+                        <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:18%;">NOTA {periodo_seleccionado}</th>
                         <th style="padding:12px; border:1px solid #d4af37; text-align:center; font-family:'Arial Black'; font-size:12px; width:25%;">DESEMPEÑO</th>
                     </tr>
                 </thead>
@@ -230,7 +216,7 @@ def renderizar(*args, **kwargs):
                 n_p4 = float(fila['P4']) if 'P4' in df_est.columns else 0.0
                 n_def = float(fila[prom_col]) if prom_col else ((n_p1+n_p2+n_p3+n_p4)/4)
 
-                # ⚡ CÁLCULO DE DESEMPEÑO TOTALMENTE DINÁMICO ANTI-NAN ⚡
+                # Cálculo automático en caliente del Desempeño real
                 des_txt = obtener_desempeno_dinamico(n_def)
                 color_def = "#cc0000" if n_def < 6.0 else "#000000"
                 color_des = "#cc0000" if n_def < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
@@ -252,10 +238,9 @@ def renderizar(*args, **kwargs):
                     </tr>
                 """
             else:
-                col_p_act = str(periodo_activo).upper().strip()
+                col_p_act = str(periodo_seleccionado).upper().strip()
                 nota_val = float(fila[col_p_act]) if col_p_act in df_est.columns else 0.0
                 
-                # ⚡ CÁLCULO DE DESEMPEÑO TOTALMENTE DINÁMICO ANTI-NAN ⚡
                 des_txt = obtener_desempeno_dinamico(nota_val)
                 color_nota = "#cc0000" if nota_val < 6.0 else "#000000"
                 color_des = "#cc0000" if nota_val < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
