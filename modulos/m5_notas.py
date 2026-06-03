@@ -107,13 +107,16 @@ def renderizar(df, periodo_sel, conn):
         df_render['PROMEDIO'] = pd.to_numeric(df_render['PROMEDIO'], errors='coerce').fillna(0.0)
         df_render['DESEMPEÑO'] = df_render['PROMEDIO'].apply(clasificar_desempeno)
 
-    # 📊 HUD DE RENDIMIENTO (Mini KPIs)
-    if 'PROMEDIO' in df_render.columns:
-        promedio_grupo = df_render['PROMEDIO'].mean()
-        aprobados = len(df_render[df_render['PROMEDIO'] >= 6.0])
-        total_est = len(df_render)
-        tasa_aprobacion = (aprobados / total_est) * 100 if total_est > 0 else 0
+    # 📊 HUD DE RENDIMIENTO MATEMÁTICAMENTE CORREGIDO
+    if 'PROMEDIO' in df_render.columns and 'Nombre_Completo' in df_render.columns:
+        # Agrupamos por estudiante único para no contar las materias repetidas
+        df_agrupado = df_render.groupby('Nombre_Completo')['PROMEDIO'].mean()
         
+        total_est = df_render['Nombre_Completo'].nunique()
+        promedio_grupo = df_agrupado.mean() if not df_agrupado.empty else 0.0
+        aprobados = len(df_agrupado[df_agrupado >= 6.0])
+        
+        tasa_aprobacion = (aprobados / total_est) * 100 if total_est > 0 else 0
         color_tasa = "green" if tasa_aprobacion >= 70 else ("orange" if tasa_aprobacion >= 50 else "red")
         
         st.markdown(f"""
@@ -216,7 +219,6 @@ def renderizar(df, periodo_sel, conn):
                         st.toast("✅ ¡Notas sincronizadas exitosamente en el búnker SQL!", icon="🚀")
                         registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Notas actualizadas")
                         st.cache_data.clear()
-                        # Un pequeño delay para que el usuario alcance a ver el toast antes de recargar
                         import time
                         time.sleep(1)
                         st.rerun()
