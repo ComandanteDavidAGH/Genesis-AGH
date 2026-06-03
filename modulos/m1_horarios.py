@@ -120,23 +120,22 @@ def renderizar(conn_sql):
     html_table += '</tbody></table><br>'
     st.html(html_table)
 
-    # 📊 RESTAURACIÓN DE ASIGNACIONES (Gráfico de Carga Laboral Docente)
+    # 📊 RESTAURACIÓN DE ASIGNACIONES CORREGIDA COLOQUIAL
     st.markdown("---")
     st.markdown("<h4 style='color:#0d1b2a; font-family:Arial Black;'>📊 Análisis Estadístico de Carga Laboral Docente</h4>", unsafe_allow_html=True)
     
-    # Filtramos la base completa quitando los descansos para calcular la carga real
     df_carga = df_horarios[
         (~df_horarios[col_materia].astype(str).str.upper().str.strip().isin(['DESCANSO', 'RECREO', '-', ''])) & 
         (~df_horarios[col_bloque].astype(str).str.upper().str.strip().str.contains('DESCANSO|RECREO'))
     ].copy()
     
     if not df_carga.empty:
-        # Contamos cuántos bloques tiene asignado cada profesor
         carga_docentes = df_carga[col_docente].value_counts().reset_index()
         carga_docentes.columns = ['Docente', 'Bloques Asignados']
-        carga_docentes = carga_docentes.sort_values(by='Bloques Asignados', ascending=True)
         
-        # Generamos el gráfico de barras ejecutivas
+        # 🔄 MANIOBRA A LA INVERSA: Cambiamos ascending=True por False para voltear la orientación
+        carga_docentes = carga_docentes.sort_values(by='Bloques Asignados', ascending=False)
+        
         fig = px.bar(
             carga_docentes, 
             x='Bloques Asignados', 
@@ -144,10 +143,10 @@ def renderizar(conn_sql):
             orientation='h',
             title='Distribución de Intensidad Horaria Semanal por Profesor',
             labels={'Bloques Asignados': 'Número de Horas / Bloques a la Semana', 'Docente': 'Profesor'},
-            color_discrete_sequence=['#0d1b2a'] # Color institucional azul oscuro
+            text='Bloques Asignados', # ⚡ ACTIVACIÓN DE ETIQUETA DE DATOS NATIVA
+            color_discrete_sequence=['#0d1b2a']
         )
         
-        # Estilizado premium de alta definición del lienzo gráfico
         fig.update_layout(
             font_family="Arial",
             title_font_family="Arial Black",
@@ -156,15 +155,16 @@ def renderizar(conn_sql):
             yaxis=dict(gridcolor='rgba(0,0,0,0)'),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            margin=dict(l=150, r=20, t=50, b=50),
+            margin=dict(l=150, r=50, t=50, b=50), # Más espacio derecho para la etiqueta de texto
             height=400
         )
         
-        # Efecto de resaltado en bordes para emular relieve ejecutivo
         fig.update_traces(
-            marker_line_color='#d4af37', # Borde Dorado institucional
+            marker_line_color='#d4af37',
             marker_line_width=1.5,
-            opacity=0.95
+            opacity=0.95,
+            textposition='outside', # ⚡ IMPRIMIR ETIQUETAS POR FUERA DE LAS BARRAS
+            textfont=dict(family="Arial Black", size=11, color="#0d1b2a")
         )
         
         st.plotly_chart(fig, use_container_width=True)
