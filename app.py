@@ -356,7 +356,7 @@ try:
                     html_boletin += f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
                     llave_busqueda = (nivel_alumno.upper(), str(row['Materia']).strip().upper(), desp.upper())
                     logro_texto = diccionario_logros.get(llave_busqueda, row.get('LOGRO', 'Descriptor no encontrado en BD'))
-                    html_boletin += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                    html_boletin += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:3px 6px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                 
                 html_boletin += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div></body></html>"""
                 components.html(html_boletin, height=680, scrolling=True)
@@ -441,11 +441,12 @@ try:
 except Exception as e:
     st.info(f"🛠️ Sincronizando módulos... {e}")
 
-# 🚀 PIE DE PÁGINA LEGAL BLINDADO
-st.markdown("---")
+# 🚀 PIE DE PÁGINA LEGAL MINIMALISTA Y ELEGANTE
 st.markdown(f"""
-    <div class='no-print' style='background-color: #f8f9fa; border: 2px solid #ced4da; border-left: 8px solid #cc0000; padding: 15px; border-radius: 8px; text-align: justify; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);'>
-        <h4 style='margin: 0 0 5px 0; font-size: 14px; color: #cc0000; font-family: "Arial Black", sans-serif;'>⚖️ AVISO LEGAL: POLÍTICA DE PRIVACIDAD Y TRATAMIENTO DE DATOS PERSONALES</h4>
-        <p style='margin: 0; font-size: 12px; color: #333; line-height: 1.5; font-weight: bold;'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 © {datetime.now().year} | En estricto cumplimiento de la <b>Ley 1581 de 2012</b> (Ley de Protección de Datos Personales), el Decreto 1377 de 2013 de Colombia, y los lineamientos del <b>Ministerio de Educación Nacional (MEN)</b>, el acceso, navegación y uso de esta plataforma garantiza que la recolección, almacenamiento y circulación de los datos personales y académicos de los menores de edad se realiza de forma confidencial y segura, operando exclusivamente para fines formativos e institucionales.</p>
+    <div class='no-print' style='margin-top: 50px; padding-top: 15px; border-top: 1px solid #cccccc; text-align: justify; color: #555;'>
+        <p style='margin: 0; font-size: 11px; line-height: 1.5;'>
+            <span style='color: #cc0000; font-weight: 900;'>⚖️ AVISO LEGAL: POLÍTICA DE PRIVACIDAD Y TRATAMIENTO DE DATOS PERSONALES</span> &nbsp;|&nbsp; 
+            <b>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 © {datetime.now().year}</b>. En estricto cumplimiento de la <b>Ley 1581 de 2012</b> (Ley de Protección de Datos Personales), el Decreto 1377 de 2013 de Colombia, y los lineamientos del <b>Ministerio de Educación Nacional (MEN)</b>, el acceso, navegación y uso de esta plataforma garantiza que la recolección, almacenamiento y circulación de los datos personales y académicos de los menores de edad se realiza de forma confidencial y segura, operando exclusivamente para fines formativos e institucionales.
+        </p>
     </div>
 """, unsafe_allow_html=True)
