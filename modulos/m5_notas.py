@@ -14,6 +14,44 @@ def registrar_bitacora(usuario, rol, accion):
     })
 
 def renderizar(df, periodo_sel, conn):
+    # 🚀 INYECCIÓN DE ESTILOS VIP PARA TABLAS (DataFrames)
+    st.markdown("""
+    <style>
+    /* Estilo global de la caja que envuelve la tabla */
+    div[data-testid="stDataFrame"] {
+        border: 3px solid #0d1b2a !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Pinta el encabezado de las columnas (Th) */
+    div[data-testid="stDataFrame"] th {
+        background-color: #0d1b2a !important;
+        color: #d4af37 !important;
+        font-family: 'Arial Black', sans-serif !important;
+        font-size: 13px !important;
+        text-align: center !important;
+        border-bottom: 2px solid #d4af37 !important;
+    }
+
+    /* Pinta las celdas y filas del cuerpo de la tabla */
+    div[data-testid="stDataFrame"] td {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-weight: bold !important;
+        font-size: 13px !important;
+        border-right: 1px solid #eeeeee !important;
+    }
+    
+    /* Efecto hover (iluminación) al pasar el mouse sobre una celda */
+    div[data-testid="stDataFrame"] td:hover {
+        background-color: #fff4e6 !important;
+        color: #cc0000 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>✍️ Registro de Calificaciones</h3>", unsafe_allow_html=True)
 
     # --- 🛡️ ESCUDO DE SEGURIDAD ULTRARRÁPIDO ---
