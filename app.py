@@ -55,13 +55,13 @@ div[data-baseweb="select"] > div * { color: #000000 !important; }
 .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
 .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
 .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
-.footer-legal { font-size: 10px; color: #888888; text-align: center; margin-top: 50px; border-top: 1px solid #eeeeee; padding-top: 10px; font-family: 'Arial', sans-serif; }
 
 /* ESCUDO GLOBAL ANTI-MÁRGENES DEL NAVEGADOR */
 @media print {
     @page { margin: 0 !important; size: letter portrait; }
     body, html { margin: 0 !important; padding: 0 !important; }
     header, footer, .stApp > header { display: none !important; }
+    .no-print { display: none !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -202,7 +202,7 @@ with st.sidebar:
     
     if st.button("🔴 CERRAR SESIÓN"): 
         st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = False, "", ""
-        st.cache_data.clear() # Limpia la RAM al salir para evitar fugas de memoria
+        st.cache_data.clear()
         st.rerun()
 
 df_temp = df_m.copy() if df_m is not None else pd.DataFrame()
@@ -225,7 +225,6 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP CON DICCIONARIO HASH (CERO LAG)
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
@@ -285,7 +284,6 @@ try:
         if curso_sel != "TODOS":
             df_boletines_base = df_boletines_base[df_boletines_base['Grado'].astype(str) == str(curso_sel)]
         
-        # ⚡ DICCIONARIO HASH DE LOGROS (Velocidad de la luz garantizada O(1))
         diccionario_logros = {}
         if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
             for _, l_row in st.session_state.df_logros.iterrows():
@@ -356,11 +354,8 @@ try:
                         col_span = 3
                     
                     html_boletin += f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
-                    
-                    # ⚡ Búsqueda ultrarrápida usando el diccionario Hash
                     llave_busqueda = (nivel_alumno.upper(), str(row['Materia']).strip().upper(), desp.upper())
                     logro_texto = diccionario_logros.get(llave_busqueda, row.get('LOGRO', 'Descriptor no encontrado en BD'))
-                    
                     html_boletin += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                 
                 html_boletin += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div></body></html>"""
@@ -431,11 +426,10 @@ try:
         
                         html_masivo += f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>"
                         
-                        # ⚡ Búsqueda ultrarrápida usando el diccionario Hash
                         llave_busqueda = (nivel_alumno.upper(), str(row['Materia']).strip().upper(), desp.upper())
                         logro_texto = diccionario_logros.get(llave_busqueda, row.get('LOGRO', 'Descriptor no encontrado en BD'))
                         
-                        html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                        html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.15;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
                     html_masivo += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>"""
                         
@@ -447,4 +441,11 @@ try:
 except Exception as e:
     st.info(f"🛠️ Sincronizando módulos... {e}")
 
-st.markdown(f"<div class='footer-legal'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 © {datetime.now().year}</div>", unsafe_allow_html=True)
+# 🚀 PIE DE PÁGINA LEGAL BLINDADO
+st.markdown("---")
+st.markdown(f"""
+    <div class='no-print' style='background-color: #f8f9fa; border: 2px solid #ced4da; border-left: 8px solid #cc0000; padding: 15px; border-radius: 8px; text-align: justify; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);'>
+        <h4 style='margin: 0 0 5px 0; font-size: 14px; color: #cc0000; font-family: "Arial Black", sans-serif;'>⚖️ AVISO LEGAL: POLÍTICA DE PRIVACIDAD Y TRATAMIENTO DE DATOS PERSONALES</h4>
+        <p style='margin: 0; font-size: 12px; color: #333; line-height: 1.5; font-weight: bold;'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 © {datetime.now().year} | En estricto cumplimiento de la <b>Ley 1581 de 2012</b> (Ley de Protección de Datos Personales), el Decreto 1377 de 2013 de Colombia, y los lineamientos del <b>Ministerio de Educación Nacional (MEN)</b>, el acceso, navegación y uso de esta plataforma garantiza que la recolección, almacenamiento y circulación de los datos personales y académicos de los menores de edad se realiza de forma confidencial y segura, operando exclusivamente para fines formativos e institucionales.</p>
+    </div>
+""", unsafe_allow_html=True)
