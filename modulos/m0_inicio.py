@@ -20,7 +20,7 @@ def renderizar():
         with col_vision:
             st.markdown("""<div style="background:white; padding:20px; border-radius:10px; border:2px solid #000; border-top:8px solid #d4af37; height:100%; box-shadow:0 4px 8px rgba(0,0,0,0.1);">
                 <h4 style="color:#000000; font-family: 'Arial Black', sans-serif; margin-top:0; text-align:center;">👁️ Nuestra Visión 2028</h4>
-                <p style="color:#000; font-weight:bold; font-size:14.5px; text-align:justify;">Seremos reconocidos como la plataforma líder en innovación pedagógica y transformación digital en la región, proyectando los talentos de <b>Génesis Omega 2026</b> hacia el éxito y el cumplimiento de los más altos estándares normativos.</p>
+                <p style="color:#000; font-weight:bold; font-size:14.5px; text-align:justify;">Seremos reconocidos como la plataforma líder en innovación pedagógica y transformación digital en la región, proyectando los talentos de <b>Génesis Omega 2026</b> hacia el éxito y el estricto cumplimiento de los más altos estándares normativos.</p>
             </div>""", unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
