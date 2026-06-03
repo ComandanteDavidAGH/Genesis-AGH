@@ -14,40 +14,15 @@ def registrar_bitacora(usuario, rol, accion):
     })
 
 def renderizar(df, periodo_sel, conn):
-    # 🚀 INYECCIÓN DE ESTILOS VIP PARA TABLAS (DataFrames)
+    # 🚀 ENVOLTORIO EXTERNO PREMIUM PARA EL EDITOR (stDataEditor)
     st.markdown("""
     <style>
-    /* Estilo global de la caja que envuelve la tabla */
-    div[data-testid="stDataFrame"] {
+    div[data-testid="stDataEditor"] {
         border: 3px solid #0d1b2a !important;
-        border-radius: 8px !important;
-        overflow: hidden !important;
-        box-shadow: 5px 5px 15px rgba(0,0,0,0.1) !important;
-    }
-    
-    /* Pinta el encabezado de las columnas (Th) */
-    div[data-testid="stDataFrame"] th {
-        background-color: #0d1b2a !important;
-        color: #d4af37 !important;
-        font-family: 'Arial Black', sans-serif !important;
-        font-size: 13px !important;
-        text-align: center !important;
-        border-bottom: 2px solid #d4af37 !important;
-    }
-
-    /* Pinta las celdas y filas del cuerpo de la tabla */
-    div[data-testid="stDataFrame"] td {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        font-weight: bold !important;
-        font-size: 13px !important;
-        border-right: 1px solid #eeeeee !important;
-    }
-    
-    /* Efecto hover (iluminación) al pasar el mouse sobre una celda */
-    div[data-testid="stDataFrame"] td:hover {
-        background-color: #fff4e6 !important;
-        color: #cc0000 !important;
+        border-radius: 0 0 8px 8px !important;
+        box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
+        padding: 2px !important;
+        background-color: #f0f2f6 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -56,7 +31,6 @@ def renderizar(df, periodo_sel, conn):
 
     # --- 🛡️ ESCUDO DE SEGURIDAD ULTRARRÁPIDO ---
     try:
-        # 🚀 MEJORA DE VELOCIDAD: Carga el escudo desde la RAM
         if 'df_config_seguridad' not in st.session_state:
             st.session_state.df_config_seguridad = conn.read(worksheet="Configuracion", ttl=600)
             
@@ -119,4 +93,26 @@ def renderizar(df, periodo_sel, conn):
             else:
                 st.warning("⚠️ No hay cambios para guardar.")
 
-    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
+    # ⚡ MOTOR DE PINTURA PANDAS STYLER (Pinta las celdas desde adentro)
+    def pintar_celdas(val):
+        try:
+            n = float(val)
+            if n < 6.0:
+                return 'color: #cc0000; font-weight: bold; background-color: #ffe6e6;'
+            elif n >= 9.0:
+                return 'color: #00994c; font-weight: bold; background-color: #e6ffe6;'
+            elif n >= 6.0:
+                return 'color: #0d1b2a; font-weight: bold;'
+            return ''
+        except:
+            return ''
+
+    # Aplicamos la pintura a las columnas numéricas
+    columnas_notas = [c for c in ['P1', 'P2', 'P3', 'P4', 'PROMEDIO'] if c in df.columns]
+    df_pintado = df.style.map(pintar_celdas, subset=columnas_notas)
+
+    # 👑 FALSO ENCABEZADO VIP PARA CORONAR LA TABLA
+    st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
+    
+    # 🖨️ RENDERIZADO DEL EDITOR DE DATOS
+    st.data_editor(df_pintado, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
