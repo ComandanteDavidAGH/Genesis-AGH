@@ -1,30 +1,3 @@
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta, timezone
-
-# ⏰ Configuración horaria
-zona_colombia = timezone(timedelta(hours=-5))
-
-def registrar_bitacora(usuario, rol, accion):
-    st.session_state.bitacora.append({
-        "Fecha": datetime.now(zona_colombia).strftime("%Y-%m-%d"),
-        "Hora": datetime.now(zona_colombia).strftime("%I:%M:%S %p"),
-        "Usuario": usuario,
-        "Rol": rol,
-        "Acción": accion
-    })
-
-def clasificar_desempeno(nota):
-    """Lógica para asegurar que los niveles siempre existan."""
-    try:
-        n = float(nota)
-        if n < 6.0: return "BAJO"
-        elif n < 8.0: return "BÁSICO"
-        elif n < 9.0: return "ALTO"
-        else: return "SUPERIOR"
-    except:
-        return "SIN ASIGNAR"
-
 def renderizar(df, periodo_sel, conn):
     # 1. SOLUCIÓN AL ERROR DE KEY: Dinamizamos la key según el periodo
     key_editor = f"editor_notas_{periodo_sel}"
