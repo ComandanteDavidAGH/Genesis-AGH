@@ -73,9 +73,6 @@ if 'rol' not in st.session_state: st.session_state.rol = ""
 if 'usuario_actual' not in st.session_state: st.session_state.usuario_actual = ""
 if 'nombre_completo_usuario' not in st.session_state: st.session_state.nombre_completo_usuario = ""
 if 'bitacora' not in st.session_state: st.session_state.bitacora = []
-if 'df_maestro' not in st.session_state: st.session_state.df_maestro = None
-if 'df_logros' not in st.session_state: st.session_state.df_logros = None
-if 'df_asistencia' not in st.session_state: st.session_state.df_asistencia = None
 if 'hora_inicio' not in st.session_state: st.session_state.hora_inicio = datetime.now(zona_colombia).strftime("%I:%M %p")
 
 def registrar_bitacora(usuario, rol, accion):
@@ -88,10 +85,46 @@ def registrar_bitacora(usuario, rol, accion):
     })
 
 # ---------------------------------------------------------
-# 🔐 3. ENLACE EXCLUSIVO AL NÚCLEO SQL SUPABASE
+# 🚀 3. MOTORES DE CACHÉ DE ALTA VELOCIDAD
 # ---------------------------------------------------------
 conn_sql = st.connection("postgresql", type="sql")
 
+@st.cache_data(ttl=600, show_spinner=False)
+def fetch_usuarios():
+    try: return conn_sql.query("SELECT * FROM data_usuarios;")
+    except: return pd.DataFrame([{"USUARIO": "Admin", "PASSWORD": "Genesis2026_Admin*", "ESTADO": "Activo", "ROL": "Admin", "Nombre_Completo": "Administrador Local"}])
+
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_maestro():
+    try:
+        df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
+        df_notas = df_notas.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo', 'ASIGNATURA': 'Materia', 'LOGROS': 'LOGRO'})
+        df_estud = conn_sql.query("SELECT * FROM data_estudiantes;")
+        df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates() if not df_estud.empty else pd.DataFrame(columns=['Nombre_Completo', 'Grado'])
+        df_m = pd.merge(df_notas, df_grados, on='Nombre_Completo', how='left')
+        df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
+        for col_nota in ['P1', 'P2', 'P3', 'P4']:
+            if col_nota in df_m.columns:
+                df_m[col_nota] = pd.to_numeric(df_m[col_nota], errors='coerce').fillna(0.0).round(1)
+        if all(c in df_m.columns for c in ['P1', 'P2', 'P3', 'P4']):
+            df_m['PROMEDIO'] = df_m[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
+        return df_m
+    except:
+        return pd.DataFrame(columns=["Nombre_Completo", "Materia", "P1", "P2", "P3", "P4", "LOGRO", "Grado", "PROMEDIO"])
+
+@st.cache_data(ttl=600, show_spinner=False)
+def fetch_logros():
+    try: return conn_sql.query("SELECT * FROM db_logros;")
+    except: return pd.DataFrame(columns=["NIVEL", "MATERIA", "DESEMPEÑO", "LOGRO_TEXTO"])
+
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_asistencia():
+    try: return conn_sql.query("SELECT * FROM db_asistencia;")
+    except: return pd.DataFrame(columns=['Nombre_Completo', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
+
+# ---------------------------------------------------------
+# 🔐 4. SISTEMA DE ACCESO (Ahora ultrarrápido)
+# ---------------------------------------------------------
 if not st.session_state.logueado:
     st.markdown("<br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1.5, 1.2, 1.5])
@@ -105,66 +138,38 @@ if not st.session_state.logueado:
         st.markdown("<br>", unsafe_allow_html=True)
         
         if st.button("🚀 INGRESAR", use_container_width=True):
-            with st.spinner("Validando en Bóveda Satelital..."):
-                try:
-                    try:
-                        df_usuarios = conn_sql.query("SELECT * FROM data_usuarios;")
-                    except Exception:
-                        df_usuarios = pd.DataFrame()
-                    
-                    if df_usuarios is None or df_usuarios.empty:
-                        df_usuarios = pd.DataFrame([{"USUARIO": "Admin", "PASSWORD": "Genesis2026_Admin*", "ESTADO": "Activo", "ROL": "Admin", "Nombre_Completo": "Administrador de Emergencia"}])
-
-                    acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
-                    
-                    if not acceso.empty:
-                        estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
-                        rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
-                        if estado == "ACTIVO":
-                            st.session_state.logueado = True
-                            st.session_state.rol = rol
-                            st.session_state.usuario_actual = u
-                            st.session_state.nombre_completo_usuario = str(acceso['Nombre_Completo'].iloc[0]).strip() if 'Nombre_Completo' in df_usuarios.columns else u
-                            registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
-                            st.rerun()
-                        else: st.error("🚨 Acceso Denegado: Cuenta inactiva.")
-                    else: st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
-                except Exception as e:
-                    st.error(f"🚨 Error de conexión. {e}")
+            with st.spinner("Validando credenciales..."):
+                df_usuarios = fetch_usuarios()
+                acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
+                
+                if not acceso.empty:
+                    estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
+                    rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
+                    if estado == "ACTIVO":
+                        st.session_state.logueado = True
+                        st.session_state.rol = rol
+                        st.session_state.usuario_actual = u
+                        st.session_state.nombre_completo_usuario = str(acceso['Nombre_Completo'].iloc[0]).strip() if 'Nombre_Completo' in df_usuarios.columns else u
+                        registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
+                        st.rerun()
+                    else: st.error("🚨 Acceso Denegado: Cuenta inactiva.")
+                else: st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
     st.stop() 
 
 # ---------------------------------------------------------
-# Satélite: Descarga Segura desde SQL
+# 🛰️ Carga en Memoria Local (Velocidad Luz)
 # ---------------------------------------------------------
 if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None or st.session_state.df_maestro.empty:
-    with st.spinner("📡 Descargando notas de la base satelital..."):
-        try:
-            df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;", ttl=600)
-            df_notas = df_notas.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo', 'ASIGNATURA': 'Materia', 'LOGROS': 'LOGRO'})
-            df_estud = conn_sql.query("SELECT * FROM data_estudiantes;")
-            df_grados = df_estud[['Nombre_Completo', 'Grado']].drop_duplicates() if not df_estud.empty else pd.DataFrame(columns=['Nombre_Completo', 'Grado'])
-            st.session_state.df_maestro = pd.merge(df_notas, df_grados, on='Nombre_Completo', how='left')
-        except Exception:
-            st.session_state.df_maestro = pd.DataFrame(columns=["Nombre_Completo", "Materia", "P1", "P2", "P3", "P4", "LOGRO", "Grado"])
+    with st.spinner("⚡ Sincronizando bases de datos..."):
+        st.session_state.df_maestro = fetch_maestro()
 
 if 'df_logros' not in st.session_state or st.session_state.df_logros is None or st.session_state.df_logros.empty:
-    try: st.session_state.df_logros = conn_sql.query("SELECT * FROM db_logros;")
-    except Exception:
-        st.session_state.df_logros = pd.DataFrame(columns=["NIVEL", "MATERIA", "DESEMPEÑO", "LOGRO_TEXTO"])
+    st.session_state.df_logros = fetch_logros()
             
 if 'df_asistencia' not in st.session_state or st.session_state.df_asistencia is None or st.session_state.df_asistencia.empty:
-    try: st.session_state.df_asistencia = conn_sql.query("SELECT * FROM db_asistencia;")
-    except Exception:
-        st.session_state.df_asistencia = pd.DataFrame(columns=['Nombre_Completo', 'GRADO', 'FECHA', 'ESTADO', 'OBSERVACIONES'])
+    st.session_state.df_asistencia = fetch_asistencia()
 
 df_m = st.session_state.df_maestro
-if df_m is not None and not df_m.empty:
-    df_m['Grado'] = df_m['Grado'].fillna("Sin Grado") 
-    for col_nota in ['P1', 'P2', 'P3', 'P4']:
-        if col_nota in df_m.columns:
-            df_m[col_nota] = pd.to_numeric(df_m[col_nota], errors='coerce').fillna(0.0).round(1)
-    if all(c in df_m.columns for c in ['P1', 'P2', 'P3', 'P4']):
-        df_m['PROMEDIO'] = df_m[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
 
 # ---------------------------------------------------------
 # 🧭 5. PANEL LATERAL Y FILTROS SEGURIZADOS
@@ -198,6 +203,8 @@ with st.sidebar:
     
     if st.button("🔴 CERRAR SESIÓN"): 
         st.session_state.logueado, st.session_state.rol, st.session_state.usuario_actual = False, "", ""
+        # Al salir, limpiamos el caché para obligar a leer fresco al próximo que entre
+        st.cache_data.clear()
         st.rerun()
 
 df_temp = df_m.copy() if df_m is not None else pd.DataFrame()
@@ -220,12 +227,11 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (SCRIPT DE EXTRACCIÓN Y GRAVEDAD DE FIRMAS)
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (PERFECTA)
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
         
-        # 🚀 SCRIPT DE EXTRACCIÓN FANTASMA
         js_extractor = """
         <script>
         function imprimirOficial() {
@@ -248,7 +254,6 @@ try:
         </script>
         """
 
-        # 🖨️ HOJA DE ESTILOS VIP CON BALANCEO DE FIRMAS
         css_vip = """<style>
             body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
             .b-print { position: relative; padding: 25px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
@@ -258,33 +263,25 @@ try:
             .table-custom td { border: 1px solid #000; padding: 6px; background-color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 11px; }
             .header-table { width: 100%; border: none; margin-bottom: 10px; z-index: 2; position: relative; }
             .header-table td { border: none; }
-            .firmas-container { display: flex; justify-content: space-around; margin-top: 80px; font-size: 13px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+            .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 13px; z-index: 2; position: relative; page-break-inside: avoid !important; }
             .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
             
             @media print { 
                 @page { size: letter portrait; margin: 0mm !important; } 
-                
                 body, html { background: white; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
                 .no-print { display: none !important; } 
-                
                 .b-print { border: none !important; box-shadow: none !important; padding: 12mm 15mm 12mm 15mm !important; width: 100% !important; margin: 0 !important; box-sizing: border-box !important;} 
                 .table-custom th { padding: 6px !important; font-size: 11px !important; }
                 .table-custom td { padding: 5px !important; font-size: 10.5px !important; }
                 .logro-texto-clase { padding: 4px 8px !important; font-size: 10px !important; line-height: 1.15 !important; }
-                
-                /* 🚀 EQUILIBRIO DE FIRMAS: Las empujamos hacia el fondo para rellenar el espacio vacío elegantemente */
-                .firmas-container { margin-top: 130px !important; font-size: 12px !important; }
-                
+                .firmas-container { margin-top: 50px !important; font-size: 12px !important; }
                 .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             }
         </style>"""    
         
         def def_nota_limpia(valor):
-            try:
-                n = float(valor)
-                return 0.0 if pd.isna(n) else n
-            except:
-                return 0.0
+            try: return 0.0 if pd.isna(float(valor)) else float(valor)
+            except: return 0.0
 
         df_boletines_base = df_m.copy() if df_m is not None else pd.DataFrame()
         if curso_sel != "TODOS":
@@ -294,14 +291,11 @@ try:
             alumno = st.selectbox("👤 Estudiante:", sorted(df_boletines_base['Nombre_Completo'].dropna().unique()))
             if alumno:
                 try:
-                    with open("logo.png", "rb") as img_file:
-                        b64_string = base64.b64encode(img_file.read()).decode()
+                    with open("logo.png", "rb") as img_file: b64_string = base64.b64encode(img_file.read()).decode()
                     URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
-                except:
-                    URL_LOGO_OFICIAL = ""
+                except: URL_LOGO_OFICIAL = ""
 
-                res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alumno]
-                res = res.drop_duplicates(subset=['Materia'])
+                res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
                 res = res[res['PROMEDIO'] > 0.0]
                 
                 promedios = [def_nota_limpia(x) for x in res[col_n]] if col_n in res.columns else [0.0]
@@ -341,21 +335,14 @@ try:
     
                 for index, row in res.iterrows():
                     nota_final = def_nota_limpia(row.get(col_n, 0))
-                    
                     if nota_final >= 9.1: desp = "SUPERIOR"
                     elif nota_final >= 7.6: desp = "ALTO"
                     elif nota_final >= 6.0: desp = "BÁSICO"
                     else: desp = "BAJO"
-    
                     color = "#155724" if nota_final >= 6.0 else "#721c24"
                     
                     if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper():
-                        p1 = def_nota_limpia(row.get('P1', 0))
-                        p2 = def_nota_limpia(row.get('P2', 0))
-                        p3 = def_nota_limpia(row.get('P3', 0))
-                        p4 = def_nota_limpia(row.get('P4', 0))
-                        prom = def_nota_limpia(row.get('PROMEDIO', 0))
-                        td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
+                        td = f"<td>{def_nota_limpia(row.get('P1',0)):.1f}</td><td>{def_nota_limpia(row.get('P2',0)):.1f}</td><td>{def_nota_limpia(row.get('P3',0)):.1f}</td><td>{def_nota_limpia(row.get('P4',0)):.1f}</td><td style='color:{color}; font-weight:bold;'>{def_nota_limpia(row.get('PROMEDIO',0)):.1f}</td>"
                         col_span = 7
                     else:
                         td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
@@ -367,30 +354,12 @@ try:
                     try:
                         if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
                             df_l = st.session_state.df_logros
-                            filtro = df_l[
-                                (df_l.iloc[:, 0].astype(str).str.strip().str.upper() == nivel_alumno.upper()) & 
-                                (df_l.iloc[:, 1].astype(str).str.strip().str.upper() == str(row['Materia']).strip().upper()) & 
-                                (df_l.iloc[:, 2].astype(str).str.strip().str.upper() == desp.upper())
-                            ]
-                            if not filtro.empty:
-                                logro_texto = str(filtro.iloc[0, 3])
-                            else:
-                                logro_texto = "Logro no encontrado en base de datos"
-                        else:
-                            logro_texto = "Base de logros vacía"
-                    except:
-                        logro_texto = row.get('LOGRO', 'Error al buscar logro')
-    
+                            filtro = df_l[(df_l.iloc[:, 0].astype(str).str.strip().str.upper() == nivel_alumno.upper()) & (df_l.iloc[:, 1].astype(str).str.strip().str.upper() == str(row['Materia']).strip().upper()) & (df_l.iloc[:, 2].astype(str).str.strip().str.upper() == desp.upper())]
+                            if not filtro.empty: logro_texto = str(filtro.iloc[0, 3])
+                    except: pass
                     html_boletin += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:3px 6px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                 
-                html_boletin += """
-                    </table>
-                    <div class='firmas-container'>
-                        <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
-                        <div class='firma-box'>Firma Director de Grupo</div>
-                    </div>
-                </div></body></html>"""
-                
+                html_boletin += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div></body></html>"""
                 components.html(html_boletin, height=680, scrolling=True)
                 
         else:
@@ -399,18 +368,15 @@ try:
             
             if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary", use_container_width=True):
                 try:
-                    with open("logo.png", "rb") as img_file:
-                        b64_string = base64.b64encode(img_file.read()).decode()
+                    with open("logo.png", "rb") as img_file: b64_string = base64.b64encode(img_file.read()).decode()
                     URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
-                except:
-                    URL_LOGO_OFICIAL = ""
+                except: URL_LOGO_OFICIAL = ""
                     
                 th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper() else f"<th>{periodo_sel}</th>"
                 html_masivo = f"""<html><head>{js_extractor}{css_vip}</head><body><div class="no-print" style="position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;"><button onclick="imprimirOficial()" style="background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:10px 20px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black';">🖨️ IMPRIMIR LOTE MASIVO</button></div>"""
                 
                 for i, alum in enumerate(estudiantes):
-                    res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alum]
-                    res = res.drop_duplicates(subset=['Materia'])
+                    res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alum].drop_duplicates(subset=['Materia'])
                     res = res[res['PROMEDIO'] > 0.0]
                     if res.empty: continue
                     
@@ -446,21 +412,14 @@ try:
     
                     for _, row in res.iterrows():
                         nota_final = def_nota_limpia(row.get(col_n, 0))
-                        
                         if nota_final >= 9.1: desp = "SUPERIOR"
                         elif nota_final >= 7.6: desp = "ALTO"
                         elif nota_final >= 6.0: desp = "BÁSICO"
                         else: desp = "BAJO"
-                        
                         color = "#155724" if nota_final >= 6.0 else "#721c24"
         
                         if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper():
-                            p1 = def_nota_limpia(row.get('P1', 0))
-                            p2 = def_nota_limpia(row.get('P2', 0))
-                            p3 = def_nota_limpia(row.get('P3', 0))
-                            p4 = def_nota_limpia(row.get('P4', 0))
-                            prom = def_nota_limpia(row.get('PROMEDIO', 0))
-                            td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
+                            td = f"<td>{def_nota_limpia(row.get('P1',0)):.1f}</td><td>{def_nota_limpia(row.get('P2',0)):.1f}</td><td>{def_nota_limpia(row.get('P3',0)):.1f}</td><td>{def_nota_limpia(row.get('P4',0)):.1f}</td><td style='color:{color}; font-weight:bold;'>{def_nota_limpia(row.get('PROMEDIO',0)):.1f}</td>"
                             col_span = 7
                         else:
                             td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
@@ -472,29 +431,12 @@ try:
                         try:
                             if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
                                 df_l = st.session_state.df_logros
-                                filtro = df_l[
-                                    (df_l.iloc[:, 0].astype(str).str.strip().str.upper() == nivel_alumno.upper()) & 
-                                    (df_l.iloc[:, 1].astype(str).str.strip().str.upper() == str(row['Materia']).strip().upper()) & 
-                                    (df_l.iloc[:, 2].astype(str).str.strip().str.upper() == desp.upper())
-                                ]
-                                if not filtro.empty:
-                                    logro_texto = str(filtro.iloc[0, 3])
-                                else:
-                                    logro_texto = "Logro no encontrado en base de datos"
-                            else:
-                                logro_texto = "Base de logros vacía"
-                        except:
-                            logro_texto = row.get('LOGRO', 'Error al buscar logro')
-                        
+                                filtro = df_l[(df_l.iloc[:, 0].astype(str).str.strip().str.upper() == nivel_alumno.upper()) & (df_l.iloc[:, 1].astype(str).str.strip().str.upper() == str(row['Materia']).strip().upper()) & (df_l.iloc[:, 2].astype(str).str.strip().str.upper() == desp.upper())]
+                                if not filtro.empty: logro_texto = str(filtro.iloc[0, 3])
+                        except: pass
                         html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.15;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
-                    html_masivo += """
-                        </table>
-                        <div class='firmas-container'>
-                            <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
-                            <div class='firma-box'>Firma Director de Grupo</div>
-                        </div>
-                        </div>"""
+                    html_masivo += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div>"""
                         
                 html_masivo += "</body></html>"
                 components.html(html_masivo, height=650, scrolling=True)
