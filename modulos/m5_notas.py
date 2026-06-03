@@ -26,6 +26,9 @@ def clasificar_desempeno(nota):
         return "SIN ASIGNAR"
 
 def renderizar(df, periodo_sel, conn):
+    # 1. SOLUCIÓN AL ERROR DE KEY: Dinamizamos la key según el periodo
+    key_editor = f"editor_notas_{periodo_sel}"
+
     # 🚀 MOTOR VISUAL
     st.markdown("""
     <style>
@@ -57,16 +60,19 @@ def renderizar(df, periodo_sel, conn):
         st.warning("No hay estudiantes asignados.")
         return
 
-    # --- 🛠️ LIMPIEZA AGRESIVA DE LOGROS (Fuerza visualización) ---
-    if 'LOGROS' not in df.columns:
-        df['LOGROS'] = ""
+    # --- 🛠️ LIMPIEZA PROFUNDA (ELIMINACIÓN DE "None") ---
+    # Trabajamos sobre una copia para no alterar el original innecesariamente
+    df_render = df.copy()
     
-    # Convierte todo a string, luego reemplaza las variaciones de vacío/nulo por un texto real
-    df['LOGROS'] = df['LOGROS'].astype(str).replace(['nan', 'NaN', 'None', 'null'], '').fillna('')
-
+    if 'LOGROS' not in df_render.columns:
+        df_render['LOGROS'] = ""
+    
+    # Forzamos a string, reemplazamos cualquier variante de nulo/nan/none y dejamos espacio en blanco
+    df_render['LOGROS'] = df_render['LOGROS'].astype(str).replace(['nan', 'None', '<NA>', 'null'], '').fillna('')
+    
     # Asegurar desempeño
-    if 'DESEMPEÑO' in df.columns:
-        df['DESEMPEÑO'] = df['PROMEDIO'].apply(clasificar_desempeno)
+    if 'DESEMPEÑO' in df_render.columns:
+        df_render['DESEMPEÑO'] = df_render['PROMEDIO'].apply(clasificar_desempeno)
 
     # --- 🎯 CONFIGURACIÓN ---
     config_notas = { 
@@ -82,16 +88,16 @@ def renderizar(df, periodo_sel, conn):
     }
 
     # --- 💾 LÓGICA DE GUARDADO ---
-    if st.button("💾 GUARDAR EN BD", type="primary"):
-        cambios = st.session_state.get('editor_notas', {}).get('edited_rows', {})
+    if st.button("💾 GUARDAR EN BD", key=f"btn_guardar_{periodo_sel}", type="primary"):
+        cambios = st.session_state.get(key_editor, {}).get('edited_rows', {})
         if cambios:
             with st.spinner("🚀 Sincronizando..."):
                 for fila_pos, valores in cambios.items():
-                    idx_real = df.index[int(fila_pos)]
+                    idx_real = df_render.index[int(fila_pos)]
                     for col, val in valores.items():
                         st.session_state.df_maestro.at[idx_real, col] = val
                 
-                # Recalcular antes de enviar
+                # Recalcular
                 st.session_state.df_maestro['PROMEDIO'] = st.session_state.df_maestro[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
                 st.session_state.df_maestro['DESEMPEÑO'] = st.session_state.df_maestro['PROMEDIO'].apply(clasificar_desempeno)
                 
@@ -108,8 +114,4 @@ def renderizar(df, periodo_sel, conn):
     # 👑 RENDERIZADO FINAL
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
     
-    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
-    
-    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
-    
-    st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
+    st.data_editor(df_render, use_container_width=True, height=450, key=key_editor, column_config=config_notas)
