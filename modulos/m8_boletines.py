@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import unicodedata
+import base64
+import os
 
 def limpiar_texto(txt):
     """ Estandariza cadenas para realizar cruces perfectos """
@@ -8,12 +10,32 @@ def limpiar_texto(txt):
     txt_str = str(txt).strip().upper()
     return ''.join(c for c in unicodedata.normalize('NFD', txt_str) if unicodedata.category(c) != 'Mn')
 
+def obtener_desempeno_dinamico(nota):
+    """ Calcula el desempeño institucional en tiempo real eliminando errores NAN """
+    try:
+        val = float(nota)
+        if val >= 9.0: return "SUPERIOR"
+        elif val >= 7.6: return "ALTO"
+        elif val >= 6.0: return "BÁSICO"
+        else: return "BAJO"
+    except Exception:
+        return "BÁSICO"
+
 def renderizar(*args, **kwargs):
-    # 👑 DEFENSAS DE INICIALIZACIÓN: Evita congelamientos y NameErrors
-    periodo_visual = "PERIODO P1"
-    periodo_sel = "P1"
-    df_notas = None
-    conn_sql = None
+    # 🛡️ EXTRECTOR DEL LOGO DE LA APLICACIÓN (Conversión Base64 Blindada)
+    logo_base64 = ""
+    if os.path.exists("logo.png"):
+        try:
+            with open("logo.png", "rb") as image_file:
+                logo_base64 = base64.b64encode(image_file.read()).decode()
+        except Exception:
+            pass
+
+    escudo_html = ""
+    if logo_base64:
+        escudo_html = f'<img src="data:image/png;base64,{logo_base64}" style="width:85px; height:auto; filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.15));">'
+    else:
+        escudo_html = '<div style="width:80px; height:80px; background-color:#0d1b2a; border:2px solid #d4af37; border-radius:50%;"></div>'
 
     # 👑 INYECTOR DE REGLAS PREMIUM Y VISTA DE IMPRESIÓN OFICIAL
     st.markdown("""
@@ -37,11 +59,17 @@ def renderizar(*args, **kwargs):
         </style>
     """, unsafe_allow_html=True)
 
-    # Desempaquetado dinámico de argumentos enviados por app.py
+    st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
+    
+    # 🔄 DETECTOR DINÁMICO DE PERIODOS (Sincronización Multicanal)
+    df_notas = None
+    periodo_sel = "P1"
+    conn_sql = None
+
     if len(args) >= 1: df_notas = args[0] if isinstance(args[0], pd.DataFrame) else None
     if len(args) >= 3: conn_sql = args[2]
 
-    # Interceptar el selector de periodo global de la barra lateral izquierda
+    # Interceptamos la selección de la barra lateral izquierda global
     for key in st.session_state.keys():
         if "PERIOD" in key.upper() or key.lower() == "periodo":
             periodo_sel = str(st.session_state[key]).upper().strip()
@@ -65,7 +93,7 @@ def renderizar(*args, **kwargs):
     col_materia = next((c for c in df_trabajo.columns if c in ['MATERIA', 'ASIGNATURA']), df_trabajo.columns[2])
     col_logro_db = next((c for c in df_trabajo.columns if c in ['LOGRO', 'DESCRIPCION']), None)
 
-    # ⚡ LAS CASILLAS PEQUEÑAS UNA AL LADO DE LA OTRA (Formato Ultra-Compacto Horizontal)
+    # ⚡ CASILLAS PEQUEÑAS HORIZONTALES COMPACTAS (Una al lado de la otra)
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
     c_modo, c_per, c_grad, c_est = st.columns([1.1, 1.4, 1.1, 2.0])
     
@@ -73,7 +101,6 @@ def renderizar(*args, **kwargs):
         modo = st.selectbox("Generación:", ["👤 Individual", "📦 Masivo"])
     
     with c_per:
-        # 🔄 CORRECCIÓN MAESTRA DE SINTAXIS DE PERIODOS
         lista_periodos_opt = ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"]
         default_idx = 0
         if "P2" in periodo_sel: default_idx = 1
@@ -110,7 +137,7 @@ def renderizar(*args, **kwargs):
         
         grado_est = df_est[col_grado].iloc[0] if col_grado in df_est.columns else "N/A"
 
-        # Barra de botones de impresión en pantalla
+        # Barra de botones de acciones
         if modo == "👤 Individual":
             st.markdown(f"""
                 <div class="barra-comandos no-print">
@@ -119,18 +146,8 @@ def renderizar(*args, **kwargs):
                 </div>
             """, unsafe_allow_html=True)
 
-        # 🛡️ CONTENEDOR DEL ESCUDO HERÁLDICO INTEGRADO EN HTML PURO (Garantizado e Inmune a caídas)
-        escudo_html = """
-        <div style="width:75px; height:85px; background-color:#0d1b2a; border:3px solid #d4af37; border-radius:8px 8px 45px 45px; box-shadow: 3px 3px 0px #0d1b2a; display:flex; align-items:center; justify-content:center; text-align:center; box-sizing:border-box;">
-            <div style="font-family:'Arial Black', sans-serif; font-size:10px; font-weight:900; color:#ffffff; line-height:1.1; padding:2px;">GÉNESIS<br><span style="color:#d4af37; font-size:8px;">2026</span></div>
-        </div>
-        """
-
         # Cálculo de Promedio General Dinámico
         columnas_periodos = [c for c in ['P1', 'P2', 'P3', 'P4'] if c in df_est.columns]
-        if not columnas_periodos:
-            columnas_periodos = [c for c in df_est.columns if c not in [col_nombre, col_grado, col_materia, 'PROMEDIO', 'DESEMPEÑO', 'LOGRO', 'ID_EST', 'EST-001']]
-        
         for cp in columnas_periodos:
             df_est[cp] = pd.to_numeric(df_est[cp], errors='coerce').fillna(0.0)
             
@@ -142,15 +159,15 @@ def renderizar(*args, **kwargs):
             df_est['FINAL_CALC'] = df_est[columnas_periodos].mean(axis=1)
             promedio_institucional = df_est['FINAL_CALC'].mean()
 
-        # Renderizado de Cabecera del Boletín
+        # Cabecera del Boletín Insignia
         html_boletin = f"""
-        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15 rgba(0,0,0,0.08);">
+        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08);">
             <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                 <tr>
                     <td style="width:15%; text-align:left; vertical-align:middle;">{escudo_html}</td>
                     <td style="width:65%; text-align:center; vertical-align:middle;">
                         <h2 style="margin:0; color:#0d1b2a; font-family:'Arial Black'; font-size:20px; letter-spacing:0.5px;">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                        <h4 style="margin:6px 0 0 0; color:#cc8800; font-family:'Arial'; font-weight:bold; font-size:13px; text-transform:uppercase; letter-spacing:1px;">INFORME ACADÉMICO OFICIAL: {periodo_visual.upper()}</h4>
+                        <h4 style="margin:6px 0 0 0; color:#cc8800; font-family:'Arial'; font-weight:bold; font-size:13px; text-transform:uppercase; letter-spacing:1px;">INFORME ACADÉMICO OFICIAL: {periodo_visual}</h4>
                     </td>
                     <td style="width:20%; text-align:right; vertical-align:middle;">
                         <div style="border:3px solid #0d1b2a; border-radius:8px; padding:6px 12px; background-color:#f8f9fa; text-align:center; display:inline-block; min-width:110px; box-shadow: 3px 3px 0px #0d1b2a;">
@@ -201,7 +218,7 @@ def renderizar(*args, **kwargs):
                 <tbody>
             """
 
-        # Inyección de filas de materias y descriptores de logros directo de Supabase
+        # Inyección de filas de materias y descriptores de logros
         for _, fila in df_est.iterrows():
             materia_nom = str(fila[col_materia]).strip()
             logro_render = str(fila[col_logro_db]).strip() if col_logro_db and not pd.isna(fila[col_logro_db]) else "Descriptor de logro oficial registrado en la bitácora escolar."
@@ -211,9 +228,10 @@ def renderizar(*args, **kwargs):
                 n_p2 = float(fila['P2']) if 'P2' in df_est.columns else 0.0
                 n_p3 = float(fila['P3']) if 'P3' in df_est.columns else 0.0
                 n_p4 = float(fila['P4']) if 'P4' in df_est.columns else 0.0
-                n_def = float(fila[prom_col]) if prom_col else ( (n_p1+n_p2+n_p3+n_p4)/4 )
+                n_def = float(fila[prom_col]) if prom_col else ((n_p1+n_p2+n_p3+n_p4)/4)
 
-                des_txt = str(fila['DESEMPEÑO']).strip().upper() if 'DESEMPEÑO' in df_est.columns else "BÁSICO"
+                # ⚡ CÁLCULO DE DESEMPEÑO TOTALMENTE DINÁMICO ANTI-NAN ⚡
+                des_txt = obtener_desempeno_dinamico(n_def)
                 color_def = "#cc0000" if n_def < 6.0 else "#000000"
                 color_des = "#cc0000" if n_def < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
 
@@ -236,8 +254,9 @@ def renderizar(*args, **kwargs):
             else:
                 col_p_act = str(periodo_activo).upper().strip()
                 nota_val = float(fila[col_p_act]) if col_p_act in df_est.columns else 0.0
-                des_txt = str(fila['DESEMPEÑO']).strip().upper() if 'DESEMPEÑO' in df_est.columns else "BÁSICO"
                 
+                # ⚡ CÁLCULO DE DESEMPEÑO TOTALMENTE DINÁMICO ANTI-NAN ⚡
+                des_txt = obtener_desempeno_dinamico(nota_val)
                 color_nota = "#cc0000" if nota_val < 6.0 else "#000000"
                 color_des = "#cc0000" if nota_val < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
 
