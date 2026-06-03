@@ -22,7 +22,7 @@ def obtener_desempeno_dinamico(nota):
         return "BÁSICO"
 
 def renderizar(*args, **kwargs):
-    # 🛡️ EXTRACTOR DEL LOGO REAL DE LA APLICACIÓN (Conversión Base64)
+    # 🛡️ EXTRACTOR DEL LOGO REAL DE LA APLICACIÓN (Conversión Base64 Blindada)
     logo_base64 = ""
     if os.path.exists("logo.png"):
         try:
@@ -36,7 +36,7 @@ def renderizar(*args, **kwargs):
     else:
         escudo_html = '<div style="width:80px; height:80px; background-color:#0d1b2a; border:2px solid #d4af37; border-radius:50%;"></div>'
 
-    # 👑 INYECTOR DE REGLAS DE IMPRESIÓN Y OCULTAMIENTO DE CONTROLES
+    # 👑 INYECTOR DE REGLAS DE IMPRESIÓN OFICIAL
     st.markdown("""
         <style>
             @media print {
@@ -60,21 +60,16 @@ def renderizar(*args, **kwargs):
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
     
-    # 🔄 ANCLAJE DIRECTO AL MENÚ LATERAL (Escaneo profundo de st.session_state)
-    periodo_seleccionado = "P1"
-    for key, value in st.session_state.items():
-        val_str = str(value).upper().strip()
-        if val_str in ["P1", "P2", "P3", "P4"] or "CONSOLID" in val_str or "FINAL" in val_str:
-            periodo_seleccionado = val_str
-            break
-
-    es_consolidado = "CONSOLID" in periodo_seleccionado or "FINAL" in periodo_seleccionado
-    periodo_visual = "CONSOLIDADO FINAL" if es_consolidado else f"PERIODO {periodo_seleccionado}"
-
-    # Desempaquetado seguro de argumentos de app.py
+    # 🔄 ANCLAJE LÁSER AL MENÚ LATERAL: Lee directamente el parámetro enviado por app.py
     df_notas = args[0] if len(args) >= 1 and isinstance(args[0], pd.DataFrame) else None
+    periodo_seleccionado = str(args[1]).upper().strip() if len(args) >= 2 and args[1] else "P1"
     conn_sql = args[2] if len(args) >= 3 else None
 
+    # Detectar el estado de consolidación final desde el menú lateral
+    es_consolidado = "CONSOLID" in periodo_seleccionado or "FINAL" in periodo_seleccionado or "TODO" in periodo_seleccionado
+    periodo_visual = "CONSOLIDADO FINAL" if es_consolidado else f"PERIODO {periodo_seleccionado}"
+
+    # Recuperación de base de datos en caso de desconexión
     if (df_notas is None or df_notas.empty) and conn_sql is not None:
         try: df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
         except Exception: pass
@@ -83,7 +78,7 @@ def renderizar(*args, **kwargs):
         st.warning("⚠️ **Base de datos de calificaciones no disponible en este cuadrante.**")
         return
 
-    # Estandarización absoluta de columnas de la base de datos
+    # Estandarización absoluta de columnas
     df_trabajo = df_notas.copy()
     df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
 
@@ -92,7 +87,17 @@ def renderizar(*args, **kwargs):
     col_materia = next((c for c in df_trabajo.columns if c in ['MATERIA', 'ASIGNATURA']), df_trabajo.columns[2])
     col_logro_db = next((c for c in df_trabajo.columns if c in ['LOGRO', 'DESCRIPCION']), None)
 
-    # ⚡ CASILLAS PEQUEÑAS HORIZONTALES ULTRA COMPACTAS (Sin el selector de periodo duplicado)
+    # Buscar la columna del periodo activo si no estamos consolidando
+    col_p_activa = None
+    if not es_consolidado:
+        for c in df_trabajo.columns:
+            if limpiar_texto(c) == limpiar_texto(periodo_seleccionado):
+                col_p_activa = c
+                break
+        if not col_p_activa:
+            col_p_activa = "P1"
+
+    # ⚡ DISEÑO DE CASILLAS PEQUEÑAS HORIZONTALES CON MÁXIMO ESPACIO
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
     c_modo, c_grad, c_est = st.columns([1.2, 1.5, 3.3])
     
@@ -132,18 +137,18 @@ def renderizar(*args, **kwargs):
                 </div>
             """, unsafe_allow_html=True)
 
-        # Cálculo de Promedio General Dinámico
-        columnas_periodos = ['P1', 'P2', 'P3', 'P4']
-        for cp in columnas_periodos:
+        # Forzar formato numérico en los 4 periodos
+        for cp in ['P1', 'P2', 'P3', 'P4']:
             if cp in df_est.columns:
                 df_est[cp] = pd.to_numeric(df_est[cp], errors='coerce').fillna(0.0)
             
+        # Calcular promedio general en tiempo real
         prom_col = next((c for c in df_est.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF']), None)
         if prom_col:
             df_est[prom_col] = pd.to_numeric(df_est[prom_col], errors='coerce').fillna(0.0)
             promedio_institucional = df_est[prom_col].mean()
         else:
-            promedio_institucional = df_est[columnas_periodos].mean(axis=1).mean()
+            promedio_institucional = df_est[['P1', 'P2', 'P3', 'P4']].mean(axis=1).mean()
 
         # Cabecera del Boletín Insignia
         html_boletin = f"""
@@ -174,7 +179,7 @@ def renderizar(*args, **kwargs):
             </table>
         """
 
-        # 👑 RECONFIGURACIÓN MATRICIAL DINÁMICA DE LA TABLA INSIGNIA
+        # 👑 CAMBIO DINÁMICO DE COLUMNAS MATRICIALES SEGÚN EL MENÚ LATERAL
         if es_consolidado:
             html_boletin += """
             <table style="width:100%; border-collapse:collapse; font-family:'Arial', sans-serif; border: 2px solid #0d1b2a;">
@@ -216,7 +221,7 @@ def renderizar(*args, **kwargs):
                 n_p4 = float(fila['P4']) if 'P4' in df_est.columns else 0.0
                 n_def = float(fila[prom_col]) if prom_col else ((n_p1+n_p2+n_p3+n_p4)/4)
 
-                # Cálculo automático en caliente del Desempeño real
+                # Procesamiento dinámico del desempeño sin errores
                 des_txt = obtener_desempeno_dinamico(n_def)
                 color_def = "#cc0000" if n_def < 6.0 else "#000000"
                 color_des = "#cc0000" if n_def < 6.0 else ("#00994c" if "SUPER" in des_txt or "ALTO" in des_txt else "#cc8800")
@@ -238,8 +243,7 @@ def renderizar(*args, **kwargs):
                     </tr>
                 """
             else:
-                col_p_act = str(periodo_seleccionado).upper().strip()
-                nota_val = float(fila[col_p_act]) if col_p_act in df_est.columns else 0.0
+                nota_val = float(fila[col_p_activa]) if col_p_activa in df_est.columns else 0.0
                 
                 des_txt = obtener_desempeno_dinamico(nota_val)
                 color_nota = "#cc0000" if nota_val < 6.0 else "#000000"
