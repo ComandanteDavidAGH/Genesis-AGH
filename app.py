@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta, timezone
 import streamlit.components.v1 as components  
 import base64
 import os
+from datetime import datetime, timedelta, timezone
 
 # ---------------------------------------------------------
 # 📋 1. MATRIZ DE MANDO: ASIGNACIONES ACADÉMICAS
@@ -213,12 +213,12 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP TAMAÑO CARTA ALTA DENSIDAD
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (ANIQUILACIÓN DE TEXTOS Y DESPLIEGUE DE FIRMAS)
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
         
-        # 🖨️ HOJA DE ESTILOS VIP: ANULACIÓN DE ENCABEZADOS DEL NAVEGADOR (Margin Cero Absoluto)
+        # 🖨️ HOJA DE ESTILOS VIP
         css_vip = """<style>
             body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
             .b-print { position: relative; padding: 25px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
@@ -232,22 +232,21 @@ try:
             .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
             
             @media print { 
-                /* 1. MÁRGENES CERO ABSOLUTO: Obliga al navegador a NO imprimir sus textos predeterminados de fecha y URL */
-                @page { size: letter portrait; margin: 0 !important; } 
+                /* 1. MÁRGEN CERO ABSOLUTO: Aniquila la fecha, link y número de página que pone el navegador web */
+                @page { size: letter portrait; margin: 0mm !important; } 
                 
-                /* 2. RECREACIÓN DEL MARGEN VIRTUAL: Le damos aire interno a la hoja para que la tabla no toque el borde del papel */
-                body, html { background: white; margin: 0 !important; padding: 10mm 12mm 10mm 12mm !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+                /* 2. RECONSTRUCCIÓN DEL MARGEN: Movemos el aire al interior del contenedor para que las tablas no choquen con el borde */
+                body, html { background: white; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
                 
                 .no-print { display: none !important; } 
                 
-                /* 3. EXPANSIÓN Y COMPRESIÓN TÁCTICA DE CELDAS */
-                .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; } 
+                .b-print { border: none !important; box-shadow: none !important; padding: 12mm 15mm 12mm 15mm !important; width: 100% !important; margin: 0 !important; box-sizing: border-box !important;} 
                 .table-custom th { padding: 6px !important; font-size: 11px !important; }
                 .table-custom td { padding: 5px !important; font-size: 10.5px !important; }
                 .logro-texto-clase { padding: 4px 8px !important; font-size: 10px !important; line-height: 1.15 !important; }
                 
-                /* 4. SECCIÓN DE FIRMAS ELEVADA PARA NO ROMPER LA HOJA */
-                .firmas-container { margin-top: 30px !important; font-size: 12px !important; }
+                /* 3. EXPANSIÓN DE FIRMAS HACIA EL FONDO: Les damos oxígeno para que no se peguen a la tabla */
+                .firmas-container { margin-top: 60px !important; font-size: 12px !important; }
                 .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             }
         </style>"""    
