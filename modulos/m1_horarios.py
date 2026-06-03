@@ -186,7 +186,7 @@ def renderizar(conn_sql):
             title_font_family="Arial Black",
             title_font_color="#0d1b2a",
             xaxis=dict(tickmode='linear', dtick=2, gridcolor='#e0e0e0'),
-            yaxis=dict(gridcolor='rgba(0,0,0,0)', autocrange="reversed"), # Se mantiene orden top descendente natural
+            yaxis=dict(gridcolor='rgba(0,0,0,0)', autorange="reversed"), # ⬅️ Aquí está el parche aplicado
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=150, r=50, t=50, b=50),
