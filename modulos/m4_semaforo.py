@@ -2,21 +2,46 @@ import streamlit as st
 import pandas as pd
 
 def renderizar(df_notas, periodo_sel, conn_sql=None):
-    # 👑 MOTOR VISUAL EMULADOR: Réplica exacta con diseño responsivo
+    # 👑 MOTOR VISUAL TÁCTICO: Animaciones, Levitación y Marcos VIP
     st.markdown("""
     <style>
-    @keyframes pulso_critico { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
-    @keyframes pulso_alerta { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
-    @keyframes pulso_optimo { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
+    /* Animaciones de Pulso para los Números */
+    @keyframes pulso_critico { 0%, 100% { opacity: 1; text-shadow: 0 0 0px #cc0000; } 50% { opacity: 0.8; text-shadow: 0 0 15px rgba(204,0,0,0.6); } }
+    @keyframes pulso_alerta { 0%, 100% { opacity: 1; text-shadow: 0 0 0px #cc8800; } 50% { opacity: 0.8; text-shadow: 0 0 15px rgba(204,136,0,0.6); } }
+    @keyframes pulso_optimo { 0%, 100% { opacity: 1; text-shadow: 0 0 0px #00994c; } 50% { opacity: 0.8; text-shadow: 0 0 15px rgba(0,153,76,0.6); } }
     
-    .card-critica-bella { background-color: #ffebeb; border: 4px solid #cc0000; padding: 15px; border-radius: 14px; text-align: center; }
-    .card-alerta-bella { background-color: #fffef0; border: 4px solid #cc8800; padding: 15px; border-radius: 14px; text-align: center; }
-    .card-optima-bella { background-color: #e6f9f0; border: 4px solid #00994c; padding: 15px; border-radius: 14px; text-align: center; }
+    /* Tarjetas Blindadas con Hover */
+    .card-semaforo {
+        padding: 15px; 
+        border-radius: 14px; 
+        text-align: center;
+        box-shadow: 4px 4px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-semaforo:hover {
+        transform: translateY(-5px);
+        box-shadow: 6px 12px 20px rgba(0,0,0,0.15);
+    }
     
-    .num-critico-titila { font-size: 50px; font-weight: 900; color: #cc0000; animation: pulso_critico 1.3s infinite; }
-    .num-alerta-titila { font-size: 50px; font-weight: 900; color: #cc8800; animation: pulso_alerta 1.3s infinite; }
-    .num-optimo-titila { font-size: 50px; font-weight: 900; color: #00994c; animation: pulso_optimo 1.3s infinite; }
-    .txt-titular { font-family: 'Arial Black', sans-serif; font-size: 13px; margin-bottom: 5px; text-transform: uppercase; }
+    /* Colores Específicos */
+    .c-critica { background-color: #ffebeb; border: 3px solid #cc0000; }
+    .c-alerta { background-color: #fffef0; border: 3px solid #cc8800; }
+    .c-optima { background-color: #e6f9f0; border: 3px solid #00994c; }
+    
+    /* Tipografía Numérica */
+    .num-critico { font-size: 45px; font-family: 'Arial Black'; color: #cc0000; animation: pulso_critico 1.5s infinite; margin: 0; line-height: 1; }
+    .num-alerta { font-size: 45px; font-family: 'Arial Black'; color: #cc8800; animation: pulso_alerta 1.5s infinite; margin: 0; line-height: 1; }
+    .num-optimo { font-size: 45px; font-family: 'Arial Black'; color: #00994c; animation: pulso_optimo 1.5s infinite; margin: 0; line-height: 1; }
+    
+    /* Etiqueta Superior */
+    .txt-titular { font-family: 'Arial Black', sans-serif; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; color: #0d1b2a; }
+    
+    /* Blindaje para las Tablas Internas */
+    div[data-testid="stDataFrame"] {
+        border: 2px solid #0d1b2a !important;
+        border-radius: 8px !important;
+        box-shadow: 3px 3px 10px rgba(0,0,0,0.05) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -26,6 +51,7 @@ def renderizar(df_notas, periodo_sel, conn_sql=None):
         st.warning("⚠️ No hay datos disponibles para el Semáforo.")
         return
 
+    # Estandarización de columnas
     df_trabajo = df_notas.copy()
     df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
     
@@ -36,38 +62,65 @@ def renderizar(df_notas, periodo_sel, conn_sql=None):
                next((c for c in df_trabajo.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF', 'NOTA']), None)
 
     if not col_nota:
-        st.error("🚨 No se encontró una columna de notas válida.")
+        st.error(f"🚨 No se encontró la columna de notas válida para el periodo: {periodo_sel}.")
         return
 
     df_trabajo[col_nota] = pd.to_numeric(df_trabajo[col_nota], errors='coerce')
     
-    # 🎯 SELECTOR COMPACTO
-    col_selector, _ = st.columns([3, 7])
+    # 🎯 SELECTOR COMPACTO Y ELEGANTE
+    col_selector, _ = st.columns([4, 6])
     grado_sel = "TODOS"
     
     with col_selector:
         if col_grado:
             grados_validos = sorted(df_trabajo[col_grado].dropna().unique().astype(str).tolist())
-            grado_sel = st.selectbox("🔍 Filtrar por Grado:", ["TODOS"] + grados_validos)
+            grado_sel = st.selectbox("🔍 Filtrar Escuadrón / Grado:", ["TODOS"] + grados_validos)
             
     if grado_sel != "TODOS":
         df_trabajo = df_trabajo[df_trabajo[col_grado].astype(str) == grado_sel]
 
+    # Agrupación Táctica por Estudiante
     df_resumen = df_trabajo.groupby(col_nombre).agg({col_nota: 'mean', col_grado: 'first'}).reset_index()
     df_resumen = df_resumen.dropna(subset=[col_nota])
+    df_resumen = df_resumen.rename(columns={col_nota: "Promedio"})
 
-    criticos = df_resumen[df_resumen[col_nota] < 6.0]
-    alertas = df_resumen[(df_resumen[col_nota] >= 6.0) & (df_resumen[col_nota] <= 7.5)]
-    optimos = df_resumen[df_resumen[col_nota] > 7.5]
+    # Clasificación Estratégica
+    criticos = df_resumen[df_resumen["Promedio"] < 6.0].sort_values(by="Promedio", ascending=True)
+    alertas = df_resumen[(df_resumen["Promedio"] >= 6.0) & (df_resumen["Promedio"] < 7.6)].sort_values(by="Promedio", ascending=True)
+    optimos = df_resumen[df_resumen["Promedio"] >= 7.6].sort_values(by="Promedio", ascending=False)
 
+    # 📊 PANELES SUPERIORES (KPIs)
     c1, c2, c3 = st.columns(3)
-    c1.html(f"<div class='card-critica-bella'><div class='txt-titular'>Riesgo Crítico</div><div class='num-critico-titila'>{len(criticos)}</div></div>")
-    c2.html(f"<div class='card-alerta-bella'><div class='txt-titular'>Alerta</div><div class='num-alerta-titila'>{len(alertas)}</div></div>")
-    c3.html(f"<div class='card-optima-bella'><div class='txt-titular'>Óptimo</div><div class='num-optimo-titila'>{len(optimos)}</div></div>")
+    c1.markdown(f"<div class='card-semaforo c-critica'><div class='txt-titular'>Riesgo Crítico</div><p class='num-critico'>{len(criticos)}</p></div>", unsafe_allow_html=True)
+    c2.markdown(f"<div class='card-semaforo c-alerta'><div class='txt-titular'>En Alerta</div><p class='num-alerta'>{len(alertas)}</p></div>", unsafe_allow_html=True)
+    c3.markdown(f"<div class='card-semaforo c-optima'><div class='txt-titular'>Óptimo</div><p class='num-optimo'>{len(optimos)}</p></div>", unsafe_allow_html=True)
 
-    if not criticos.empty:
-        st.markdown("---")
-        st.subheader("🚨 Estudiantes en Riesgo Crítico")
-        st.dataframe(criticos[[col_nombre, col_grado, col_nota]].rename(columns={col_nota: "Promedio"}), use_container_width=True, hide_index=True)
-    else:
-        st.success("✅ ¡Todo el perímetro está estable!")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ⚙️ CONFIGURACIÓN DE COLUMNAS (Barra de Progreso Integrada)
+    config_tablas = {
+        col_nombre: st.column_config.TextColumn("Estudiante", width="large"),
+        col_grado: st.column_config.TextColumn("Grado", width="medium"),
+        "Promedio": st.column_config.ProgressColumn("Nivel Ponderado", help="Promedio acumulado", format="%.1f", min_value=0, max_value=10)
+    }
+
+    # 🛡️ PESTAÑAS DE INSPECCIÓN 360°
+    tab1, tab2, tab3 = st.tabs(["🔴 RIESGO CRÍTICO (< 6.0)", "🟡 EN ALERTA (6.0 - 7.5)", "🟢 RENDIMIENTO ÓPTIMO (> 7.5)"])
+    
+    with tab1:
+        if not criticos.empty:
+            st.dataframe(criticos, use_container_width=True, hide_index=True, column_config=config_tablas)
+        else:
+            st.success("✅ Excelente: No hay estudiantes en riesgo crítico en este corte.")
+            
+    with tab2:
+        if not alertas.empty:
+            st.dataframe(alertas, use_container_width=True, hide_index=True, column_config=config_tablas)
+        else:
+            st.info("ℹ️ No hay estudiantes en zona de alerta (Básico).")
+            
+    with tab3:
+        if not optimos.empty:
+            st.dataframe(optimos, use_container_width=True, hide_index=True, column_config=config_tablas)
+        else:
+            st.warning("⚠️ No se registran estudiantes con rendimiento alto o superior.")
