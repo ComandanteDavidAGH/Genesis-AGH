@@ -42,7 +42,6 @@ def renderizar(conn):
     
     df_l = st.session_state.df_logros.copy() if st.session_state.df_logros is not None else pd.DataFrame()
 
-    # ⚡ MOTOR DE PINTURA PANDAS STYLER (Resalta el nivel de desempeño)
     def pintar_niveles(val):
         try:
             texto = str(val).strip().upper()
@@ -53,7 +52,6 @@ def renderizar(conn):
             return ''
         except: return ''
 
-    # Configuración de ancho para evitar que se corten los textos
     config_columnas = {
         "LOGRO": st.column_config.TextColumn("Descripción del Logro", width="large"),
         "LOGROS": st.column_config.TextColumn("Descripción del Logro", width="large"),
@@ -61,45 +59,43 @@ def renderizar(conn):
     }
 
     if st.session_state.rol == "Admin":
-        st.info("💡 Modo Edición: Como Comandante, usted tiene autorización para modificar el diccionario oficial.")
+        st.info("💡 Modo Edición: Como Comandante, usted tiene autorización para modificar el diccionario oficial. Puede agregar o eliminar filas.")
         
-        # Botón alineado a la derecha como en el módulo de Notas
+        df_pintado = df_l.style.map(pintar_niveles, subset=['DESEMPEÑO'] if 'DESEMPEÑO' in df_l.columns else [])
+        st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:5px; letter-spacing:1px;'>MATRIZ DE DESCRIPTORES EDITABLE</div>", unsafe_allow_html=True)
+        
+        # 1. ⚡ Renderizamos la tabla primero (capturando su forma final en "df_editado")
+        df_editado = st.data_editor(df_pintado, use_container_width=True, num_rows="dynamic", height=500, key="widget_logros_v2", column_config=config_columnas)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # 2. ⚡ Colocamos el botón de Guardar DEBAJO de la tabla
         col_vacia, col_btn = st.columns([7, 3])
         with col_btn:
             if st.button("💾 GUARDAR EN BASE DE DATOS", type="primary", use_container_width=True):
-                df_editado = st.session_state.editor_logros
-                
                 with st.spinner("🚀 Transmitiendo al Satélite SQL..."):
                     try: 
-                        # ⚡ ESCRITURA DIRECTA A SUPABASE
+                        # Inyectamos el DataFrame completo con sus nuevas filas y ediciones a Supabase
                         df_editado.to_sql('db_logros', con=conn.engine, if_exists='replace', index=False)
                         st.session_state.df_logros = df_editado.copy()
                         
                         st.toast("✅ ¡Diccionario de Logros asegurado en la bóveda SQL!", icon="🚀")
                         registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "💾 Actualizó Diccionario de Logros")
-                        st.cache_data.clear() # Limpiamos RAM para que los boletines tomen los nuevos logros
+                        st.cache_data.clear() 
                         
                         import time
                         time.sleep(1)
                         st.rerun()
                     except Exception as e: 
                         st.error(f"🚨 FALLA DE ESCRITURA SQL: {e}")
-        
-        df_pintado = df_l.style.map(pintar_niveles, subset=['DESEMPEÑO'] if 'DESEMPEÑO' in df_l.columns else [])
-        st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:5px; letter-spacing:1px;'>MATRIZ DE DESCRIPTORES EDITABLE</div>", unsafe_allow_html=True)
-        
-        st.session_state.editor_logros = st.data_editor(df_pintado, use_container_width=True, num_rows="dynamic", height=500, key="editor_logros", column_config=config_columnas)
     
     else:
-        # --- MODO DOCENTE (LECTURA Y BÚSQUEDA TÁCTICA) ---
         st.info("👁️ Modo Lectura: Busque y consulte los logros institucionales. Solo Rectoría está autorizada para modificarlos.")
         
-        # Inyección del Buscador Táctico
         st.markdown("<div class='filtro-box'>", unsafe_allow_html=True)
         st.markdown("<p style='font-family:Arial Black; color:#0d1b2a; margin-top:0;'>🔍 Búsqueda Rápida de Logros</p>", unsafe_allow_html=True)
         cf1, cf2, cf3 = st.columns(3)
         
-        # Filtros dinámicos basados en las columnas existentes
         df_filtro = df_l.copy()
         
         col_nivel = next((c for c in df_filtro.columns if c.upper() in ['NIVEL', 'GRADO']), None)
@@ -124,7 +120,6 @@ def renderizar(conn):
                 
         st.markdown("</div>", unsafe_allow_html=True)
         
-        # Renderizado final
         if df_filtro.empty:
             st.warning("No hay logros que coincidan con la búsqueda actual.")
         else:
