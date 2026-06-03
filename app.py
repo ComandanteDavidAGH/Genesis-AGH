@@ -56,6 +56,13 @@ div[data-baseweb="select"] > div * { color: #000000 !important; }
 .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
 .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
 .footer-legal { font-size: 10px; color: #888888; text-align: center; margin-top: 50px; border-top: 1px solid #eeeeee; padding-top: 10px; font-family: 'Arial', sans-serif; }
+
+/* 🚨 ESCUDO GLOBAL ANTI-MÁRGENES DEL NAVEGADOR (Para aniquilar fecha y URL) 🚨 */
+@media print {
+    @page { margin: 0 !important; size: letter portrait; }
+    body, html { margin: 0 !important; padding: 0 !important; }
+    header, footer, .stApp > header { display: none !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -123,7 +130,7 @@ if not st.session_state.logueado:
                         else: st.error("🚨 Acceso Denegado: Cuenta inactiva.")
                     else: st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
                 except Exception as e:
-                    st.error(f"🚨 Error de conexión. {e}")
+                    st.error(f"🚨 Error de connection. {e}")
     st.stop() 
 
 # ---------------------------------------------------------
@@ -213,7 +220,7 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (ANIQUILACIÓN DE TEXTOS Y DESPLIEGUE DE FIRMAS)
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (ANIQUILACIÓN DE TEXTOS DE NAVEGADOR)
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
@@ -355,7 +362,7 @@ try:
                     except:
                         logro_texto = row.get('LOGRO', 'Error al buscar logro')
     
-                    html_boletin += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                    html_boletin += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:3px 6px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                 
                 html_boletin += """
                     </table>
@@ -461,7 +468,7 @@ try:
                         except:
                             logro_texto = row.get('LOGRO', 'Error al buscar logro')
                         
-                        html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.15;'><b>LOGRO:</b> {logro_texto}</td></tr>"
+                        html_masivo += f"<tr><td colspan='{col_span}' class='logro-texto-clase' style='text-align:left; font-size:10px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.15;'><b>LOGRO:</b> {logro_texto}</td></tr>"
                     
                     html_masivo += """
                         </table>
