@@ -56,6 +56,13 @@ div[data-baseweb="select"] > div * { color: #000000 !important; }
 .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
 .asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
 .footer-legal { font-size: 10px; color: #888888; text-align: center; margin-top: 50px; border-top: 1px solid #eeeeee; padding-top: 10px; font-family: 'Arial', sans-serif; }
+
+/* 🚨 ESCUDO GLOBAL ANTI-MÁRGENES DEL NAVEGADOR 🚨 */
+@media print {
+    @page { margin: 0 !important; size: letter portrait; }
+    body, html { margin: 0 !important; padding: 0 !important; }
+    header, footer, .stApp > header { display: none !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -213,12 +220,12 @@ try:
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
     
-    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (SCRIPT DE EXTRACCIÓN ANTI-NAVEGADOR)
+    # 👑 INTEGRACIÓN DE CENTRAL DE IMPRESIÓN VIP (SCRIPT DE EXTRACCIÓN Y GRAVEDAD DE FIRMAS)
     elif menu == "📜 Boletines":
         st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
         modo_impresion = st.radio("Seleccione el modo de generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
         
-        # 🚀 LA TRAMPA: Script de extracción que lanza el boletín en una pestaña fantasma para burlar a Chrome
+        # 🚀 SCRIPT DE EXTRACCIÓN FANTASMA
         js_extractor = """
         <script>
         function imprimirOficial() {
@@ -241,7 +248,7 @@ try:
         </script>
         """
 
-        # 🖨️ HOJA DE ESTILOS VIP
+        # 🖨️ HOJA DE ESTILOS VIP CON BALANCEO DE FIRMAS
         css_vip = """<style>
             body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
             .b-print { position: relative; padding: 25px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; page-break-inside: avoid !important; }
@@ -251,24 +258,23 @@ try:
             .table-custom td { border: 1px solid #000; padding: 6px; background-color: rgba(255, 255, 255, 0.85); text-align: center; font-size: 11px; }
             .header-table { width: 100%; border: none; margin-bottom: 10px; z-index: 2; position: relative; }
             .header-table td { border: none; }
-            .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 13px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+            .firmas-container { display: flex; justify-content: space-around; margin-top: 80px; font-size: 13px; z-index: 2; position: relative; page-break-inside: avoid !important; }
             .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
             
             @media print { 
-                /* 1. MÁRGEN CERO ABSOLUTO EN VENTANA FANTASMA: Aniquila 100% los textos del navegador */
                 @page { size: letter portrait; margin: 0mm !important; } 
                 
                 body, html { background: white; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
                 .no-print { display: none !important; } 
                 
-                /* 2. RECONSTRUCCIÓN DEL MARGEN INTERNO */
                 .b-print { border: none !important; box-shadow: none !important; padding: 12mm 15mm 12mm 15mm !important; width: 100% !important; margin: 0 !important; box-sizing: border-box !important;} 
                 .table-custom th { padding: 6px !important; font-size: 11px !important; }
                 .table-custom td { padding: 5px !important; font-size: 10.5px !important; }
                 .logro-texto-clase { padding: 4px 8px !important; font-size: 10px !important; line-height: 1.15 !important; }
                 
-                /* 3. EXPANSIÓN DE FIRMAS RESTAURADA PARA ESTÉTICA PERFECTA */
-                .firmas-container { margin-top: 50px !important; font-size: 12px !important; }
+                /* 🚀 EQUILIBRIO DE FIRMAS: Las empujamos hacia el fondo para rellenar el espacio vacío elegantemente */
+                .firmas-container { margin-top: 130px !important; font-size: 12px !important; }
+                
                 .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             }
         </style>"""    
