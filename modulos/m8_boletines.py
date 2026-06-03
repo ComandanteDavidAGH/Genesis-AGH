@@ -37,7 +37,7 @@ def renderizar(*args, **kwargs):
         </style>
     """, unsafe_allow_html=True)
 
-    # Desempaquetado dinámico de argumentos
+    # Desempaquetado dinámico de argumentos enviados por app.py
     if len(args) >= 1: df_notas = args[0] if isinstance(args[0], pd.DataFrame) else None
     if len(args) >= 3: conn_sql = args[2]
 
@@ -67,18 +67,18 @@ def renderizar(*args, **kwargs):
 
     # ⚡ LAS CASILLAS PEQUEÑAS UNA AL LADO DE LA OTRA (Formato Ultra-Compacto Horizontal)
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
-    c_modo, c_per, c_grad, c_est = st.columns([1.1, 1.2, 1.1, 2.0])
+    c_modo, c_per, c_grad, c_est = st.columns([1.1, 1.4, 1.1, 2.0])
     
     with c_modo:
         modo = st.selectbox("Generación:", ["👤 Individual", "📦 Masivo"])
     
     with c_per:
-        # Sincronización bidireccional forzada del Periodo
+        # 🔄 CORRECCIÓN MAESTRA DE SINTAXIS DE PERIODOS
         lista_periodos_opt = ["P1", "P2", "P3", "P4", "CONSOLIDADO FINAL"]
         default_idx = 0
         if "P2" in periodo_sel: default_idx = 1
-        elif "P3" in default_idx = 2
-        elif "P4" in default_idx = 3
+        elif "P3" in periodo_sel: default_idx = 2
+        elif "P4" in periodo_sel: default_idx = 3
         elif "CONSOLID" in periodo_sel or "FINAL" in periodo_sel: default_idx = 4
         
         periodo_activo = st.selectbox("⏱️ Periodo:", lista_periodos_opt, index=default_idx)
@@ -108,9 +108,6 @@ def renderizar(*args, **kwargs):
         df_est = df_trabajo[df_trabajo[col_nombre] == estudiante].copy()
         if df_est.empty: continue
         
-        # Extracción de promedios institucionales reales
-        prom_col = next((c for c in df_est.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF']), None)
-        promedio_general_val = float(df_est[prom_col].mean()) if prom_col else 0.0
         grado_est = df_est[col_grado].iloc[0] if col_grado in df_est.columns else "N/A"
 
         # Barra de botones de impresión en pantalla
@@ -122,27 +119,43 @@ def renderizar(*args, **kwargs):
                 </div>
             """, unsafe_allow_html=True)
 
-        # 🛡️ CONTENEDOR DEL ESCUDO HERÁLDICO INTEGRADO EN HTML PURO (Inmune a caídas)
+        # 🛡️ CONTENEDOR DEL ESCUDO HERÁLDICO INTEGRADO EN HTML PURO (Garantizado e Inmune a caídas)
         escudo_html = """
         <div style="width:75px; height:85px; background-color:#0d1b2a; border:3px solid #d4af37; border-radius:8px 8px 45px 45px; box-shadow: 3px 3px 0px #0d1b2a; display:flex; align-items:center; justify-content:center; text-align:center; box-sizing:border-box;">
             <div style="font-family:'Arial Black', sans-serif; font-size:10px; font-weight:900; color:#ffffff; line-height:1.1; padding:2px;">GÉNESIS<br><span style="color:#d4af37; font-size:8px;">2026</span></div>
         </div>
         """
 
-        # Cabecera del Boletín Insignia
+        # Cálculo de Promedio General Dinámico
+        columnas_periodos = [c for c in ['P1', 'P2', 'P3', 'P4'] if c in df_est.columns]
+        if not columnas_periodos:
+            columnas_periodos = [c for c in df_est.columns if c not in [col_nombre, col_grado, col_materia, 'PROMEDIO', 'DESEMPEÑO', 'LOGRO', 'ID_EST', 'EST-001']]
+        
+        for cp in columnas_periodos:
+            df_est[cp] = pd.to_numeric(df_est[cp], errors='coerce').fillna(0.0)
+            
+        prom_col = next((c for c in df_est.columns if c in ['PROMEDIO', 'PROMEDIO_FINAL', 'DEF']), None)
+        if prom_col:
+            df_est[prom_col] = pd.to_numeric(df_est[prom_col], errors='coerce').fillna(0.0)
+            promedio_institucional = df_est[prom_col].mean()
+        else:
+            df_est['FINAL_CALC'] = df_est[columnas_periodos].mean(axis=1)
+            promedio_institucional = df_est['FINAL_CALC'].mean()
+
+        # Renderizado de Cabecera del Boletín
         html_boletin = f"""
-        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08);">
+        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15 rgba(0,0,0,0.08);">
             <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                 <tr>
                     <td style="width:15%; text-align:left; vertical-align:middle;">{escudo_html}</td>
                     <td style="width:65%; text-align:center; vertical-align:middle;">
                         <h2 style="margin:0; color:#0d1b2a; font-family:'Arial Black'; font-size:20px; letter-spacing:0.5px;">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                        <h4 style="margin:6px 0 0 0; color:#cc8800; font-family:'Arial'; font-weight:bold; font-size:13px; text-transform:uppercase; letter-spacing:1px;">INFORME ACADÉMICO OFICIAL: {periodo_visual}</h4>
+                        <h4 style="margin:6px 0 0 0; color:#cc8800; font-family:'Arial'; font-weight:bold; font-size:13px; text-transform:uppercase; letter-spacing:1px;">INFORME ACADÉMICO OFICIAL: {periodo_visual.upper()}</h4>
                     </td>
                     <td style="width:20%; text-align:right; vertical-align:middle;">
                         <div style="border:3px solid #0d1b2a; border-radius:8px; padding:6px 12px; background-color:#f8f9fa; text-align:center; display:inline-block; min-width:110px; box-shadow: 3px 3px 0px #0d1b2a;">
                             <div style="font-size:10px; font-family:'Arial Black'; color:#0d1b2a; text-transform:uppercase;">PROMEDIO</div>
-                            <div style="font-size:24px; font-family:'Arial Black'; color:#cc8800; font-weight:900; margin-top:1px;">{promedio_general_val:.1f}</div>
+                            <div style="font-size:24px; font-family:'Arial Black'; color:#cc8800; font-weight:900; margin-top:1px;">{promedio_institucional:.1f}</div>
                         </div>
                     </td>
                 </tr>
@@ -158,7 +171,7 @@ def renderizar(*args, **kwargs):
             </table>
         """
 
-        # 👑 CONFIGURACIÓN DINÁMICA DE TABLAS (Apertura de 4 Periodos o Vista Única)
+        # 👑 RECONFIGURACIÓN MATRICIAL DINÁMICA DE LA TABLA INSIGNIA
         if es_consolidado:
             html_boletin += """
             <table style="width:100%; border-collapse:collapse; font-family:'Arial', sans-serif; border: 2px solid #0d1b2a;">
@@ -188,7 +201,7 @@ def renderizar(*args, **kwargs):
                 <tbody>
             """
 
-        # Inyección de filas de materias y descriptores extraídos de Supabase
+        # Inyección de filas de materias y descriptores de logros directo de Supabase
         for _, fila in df_est.iterrows():
             materia_nom = str(fila[col_materia]).strip()
             logro_render = str(fila[col_logro_db]).strip() if col_logro_db and not pd.isna(fila[col_logro_db]) else "Descriptor de logro oficial registrado en la bitácora escolar."
@@ -198,7 +211,7 @@ def renderizar(*args, **kwargs):
                 n_p2 = float(fila['P2']) if 'P2' in df_est.columns else 0.0
                 n_p3 = float(fila['P3']) if 'P3' in df_est.columns else 0.0
                 n_p4 = float(fila['P4']) if 'P4' in df_est.columns else 0.0
-                n_def = float(fila[prom_col]) if prom_col else 0.0
+                n_def = float(fila[prom_col]) if prom_col else ( (n_p1+n_p2+n_p3+n_p4)/4 )
 
                 des_txt = str(fila['DESEMPEÑO']).strip().upper() if 'DESEMPEÑO' in df_est.columns else "BÁSICO"
                 color_def = "#cc0000" if n_def < 6.0 else "#000000"
@@ -215,13 +228,13 @@ def renderizar(*args, **kwargs):
                         <td style="padding:8px; font-family:'Arial Black'; font-weight:bold; border-right:1px solid #0d1b2a; color:{color_des}">{des_txt}</td>
                     </tr>
                     <tr style="background-color:#ffffff;">
-                        <td colspan="7" style="padding:6px 12px 8px 12px; font-style:italic; font-size:11px; color:#4a4a4a; border-left:1px solid #0d1b2a; border-right:1px solid #0d1b2a; border-bottom:2px solid #0d1b2a; text-align:left; background-color:#fafafa;">
+                        <td colspan="7" style="padding:5px 12px 8px 12px; font-style:italic; font-size:11px; color:#4a4a4a; border-left:1px solid #0d1b2a; border-right:1px solid #0d1b2a; border-bottom:2px solid #0d1b2a; text-align:left; background-color:#fafafa;">
                             <strong style="color:#cc8800;">LOGRO:</strong> {logro_render}
                         </td>
                     </tr>
                 """
             else:
-                col_p_act = activo_col = str(periodo_activo).upper().strip()
+                col_p_act = str(periodo_activo).upper().strip()
                 nota_val = float(fila[col_p_act]) if col_p_act in df_est.columns else 0.0
                 des_txt = str(fila['DESEMPEÑO']).strip().upper() if 'DESEMPEÑO' in df_est.columns else "BÁSICO"
                 
