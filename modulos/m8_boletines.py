@@ -22,7 +22,7 @@ def obtener_desempeno_dinamico(nota):
         return "BÁSICO"
 
 def renderizar(*args, **kwargs):
-    # 🛡️ EXTRACTOR DEL LOGO REAL DE LA APLICACIÓN (Conversión Base64)
+    # 🛡️ EXTRACTOR DEL LOGO REAL DE LA APLICACIÓN (Conversión Base64 Blindada)
     logo_base64 = ""
     if os.path.exists("logo.png"):
         try:
@@ -42,41 +42,55 @@ def renderizar(*args, **kwargs):
             @media print {
                 header, [data-testid="stSidebar"], [data-testid="stHeader"], 
                 .stRadio, .stSelectbox, .no-print, .stButton, div.block-container button,
-                div[data-testid="stVerticalBlock"] > div.no-print, .panel-ayuda-print {
+                div[data-testid="stVerticalBlock"] > div.no-print, div.barra-impresion-mando {
                     display: none !important;
                 }
                 .main .block-container { padding-top: 0px !important; padding-bottom: 0px !important; }
                 .boletin-insignia-box { border: none !important; box-shadow: none !important; margin: 0px !important; padding: 0px !important; width: 100% !important; }
             }
-            .panel-ayuda-print {
-                background-color: #f8f9fa;
-                border: 2px solid #0d1b2a;
-                border-left: 6px solid #d4af37;
-                padding: 15px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-                box-shadow: 3px 3px 10px rgba(0,0,0,0.05);
+            
+            /* Estilos ejecutivos para los botones insignia originales */
+            .btn-boletin-premium {
+                background-color: #0d1b2a !important;
+                color: white !important;
+                font-family: 'Arial Black', sans-serif !important;
+                font-size: 13px !important;
+                font-weight: bold !important;
+                border: 2px solid #d4af37 !important;
+                border-radius: 6px !important;
+                box-shadow: 3px 3px 0px #0d1b2a !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+            }
+            .btn-boletin-premium:hover {
+                background-color: #1e3551 !important;
+                box-shadow: 3px 3px 0px #d4af37 !important;
+                transform: translate(-1px, -1px);
             }
         </style>
     """, unsafe_allow_html=True)
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📜 Expedición de Boletines Oficiales</h3>", unsafe_allow_html=True)
     
-    # 🔄 INTERCEPTOR DE FRECUENCIA: Escaneo prioritario y reactivo de la Barra Lateral Global
+    # 🔄 CONEXIÓN LÁSER AL MENÚ LATERAL (Lectura forzada de la señal de app.py)
+    df_notas = args[0] if len(args) >= 1 and isinstance(args[0], pd.DataFrame) else None
     periodo_seleccionado = "P1"
-    for key, value in st.session_state.items():
-        val_str = str(value).upper().strip()
-        if val_str in ["P1", "P2", "P3", "P4"] or "CONSOLID" in val_str or "FINAL" in val_str:
-            periodo_seleccionado = val_str
-            break
+    
+    # Extraemos el periodo real directo del argumento que inyecta app.py
+    if len(args) >= 2 and args[1]:
+        periodo_seleccionado = str(args[1]).upper().strip()
+    else:
+        # Lector de respaldo directo sobre la llave del selector lateral de Streamlit
+        for key, value in st.session_state.items():
+            if "period" in key.lower() or key.lower() == "periodo":
+                periodo_seleccionado = str(value).upper().strip()
+                break
 
-    es_consolidado = "CONSOLID" in periodo_seleccionado or "FINAL" in periodo_seleccionado
+    # Clasificación estructural de la matriz
+    es_consolidado = "CONSOLID" in periodo_seleccionado or "FINAL" in periodo_seleccionado or "TODO" in periodo_seleccionado
     periodo_visual = "CONSOLIDADO FINAL" if es_consolidado else f"PERIODO {periodo_seleccionado}"
 
-    # Desempaquetado seguro de los datos de app.py
-    df_notas = args[0] if len(args) >= 1 and isinstance(args[0], pd.DataFrame) else None
-    conn_sql = args[2] if len(args) >= 3 else None
-
+    # Recuperación de la base de datos en caso de micro-caídas
     if (df_notas is None or df_notas.empty) and conn_sql is not None:
         try: df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
         except Exception: pass
@@ -85,7 +99,7 @@ def renderizar(*args, **kwargs):
         st.warning("⚠️ **Base de datos de calificaciones no disponible en este cuadrante.**")
         return
 
-    # Estandarización absoluta de columnas verificadas por la trampa
+    # Estandarización absoluta de columnas verificadas por su trampa
     df_trabajo = df_notas.copy()
     df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
 
@@ -93,7 +107,7 @@ def renderizar(*args, **kwargs):
     col_materia = "MATERIA"
     col_grado = "GRADO"
 
-    # ⚡ FILTROS COMPACTOS HORIZONTALES (Espacio Optimizado)
+    # ⚡ FILTROS COMPACTOS HORIZONTALES (Espacio Optimizado en una sola línea delgada)
     st.markdown("<div class='no-print'>", unsafe_allow_html=True)
     c_modo, c_grad, c_est = st.columns([1.2, 1.5, 3.3])
     
@@ -116,18 +130,17 @@ def renderizar(*args, **kwargs):
             st.text_input("Estado de Lote:", f"📦 Masivo: {len(df_alumnos)} Boletines consolidados listos", disabled=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # 🖨️ PANEL DE MANDO DE IMPRESIÓN PREMIUM (Garantiza el bypass de seguridad)
+    # 🖨️ RESTAURACIÓN DE LOS BOTONES PREMIUM ORIGINALES CON PUENTE DE EJECUCIÓN SEGURO
     if modo == "👤 Individual":
-        st.markdown(f"""
-            <div class="panel-ayuda-print no-print">
-                <p style="margin:0; font-family:'Arial Black'; color:#0d1b2a; font-size:14px;">🖨️ CONTROL INSTITUCIONAL DE EXPEDICIÓN</p>
-                <p style="margin:5px 0 0 0; font-size:12.5px; color:#333333; line-height:1.4;">
-                    Para garantizar la máxima nitidez y activar el guardado oficial, use el comando universal del sistema: <br>
-                    👉 Presione las teclas <strong>Ctrl + P</strong> (en Windows) o <strong>Cmd + P</strong> (en Mac). <br>
-                    💡 <em>Nota de Rectoría:</em> En la ventana que se abrirá, cambie el 'Destino' a <strong>Guardar como PDF</strong> o seleccione su impresora física. El menú lateral y los botones se ocultarán automáticamente.
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<div class='no-print' style='margin-bottom: 20px;'>", unsafe_allow_html=True)
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("🖨️ IMPRIMIR INFORME ACADÉMICO", use_container_width=True, type="primary"):
+                st.components.v1.html("<script>window.parent.print();</script>", height=0, width=0)
+        with col_btn2:
+            if st.button("📥 GUARDAR COMO PDF", use_container_width=True):
+                st.components.v1.html("<script>window.parent.print();</script>", height=0, width=0)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # Renderizado en cadena de los Boletines Insignias
     for estudiante in df_alumnos:
@@ -136,7 +149,7 @@ def renderizar(*args, **kwargs):
         
         grado_est = df_est[col_grado].iloc[0] if col_grado in df_est.columns else "N/A"
 
-        # Asegurar formato numérico
+        # Asegurar formato numérico en las columnas de la base de datos
         for cp in ['P1', 'P2', 'P3', 'P4']:
             if cp in df_est.columns:
                 df_est[cp] = pd.to_numeric(df_est[cp], errors='coerce').fillna(0.0)
@@ -150,7 +163,7 @@ def renderizar(*args, **kwargs):
 
         # Cabecera del Boletín Insignia
         html_boletin = f"""
-        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:15px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08);">
+        <div class="boletin-insignia-box" style="background-color:#ffffff; border:3px solid #0d1b2a; border-radius:12px; padding:30px; margin-top:10px; font-family:'Arial', sans-serif; box-shadow: 4px 4px 15px rgba(0,0,0,0.08);">
             <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                 <tr>
                     <td style="width:15%; text-align:left; vertical-align:middle;">{escudo_html}</td>
@@ -177,7 +190,7 @@ def renderizar(*args, **kwargs):
             </table>
         """
 
-        # 👑 CAMBIO MATRICIAL DINÁMICO COMPLETAMENTE CONECTADO AL MENÚ LATERAL
+        # 👑 APERTURA MATRICIAL: Muestra las 4 columnas si es Consolidado, o 1 si es periodo individual
         if es_consolidado:
             html_boletin += """
             <table style="width:100%; border-collapse:collapse; font-family:'Arial', sans-serif; border: 2px solid #0d1b2a;">
@@ -240,8 +253,7 @@ def renderizar(*args, **kwargs):
                     </tr>
                 """
             else:
-                col_p_verif = str(periodo_seleccionado).upper().strip()
-                nota_val = float(fila[col_p_verif]) if col_p_verif in df_est.columns else 0.0
+                nota_val = float(fila[periodo_seleccionado]) if periodo_seleccionado in df_est.columns else 0.0
                 
                 des_txt = obtener_desempeno_dinamico(nota_val)
                 color_nota = "#cc0000" if nota_val < 6.0 else "#000000"
