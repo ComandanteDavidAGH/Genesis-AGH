@@ -69,5 +69,24 @@ def renderizar(df, periodo_sel, conn):
             st.warning("⚠️ Sin cambios.")
 
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
+    # 1. Definimos la lógica de desempeño (ajusta los rangos según tu sistema de calificación)
+def clasificar_desempeno(nota):
+    # Por seguridad, si la nota es NaN, devolvemos "Sin definir"
+    if pd.isna(nota): 
+        return "Sin definir"
     
+    # Aquí aplicamos tus reglas
+    if nota < 6.0:
+        return "BAJO"
+    elif nota < 8.0:
+        return "BÁSICO"
+    elif nota < 9.5:
+        return "ALTO"
+    else:
+        return "SUPERIOR"
+
+# 2. Aplicamos esta lógica a la columna 'Definitiva' para llenar los vacíos
+# Asegúrate de que 'Definitiva' sea numérica antes de procesar
+df['Definitiva'] = pd.to_numeric(df['Definitiva'], errors='coerce')
+df['DESEMPEÑO'] = df['Definitiva'].apply(clasificar_desempeno)
     st.data_editor(df, use_container_width=True, height=450, key="editor_notas", column_config=config_notas)
