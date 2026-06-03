@@ -48,14 +48,15 @@ def renderizar(df, periodo_sel, conn):
         st.warning("No hay estudiantes asignados para este grado y materia.")
         return
 
+    # 🎯 CORTE DE DECIMALES: format="%.1f" restringe la vista a 1 solo número después del punto
     config_notas = { 
-        'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1),
-        'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1),
-        'P3': st.column_config.NumberColumn("P3", min_value=1.0, max_value=10.0, step=0.1),
-        'P4': st.column_config.NumberColumn("P4", min_value=1.0, max_value=10.0, step=0.1),
+        'P1': st.column_config.NumberColumn("P1", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
+        'P2': st.column_config.NumberColumn("P2", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
+        'P3': st.column_config.NumberColumn("P3", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
+        'P4': st.column_config.NumberColumn("P4", min_value=1.0, max_value=10.0, step=0.1, format="%.1f"),
         'Nombre_Completo': st.column_config.TextColumn("Estudiante", disabled=True),
         'Materia': st.column_config.TextColumn("Asignatura", disabled=True),
-        'PROMEDIO': st.column_config.NumberColumn("Definitiva", disabled=True)
+        'PROMEDIO': st.column_config.NumberColumn("Definitiva", disabled=True, format="%.1f")
     }
 
     col_btn, col_espacio = st.columns([2, 8])
@@ -93,7 +94,7 @@ def renderizar(df, periodo_sel, conn):
             else:
                 st.warning("⚠️ No hay cambios para guardar.")
 
-    # ⚡ MOTOR DE PINTURA PANDAS STYLER (Pinta las celdas desde adentro)
+    # ⚡ MOTOR DE PINTURA PANDAS STYLER
     def pintar_celdas(val):
         try:
             n = float(val)
@@ -107,9 +108,9 @@ def renderizar(df, periodo_sel, conn):
         except:
             return ''
 
-    # Aplicamos la pintura a las columnas numéricas
+    # Aplicamos la pintura y FORZAMOS EL FORMATO a 1 solo decimal para limpiar los ceros
     columnas_notas = [c for c in ['P1', 'P2', 'P3', 'P4', 'PROMEDIO'] if c in df.columns]
-    df_pintado = df.style.map(pintar_celdas, subset=columnas_notas)
+    df_pintado = df.style.map(pintar_celdas, subset=columnas_notas).format("{:.1f}", subset=columnas_notas)
 
     # 👑 FALSO ENCABEZADO VIP PARA CORONAR LA TABLA
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:15px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
