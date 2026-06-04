@@ -21,15 +21,19 @@ def construir_mapa_logros(df_logros_raw):
     if df_logros_raw is not None and not df_logros_raw.empty:
         for _, fila in df_logros_raw.iterrows():
             if len(fila) >= 4:
+                val_logro = str(fila.iloc[3]).strip()
+                # Filtro anti-basura
+                if val_logro.lower() in ['nan', 'none', '<na>', 'null', '']:
+                    continue
                 clave = (
                     str(fila.iloc[0]).strip().upper(), 
                     str(fila.iloc[1]).strip().upper(), 
                     str(fila.iloc[2]).strip().upper()
                 )
-                dict_logros[clave] = str(fila.iloc[3])
+                dict_logros[clave] = val_logro
     return dict_logros
 
-# --- 2. MOTOR DE RENDERIZADO OPTIMIZADO PARA HOJA CARTA ---
+# --- 2. MOTOR DE RENDERIZADO ULTRALIVIANO ---
 
 def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, periodos_print, info_puesto):
     res = df_curso[df_curso['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
@@ -60,21 +64,25 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
         for p in periodos_print:
             if p == "FINAL":
                 val = float(row.get('PROMEDIO', 0)) if pd.notna(row.get('PROMEDIO', 0)) else 0.0
-                td += f"<td style='color:{color};'>{val:.1f}</td>"
+                td += f"<td style='color:{color}; font-weight:bold;'>{val:.1f}</td>"
             else:
                 val = float(row.get(p, 0)) if pd.notna(row.get(p, 0)) else 0.0
-                td += f"<td>{val:.1f}</td>"
+                td += f"<td style='font-weight:bold;'>{val:.1f}</td>"
 
-        html_filas.append(f"<tr><td class='materia-title'><b>{row['Materia']}</b></td>{td}<td style='color:{color};'>{desp}</td></tr>")
+        html_filas.append(f"<tr><td class='materia-title'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>")
         
         materia_limpia = str(row['Materia']).strip().upper()
         clave_busqueda = (nivel_alumno, materia_limpia, desp)
-        logro_texto = dict_logros.get(clave_busqueda, str(row.get('LOGRO', 'Sin registro')))
+        logro_texto = dict_logros.get(clave_busqueda, str(row.get('LOGRO', '')))
         
+        # Aniquilación final del "nan" o vacíos
+        if str(logro_texto).strip().lower() in ['nan', 'none', '<na>', 'null', '']:
+            logro_texto = "Pendiente de registro en matriz de logros."
+            
         html_filas.append(f"<tr class='logro-row'><td colspan='{col_span_logro}'><b>LOGRO:</b> {logro_texto}</td></tr>")
 
     img_watermark = f'<img src="{URL_LOGO}" class="watermark">' if URL_LOGO else ""
-    img_logo = f'<img src="{URL_LOGO}" width="85">' if URL_LOGO else ""
+    img_logo = f'<img src="{URL_LOGO}" width="75">' if URL_LOGO else ""
 
     html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
     <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:12px; right:20px; z-index:99;">
@@ -84,14 +92,14 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
         {img_watermark}
         <table class="header-table">
             <tr>
-                <td style="width:15%; text-align:left;">{img_logo}</td>
+                <td style="width:12%; text-align:left;">{img_logo}</td>
                 <td style="text-align:center; vertical-align:middle;">
-                    <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                    <p style="margin:5px 0 0 0; font-size:14px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                    <h2 style="margin:0; color:#0d1b2a; font-size:18px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                    <p style="margin:4px 0 0 0; font-size:12px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                 </td>
                 <td style="text-align:right; width:15%; vertical-align:middle;">
-                    <div style="border:2.5px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px; box-shadow: 2px 2px 0px #0d1b2a;">
-                        <b style="font-size:11px; color:#000;">PROMEDIO</b><br><b style="font-size:20px; color:#d4af37;">{p_prom:.1f}</b>
+                    <div style="border:2px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                        <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
                     </div>
                 </td>
             </tr>
@@ -106,7 +114,7 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
             {"".join(html_filas)}
         </table>
         <div class='firmas-container'>
-            <div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div>
+            <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
             <div class='firma-box'>Firma Director de Grupo</div>
         </div>
     </div></body></html>"""
@@ -135,7 +143,6 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
         def_p = ["P1", "P2", "P3", "P4", "FINAL"] if "CONSOLID" in str(periodo_sel).upper() else [periodo_sel]
         def_p = [p for p in def_p if p in opciones_p]
         if not def_p: def_p = ["FINAL"]
-        
         periodos_print = st.multiselect("📊 Columnas a Imprimir:", opciones_p, default=def_p)
         
     st.markdown("</div>", unsafe_allow_html=True)
@@ -159,49 +166,51 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     df_agrupado['Total_Grado'] = df_agrupado.groupby('Grado')['Nombre_Completo'].transform('count')
     dict_puestos = {row['Nombre_Completo']: f"{row['Puesto']} de {row['Total_Grado']}" for _, row in df_agrupado.iterrows()}
 
-    # 🎨 NÚCLEO CSS REPARADO PARA HOJA CARTA
+    # 🎨 NÚCLEO CSS DE COMPRESIÓN TÁCTICA PARA HOJA CARTA
     css_vip = """<style>
         body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
         
-        /* Contenedor Principal */
+        /* Contenedor Principal en Pantalla */
         .b-print { position: relative; padding: 25px; border: 3px solid #0d1b2a; border-radius: 12px; background: white; z-index: 1; margin-bottom: 25px; page-break-inside: avoid !important; }
-        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 65%; z-index: -1; pointer-events: none; }
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 65%; z-index: -1; pointer-events: none; }
         
-        /* Tablas y Estilos base */
-        .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; }
-        .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .table-custom td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 13px; font-weight: bold; }
-        .materia-title { text-align: left !important; background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .logro-row td { text-align: justify !important; font-size: 11.5px !important; font-style: italic; border-bottom: 2px solid #000; background-color: #ffffff !important; padding: 6px 12px !important; font-weight: normal !important; line-height: 1.4 !important; }
+        /* Tablas y Estilos base en Pantalla */
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; z-index: 2; position: relative; }
+        .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 6px; font-family: 'Arial Black'; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .table-custom td { border: 1px solid #000; padding: 6px; text-align: center; font-size: 12px; }
+        .materia-title { text-align: left !important; background-color: #f8f9fa !important; font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .logro-row td { text-align: justify !important; font-size: 11px !important; font-style: italic; border-bottom: 2px solid #000; background-color: #ffffff !important; padding: 4px 10px !important; font-weight: normal !important; line-height: 1.2 !important; }
         
-        .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; }
+        .header-table { width: 100%; border: none; margin-bottom: 10px; z-index: 2; position: relative; }
         .header-table td { border: none; padding: 0; }
         
-        .info-box { border: 2px solid #0d1b2a; padding: 12px; background: #f8f9fa !important; display: flex; justify-content: space-between; margin-bottom: 15px; border-radius: 6px; font-size: 13px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-shadow: 2px 2px 0px #0d1b2a; }
+        .info-box { border: 2px solid #0d1b2a; padding: 8px 12px; background: #f8f9fa !important; display: flex; justify-content: space-between; margin-bottom: 10px; border-radius: 6px; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-shadow: 2px 2px 0px #0d1b2a; }
         
-        .firmas-container { display: flex; justify-content: space-around; margin-top: 60px; font-size: 14px; z-index: 2; position: relative; page-break-inside: avoid !important; }
-        .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 8px; font-weight: bold; color: #0d1b2a; }
+        .firmas-container { display: flex; justify-content: space-around; margin-top: 40px; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+        .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
         
-        /* 🚀 REGLAS ESTRICTAS DE IMPRESIÓN (EL ARREGLO DEL TAMAÑO) */
+        /* 🚀 REGLAS ESTRICTAS DE IMPRESIÓN (LA COMPRESIÓN PERFECTA) */
         @media print { 
-            @page { size: letter portrait; margin: 12mm 15mm 15mm 15mm !important; } 
+            @page { size: letter portrait; margin: 8mm 10mm 8mm 10mm !important; } 
             body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
             .no-print { display: none !important; } 
             .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; } 
             .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             
-            /* Expansión inteligente de la tabla para ocupar la hoja Carta */
-            .table-custom th { padding: 10px !important; font-size: 13px !important; }
-            .table-custom td { padding: 9px !important; font-size: 13px !important; }
-            .logro-row td { padding: 8px 12px !important; font-size: 12px !important; line-height: 1.5 !important; }
-            .info-box { padding: 15px !important; font-size: 14px !important; }
-            .firmas-container { margin-top: 80px !important; font-size: 14px !important; }
+            /* Reducción milimétrica para que entren grados de 15 materias en una hoja Carta */
+            .header-table { margin-bottom: 5px !important; }
+            .info-box { padding: 6px 10px !important; font-size: 11px !important; margin-bottom: 5px !important; }
+            .table-custom { margin-top: 2px !important; margin-bottom: 2px !important; }
+            .table-custom th { padding: 4px !important; font-size: 10.5px !important; }
+            .table-custom td { padding: 3px !important; font-size: 10.5px !important; }
+            .materia-title { font-size: 10.5px !important; }
+            .logro-row td { padding: 2px 8px !important; font-size: 9.5px !important; line-height: 1.15 !important; }
+            .firmas-container { margin-top: 25px !important; font-size: 11px !important; }
         }
     </style>"""
 
     if modo_impresion == "👤 Individual":
         estudiantes = sorted(df_curso['Nombre_Completo'].dropna().unique())
-        
         col_esp1, col_est, col_esp2 = st.columns([1, 8, 1])
         with col_est:
             alumno = st.selectbox("👤 Seleccione el Estudiante para Inspección:", estudiantes, key="sb_alumno_vip")
@@ -213,13 +222,11 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     else:
         # --- MODO MASIVO ---
         estudiantes = sorted(df_curso['Nombre_Completo'].dropna().unique())
-        
         col_esp1, col_est, col_esp2 = st.columns([1, 8, 1])
         with col_est:
             st.info(f"⚠️ Se compilarán {len(estudiantes)} boletines oficiales. El documento incluirá las siguientes columnas: **{', '.join(periodos_print)}**")
 
             if st.button("🖨️ INICIAR COMPILACIÓN MASIVA VIP", type="primary", use_container_width=True):
-                
                 progress_text = "Preparando motores de compilación..."
                 barra_progreso = st.progress(0, text=progress_text)
                 
@@ -229,7 +236,7 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
                                "</div>"]
 
                 img_watermark = f'<img src="{URL_LOGO_OFICIAL}" class="watermark">' if URL_LOGO_OFICIAL else ""
-                img_logo = f'<img src="{URL_LOGO_OFICIAL}" width="85">' if URL_LOGO_OFICIAL else ""
+                img_logo = f'<img src="{URL_LOGO_OFICIAL}" width="75">' if URL_LOGO_OFICIAL else ""
 
                 total_alumnos = len(estudiantes)
                 th_masivo = "".join([f"<th>{p}</th>" for p in periodos_print])
@@ -253,14 +260,14 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
                     {img_watermark}
                     <table class="header-table">
                         <tr>
-                            <td style="width:15%; text-align:left;">{img_logo}</td>
+                            <td style="width:12%; text-align:left;">{img_logo}</td>
                             <td style="text-align:center; vertical-align:middle;">
-                                <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                                <p style="margin:5px 0 0 0; font-size:14px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                                <h2 style="margin:0; color:#0d1b2a; font-size:18px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                                <p style="margin:4px 0 0 0; font-size:12px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                             </td>
                             <td style="text-align:right; width:15%; vertical-align:middle;">
-                                <div style="border:2.5px solid #0d1b2a; padding:8px; background:#f0f2f6; text-align:center; border-radius:8px; box-shadow: 2px 2px 0px #0d1b2a;">
-                                    <b style="font-size:11px; color:#000;">PROMEDIO</b><br><b style="font-size:20px; color:#d4af37;">{p_prom:.1f}</b>
+                                <div style="border:2px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                                    <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
                                 </div>
                             </td>
                         </tr>
@@ -286,22 +293,26 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
                         for p in periodos_print:
                             if p == "FINAL":
                                 val = float(row.get('PROMEDIO', 0)) if pd.notna(row.get('PROMEDIO', 0)) else 0.0
-                                td_masivo += f"<td style='color:{color};'>{val:.1f}</td>"
+                                td_masivo += f"<td style='color:{color}; font-weight:bold;'>{val:.1f}</td>"
                             else:
                                 val = float(row.get(p, 0)) if pd.notna(row.get(p, 0)) else 0.0
-                                td_masivo += f"<td>{val:.1f}</td>"
+                                td_masivo += f"<td style='font-weight:bold;'>{val:.1f}</td>"
 
-                        html_masivo.append(f"<tr><td class='materia-title'><b>{row['Materia']}</b></td>{td_masivo}<td style='color:{color};'>{desp}</td></tr>")
+                        html_masivo.append(f"<tr><td class='materia-title'><b>{row['Materia']}</b></td>{td_masivo}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>")
 
                         materia_limpia = str(row['Materia']).strip().upper()
                         clave_busqueda = (nivel_alumno, materia_limpia, desp)
-                        logro_texto = dict_logros.get(clave_busqueda, str(row.get('LOGRO', 'Sin registro')))
+                        logro_texto = dict_logros.get(clave_busqueda, str(row.get('LOGRO', '')))
+                        
+                        # Aniquilación del "nan" en el masivo
+                        if str(logro_texto).strip().lower() in ['nan', 'none', '<na>', 'null', '']:
+                            logro_texto = "Pendiente de registro en matriz de logros."
 
                         html_masivo.append(f"<tr class='logro-row'><td colspan='{col_span_logro}'><b>LOGRO:</b> {logro_texto}</td></tr>")
 
                     html_masivo.append("""</table>
                         <div class='firmas-container'>
-                            <div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div>
+                            <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
                             <div class='firma-box'>Firma Director de Grupo</div>
                         </div>
                     </div>""")
