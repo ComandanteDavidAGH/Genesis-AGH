@@ -2,6 +2,53 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+# =========================================================
+# ⚡ MOTOR DE PROCESAMIENTO MATEMÁTICO (Caché de Perfiles)
+# =========================================================
+@st.cache_data(show_spinner=False)
+def compilar_perfil_estudiante(df, alumno, col_n, df_asistencia):
+    """ Filtra y pre-calcula los datos y colores del estudiante en milisegundos """
+    # 1. Aislar notas y asegurar formatos
+    df_alum = df[df['Nombre_Completo'] == alumno].copy()
+    df_alum[col_n] = pd.to_numeric(df_alum[col_n], errors='coerce')
+    
+    promedio_global = df_alum[col_n].mean()
+    if pd.isna(promedio_global): promedio_global = 0.0
+    
+    # 2. Lógica de colores (Semáforo Institucional Inteligente)
+    if promedio_global < 6.0: 
+        des_global, fill, line = 'BAJO 🔴', 'rgba(230, 57, 70, 0.4)', '#e63946'
+    elif promedio_global < 7.6: 
+        des_global, fill, line = 'BÁSICO 🟡', 'rgba(244, 162, 97, 0.4)', '#f4a261'
+    elif promedio_global < 9.1: 
+        des_global, fill, line = 'ALTO 🟢', 'rgba(42, 157, 143, 0.4)', '#2a9d8f'
+    else: 
+        des_global, fill, line = 'SUPERIOR 🌟', 'rgba(212, 175, 55, 0.4)', '#d4af37'
+        
+    # 3. Preparar datos del Polígono de Desempeño (Radar)
+    df_radar = df_alum.dropna(subset=[col_n]).copy()
+    if not df_radar.empty:
+        df_radar['Etiqueta_Nota'] = df_radar[col_n].apply(lambda x: f"{x:.1f}")
+        
+    # 4. Aislar historial disciplinario (Cruce de Tablas de Alta Velocidad)
+    novedades_count = 0
+    df_hist_limpio = pd.DataFrame()
+    
+    if df_asistencia is not None and not df_asistencia.empty and 'Nombre_Completo' in df_asistencia.columns:
+        df_hist = df_asistencia[df_asistencia['Nombre_Completo'] == alumno]
+        novedades_count = len(df_hist)
+        if novedades_count > 0:
+            cols_mostrar = [c for c in ['FECHA', 'ESTADO', 'OBSERVACIONES'] if c in df_hist.columns]
+            df_hist_limpio = df_hist[cols_mostrar].sort_values(
+                by=cols_mostrar[0] if cols_mostrar else df_hist.columns[0], ascending=False
+            )
+            
+    return promedio_global, des_global, fill, line, df_radar, novedades_count, df_hist_limpio
+
+
+# =========================================================
+# 👑 RENDERIZADO VISUAL
+# =========================================================
 def renderizar(df, periodo_sel, conn):
     # 🚀 INYECCIÓN DEL MOTOR DE ANIMACIÓN 3D Y ESTILOS VIP
     st.markdown("""
@@ -70,39 +117,10 @@ def renderizar(df, periodo_sel, conn):
         alumno_analisis = st.selectbox("🎯 Seleccione Estudiante a Inspeccionar:", lista_alumnos_dash)
     
     if alumno_analisis:
-        # Aislamos el dataframe del alumno y aseguramos tipo numérico
-        df_alum = df[df['Nombre_Completo'] == alumno_analisis].copy()
-        df_alum[col_n] = pd.to_numeric(df_alum[col_n], errors='coerce')
+        # ⚡ CARGA ULTRARRÁPIDA DESDE LA CACHÉ
+        df_asistencia_global = st.session_state.get('df_asistencia', pd.DataFrame())
+        promedio_global, des_global, color_radar_fill, color_radar_line, df_radar, novedades_count, df_hist_limpio = compilar_perfil_estudiante(df, alumno_analisis, col_n, df_asistencia_global)
         
-        promedio_global = df_alum[col_n].mean()
-        if pd.isna(promedio_global): promedio_global = 0.0
-        
-        # Lógica de Color Dinámico para el Polígono
-        if promedio_global < 6.0: 
-            des_global = 'BAJO 🔴'
-            color_radar_fill = 'rgba(230, 57, 70, 0.4)' # Rojo
-            color_radar_line = '#e63946'
-        elif promedio_global < 7.6: 
-            des_global = 'BÁSICO 🟡'
-            color_radar_fill = 'rgba(244, 162, 97, 0.4)' # Naranja/Dorado
-            color_radar_line = '#f4a261'
-        elif promedio_global < 9.1: 
-            des_global = 'ALTO 🟢'
-            color_radar_fill = 'rgba(42, 157, 143, 0.4)' # Verde
-            color_radar_line = '#2a9d8f'
-        else: 
-            des_global = 'SUPERIOR 🌟'
-            color_radar_fill = 'rgba(212, 175, 55, 0.4)' # Oro
-            color_radar_line = '#d4af37'
-        
-        # 🛡️ BLINDAJE DE NOVEDADES
-        novedades_count = 0
-        df_hist_alum = pd.DataFrame()
-        if 'df_asistencia' in st.session_state and st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty:
-            if 'Nombre_Completo' in st.session_state.df_asistencia.columns:
-                df_hist_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['Nombre_Completo'] == alumno_analisis]
-                novedades_count = len(df_hist_alum)
-            
         st.markdown("<br>", unsafe_allow_html=True)
         
         # 👑 TARJETAS MÉTRICAS VIP
@@ -117,10 +135,7 @@ def renderizar(df, periodo_sel, conn):
         with col_r1:
             st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>POLÍGONO DE DESEMPEÑO INTELIGENTE</p>", unsafe_allow_html=True)
             
-            df_radar = df_alum.dropna(subset=[col_n]).copy()
             if not df_radar.empty:
-                df_radar['Etiqueta_Nota'] = df_radar[col_n].apply(lambda x: f"{x:.1f}")
-                
                 fig_radar = px.line_polar(df_radar, r=col_n, theta='Materia', line_close=True, range_r=[0,10], text='Etiqueta_Nota')
                 
                 # Inyección del color dinámico
@@ -151,10 +166,8 @@ def renderizar(df, periodo_sel, conn):
         with col_r2:
             st.markdown("<p style='font-weight:bold; font-family:Arial Black; text-align:center;'>HISTORIAL DISCIPLINARIO</p>", unsafe_allow_html=True)
             if novedades_count > 0: 
-                cols_mostrar = [c for c in ['FECHA', 'ESTADO', 'OBSERVACIONES'] if c in df_hist_alum.columns]
-                df_hist_limpio = df_hist_alum[cols_mostrar].sort_values(by=cols_mostrar[0] if cols_mostrar else df_hist_alum.columns[0], ascending=False)
                 
-                # 🎨 MOTOR DE PINTURA PANDAS PARA REPORTES
+                # 🎨 MOTOR DE PINTURA PANDAS PARA REPORTES (Mantenido ligero en la UI)
                 def color_estado(val):
                     v = str(val).upper()
                     if any(palabra in v for palabra in ['FALLA', 'RETARDO', 'LLAMADO', 'SUSPENSIÓN']):
@@ -163,7 +176,7 @@ def renderizar(df, periodo_sel, conn):
                         return 'color: #00994c; font-weight: bold;' # Verde Éxito
                     return 'color: #0d1b2a; font-weight: bold;'
 
-                if 'ESTADO' in cols_mostrar:
+                if 'ESTADO' in df_hist_limpio.columns:
                     st.dataframe(df_hist_limpio.style.map(color_estado, subset=['ESTADO']), use_container_width=True, hide_index=True)
                 else:
                     st.dataframe(df_hist_limpio, use_container_width=True, hide_index=True)
