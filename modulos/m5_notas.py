@@ -41,13 +41,23 @@ def obtener_nivel(grado):
 def renderizar(df, periodo_sel, conn):
     key_editor = f"editor_notas_{periodo_sel}"
 
-    # 🚀 MOTOR VISUAL 3D Y ESTILOS DE HUD
+    # 🚀 MOTOR VISUAL 3D, HUD Y FUSIÓN DE CONTORNOS
     st.markdown("""
     <style>
+    /* Fusión perfecta entre el encabezado negro y la tabla */
     div[data-testid="stDataEditor"] {
         border: 3px solid #0d1b2a !important;
+        border-top: none !important; /* Para que encaje con la caja del título */
         border-radius: 0 0 8px 8px !important;
         box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
+        margin-top: -15px !important; /* 🎯 TRUCO MAESTRO: Succiona la tabla hacia arriba */
+        position: relative;
+        z-index: 10;
+    }
+    
+    /* Eliminar el borde gris fantasma interno de Streamlit */
+    [data-testid="stDataFrameResizable"] {
+        border: none !important;
     }
     
     /* Mini-KPIs del Docente */
@@ -109,9 +119,7 @@ def renderizar(df, periodo_sel, conn):
 
     # 📊 HUD DE RENDIMIENTO MATEMÁTICAMENTE CORREGIDO
     if 'PROMEDIO' in df_render.columns and 'Nombre_Completo' in df_render.columns:
-        # Agrupamos por estudiante único para no contar las materias repetidas
         df_agrupado = df_render.groupby('Nombre_Completo')['PROMEDIO'].mean()
-        
         total_est = df_render['Nombre_Completo'].nunique()
         promedio_grupo = df_agrupado.mean() if not df_agrupado.empty else 0.0
         aprobados = len(df_agrupado[df_agrupado >= 6.0])
@@ -165,7 +173,7 @@ def renderizar(df, periodo_sel, conn):
 
     df_render = df_render.drop(columns=['Nivel_Temp'])
 
-    # 4. Motor de Pintura Semáforo (Rojo/Verde)
+    # 4. Motor de Pintura Semáforo
     def pintar_celdas(val):
         try:
             n = float(val)
@@ -227,6 +235,7 @@ def renderizar(df, periodo_sel, conn):
             else:
                 st.toast("⚠️ No detecté cambios en la matriz para guardar.", icon="👀")
 
-    st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-bottom:none; border-radius:8px 8px 0 0; margin-top:5px; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
+    # 🎯 EL TÍTULO QUE SE FUNDE CON LA TABLA (position relative y z-index alto)
+    st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-radius:8px 8px 0 0; position:relative; z-index:11; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
     
     st.data_editor(df_pintado, use_container_width=True, height=450, key=key_editor, column_config=config_notas)
