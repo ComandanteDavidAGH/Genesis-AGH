@@ -31,7 +31,7 @@ def construir_mapa_logros(df_logros_raw):
                 dict_logros[clave] = val_logro
     return dict_logros
 
-# --- 2. MOTOR DE RENDERIZADO ---
+# --- 2. MOTOR DE RENDERIZADO OFICIAL ---
 
 def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, periodos_print, info_puesto):
     res = df_curso[df_curso['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
@@ -166,18 +166,19 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     df_agrupado['Total_Grado'] = df_agrupado.groupby('Grado')['Nombre_Completo'].transform('count')
     dict_puestos = {row['Nombre_Completo']: f"{row['Puesto']} de {row['Total_Grado']}" for _, row in df_agrupado.iterrows()}
 
-    # 🎨 ESTILOS CSS ESTABILIZADOS (Márgenes fijos equilibrados)
+    # 🎨 RECALIBRACIÓN ESTRUCTURAL COMPLETA (Ancho 100% y Firmas Blindadas al Fondo)
     css_vip = """<style>
         body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
         
         .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 10px; background: white; z-index: 1; margin-bottom: 25px; box-sizing: border-box; }
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 60%; z-index: -1; pointer-events: none; }
         
-        .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; z-index: 2; position: relative; }
+        /* Aseguramos el ancho completo imponente en pantalla */
+        .table-custom { width: 100% !important; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; z-index: 2; position: relative; }
         .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 6px; font-family: 'Arial Black'; font-size: 11.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .table-custom td { border: 1px solid #000; padding: 5px; text-align: center; font-size: 11px; }
         .materia-title { text-align: left !important; background-color: #f8f9fa !important; font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .logro-row td { text-align: justify !important; font-size: 10.5px !important; font-style: italic; border-bottom: 1.5px solid #000; background-color: #ffffff !important; padding: 3px 8px !important; font-weight: normal !important; line-height: 1.25 !important; }
+        .logro-row td { text-align: justify !important; font-size: 10.5px !important; font-style: italic; border-bottom: 1px solid #000; background-color: #ffffff !important; padding: 3px 8px !important; font-weight: normal !important; line-height: 1.25 !important; }
         
         .header-table { width: 100%; border: none; margin-bottom: 10px; z-index: 2; position: relative; }
         .header-table td { border: none; padding: 0; }
@@ -186,31 +187,47 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
         
         .info-box { border: 2px solid #0d1b2a; padding: 8px 12px; background: #f8f9fa !important; display: flex; justify-content: space-between; margin-bottom: 8px; border-radius: 5px; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         
-        .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 12px; z-index: 2; position: relative; }
+        /* Contenedor de firmas estándar en pantalla */
+        .firmas-container { display: flex; justify-content: space-around; margin-top: 40px; font-size: 12px; z-index: 2; position: relative; }
         .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
         
+        /* 🚀 REGLAS DE IMPRESIÓN BLINDADAS (LA SOLUCIÓN MATEMÁTICA) */
         @media print { 
-            @page { size: letter portrait; margin: 10mm 12mm 12mm 12mm !important; } 
+            /* Margen seguro para que la impresora no corte nada */
+            @page { size: letter portrait; margin: 12mm 15mm 25mm 15mm !important; } 
+            
             body, html { width: 100% !important; background: white; margin: 0; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
             .no-print { display: none !important; } 
-            .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; } 
+            
+            /* Hacemos que el contenedor ocupe exactamente la hoja carta */
+            .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important; position: relative !important; } 
             .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             
-            .header-table { margin-bottom: 6px !important; }
-            .header-table h2 { font-size: 15px !important; margin: 0 !important; }
+            .header-table { margin-bottom: 5px !important; }
+            .header-table h2 { font-size: 16px !important; margin: 0 !important; }
             .header-table p { font-size: 11px !important; margin: 0 !important; }
             
-            .info-box { padding: 4px 8px !important; font-size: 11px !important; margin-bottom: 6px !important; border-width: 1.5px !important;}
+            .info-box { padding: 5px 10px !important; font-size: 11px !important; margin-bottom: 5px !important; border-width: 1.5px !important;}
             
-            .table-custom { width: 100% !important; margin-top: 0 !important; margin-bottom: 0 !important; }
-            .table-custom th { padding: 3px !important; font-size: 10px !important; }
-            .table-custom td { padding: 3px !important; font-size: 10px !important; }
-            .materia-title { font-size: 10px !important; }
-            .logro-row td { padding: 2px 6px !important; font-size: 9px !important; line-height: 1.15 !important; border-bottom: 1.5px solid #000 !important; }
+            /* Forzado de Ancho Completo Real */
+            .table-custom { width: 100% !important; min-width: 100% !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+            .table-custom th { padding: 4px !important; font-size: 11px !important; }
+            .table-custom td { padding: 3px !important; font-size: 11px !important; }
+            .materia-title { font-size: 11px !important; }
+            .logro-row td { padding: 2px 6px !important; font-size: 9.5px !important; line-height: 1.2 !important; border-bottom: 1.5px solid #000 !important; }
             
-            /* EQUILIBRIO DE FIRMAS: Espacio controlado anti-desborde */
-            .firmas-container { margin-top: 45px !important; font-size: 11px !important; page-break-inside: avoid !important; }
-            .firma-box { padding-top: 4px !important; border-top: 1.5px solid #0d1b2a !important; }
+            /* 👑 REGLA DE ORO DE FIRMAS: Ancladas al fondo de la primera hoja pase lo que pase */
+            .firmas-container { 
+                position: absolute !important; 
+                bottom: 5mm !important; 
+                left: 0 !important; 
+                width: 100% !important; 
+                display: flex !important; 
+                justify-content: space-around !important; 
+                margin-top: 0 !important; 
+                font-size: 11px !important; 
+            }
+            .firma-box { padding-top: 5px !important; border-top: 1.5px solid #0d1b2a !important; }
         }
     </style>"""
 
