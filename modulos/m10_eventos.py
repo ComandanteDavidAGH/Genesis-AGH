@@ -1,5 +1,23 @@
 import streamlit as st
 
+# =========================================================
+# ⚡ ACELERADOR DE MEMORIA (Caché de Galería)
+# =========================================================
+@st.cache_data
+def obtener_galeria():
+    """Guarda la base de datos de imágenes en la memoria ultrarrápida"""
+    return [
+        {"url": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800", "caption": "🔬 Feria Científica"},
+        {"url": "https://images.unsplash.com/photo-1523580494112-071d1694335c?q=80&w=800", "caption": "🎓 Ceremonia de Grados"},
+        {"url": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800", "caption": "🤝 Comunidad Estudiantil"},
+        {"url": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800", "caption": "📚 Maratón de Lectura"},
+        {"url": "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800", "caption": "🏆 Olimpiadas Deportivas"},
+        {"url": "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800", "caption": "🎭 Festival de Arte"}
+    ]
+
+# =========================================================
+# 👑 MOTOR VISUAL Y RENDERIZADO
+# =========================================================
 def renderizar():
     # --- 1. MOTOR CSS VIP (Animaciones, Levitación y Marcos) ---
     st.markdown("""
@@ -61,15 +79,8 @@ def renderizar():
     """
     st.markdown(TITULO_HTML, unsafe_allow_html=True)
     
-    # --- 3. BASE DE DATOS DE LA GALERÍA ---
-    galeria = [
-        {"url": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800", "caption": "🔬 Feria Científica"},
-        {"url": "https://images.unsplash.com/photo-1523580494112-071d1694335c?q=80&w=800", "caption": "🎓 Ceremonia de Grados"},
-        {"url": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800", "caption": "🤝 Comunidad Estudiantil"},
-        {"url": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800", "caption": "📚 Maratón de Lectura"},
-        {"url": "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800", "caption": "🏆 Olimpiadas Deportivas"},
-        {"url": "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800", "caption": "🎭 Festival de Arte"}
-    ]
+    # --- 3. EXTRACCIÓN DE LA CACHÉ ---
+    galeria = obtener_galeria()
     
     # --- 4. MOTOR DE RENDERIZADO (Distribución Automática e Inteligente) ---
     columnas = st.columns(3)
