@@ -28,36 +28,41 @@ ASIGNACIONES_DOCENTES = {
 MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
 
 # ---------------------------------------------------------
-# ⚙️ 2. CONFIGURACIÓN DEL NÚCLEO Y MEMORIA VISUAL
+# ⚙️ 2. CONFIGURACIÓN DEL NÚCLEO Y CSS ANTI-FANTASMAS
 # ---------------------------------------------------------
 st.set_page_config(page_title="Génesis AGH | Sistema Operativo", layout="wide", page_icon="🎓", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
+/* Ocultamiento de marcas de Streamlit */
 [data-testid="stToolbarActions"] { display: none !important; }
 .viewerBadge_container { display: none !important; visibility: hidden !important; opacity: 0 !important; }
 footer { display: none !important; visibility: hidden !important; }
 #MainMenu { visibility: visible; }
+
+/* Fondo y contenedor principal */
 .stApp { background-color: #ffffff; }
 .stApp::before {
     content: ""; background-image: url('https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png');
     background-size: 350px; background-repeat: no-repeat; background-position: center;
     opacity: 0.15; position: fixed; top: 0; left: 0; bottom: 0; right: 0; z-index: 0; pointer-events: none;
 }
-.block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 98% !important; z-index: 1; }
+.block-container { padding-top: 1rem !important; padding-bottom: 70px !important; max-width: 98% !important; z-index: 1; }
+
+/* 🚀 DESTRUCTOR DE FANTASMAS: Oculta el módulo viejo instantáneamente */
+[data-stale="true"] {
+    opacity: 0 !important;
+    transition: opacity 0s !important;
+}
+
+/* Panel Lateral */
 [data-testid="stSidebar"] { background-color: #0d1b2a !important; border-right: 5px solid #d4af37; z-index: 2; }
 [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: white !important; font-weight: bold; }
-
-[data-testid="stSidebar"] .stButton > button {
-    background-color: #990000 !important; 
-    border: 2px solid #ff4d4d !important;
-    border-radius: 8px !important;
-    padding: 10px !important;
-    transition: all 0.3s ease !important;
-}
+[data-testid="stSidebar"] .stButton > button { background-color: #990000 !important; border: 2px solid #ff4d4d !important; border-radius: 8px !important; padding: 10px !important; transition: all 0.3s ease !important; }
 [data-testid="stSidebar"] .stButton > button * { color: #ffffff !important; font-weight: 900 !important; }
 [data-testid="stSidebar"] .stButton > button:hover { background-color: #ff3333 !important; border-color: #ffffff !important; transform: scale(1.02); }
 
+/* Estilos de Elementos */
 div[data-baseweb="select"] > div { background-color: #ffffff !important; border: 2px solid #d4af37 !important; }
 div[data-baseweb="select"] > div * { color: #000000 !important; }
 .metric-card { background-color: #ffffff; border: 3px solid #000000; border-top: 8px solid #d4af37; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 4px 4px 0px #0d1b2a; }
@@ -65,8 +70,30 @@ div[data-baseweb="select"] > div * { color: #000000 !important; }
 .metric-label { font-size: 14px; font-weight: bold; color: #000000; margin: 0; text-transform: uppercase;}
 .titulo-container { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0; z-index: 999; border-bottom: 3px solid #d4af37; margin-bottom: 20px; }
 .titulo-Agh { color: #000000 !important; font-family: 'Arial Black', sans-serif; font-size: 2.2rem !important; text-align: center; margin-top: 0px; margin-bottom: 5px; text-shadow: 2px 2px 0px #d4af37; }
-.asistente-box { background: white; border-radius: 8px; padding: 8px 15px; border-left: 6px solid #d4af37; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; align-items: center; border: 2px solid #000; margin-bottom: 15px; color: #000; font-weight: bold;}
+
+/* 🛡️ POLÍTICA DE CALIDAD SIEMPRE VISIBLE EN EL FONDO */
+.footer-legal-fixed {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #0d1b2a;
+    color: #d4af37;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 11px;
+    font-family: 'Arial Black', sans-serif;
+    border-top: 3px solid #d4af37;
+    z-index: 999999;
+}
 </style>
+""", unsafe_allow_html=True)
+
+# Inyectamos el pie de página directamente aquí para que NADA pueda borrarlo
+st.markdown(f"""
+    <div class='footer-legal-fixed'>
+        PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 © {datetime.now().year} | Protección de Datos Personales (Ley 1581 de 2012)
+    </div>
 """, unsafe_allow_html=True)
 
 zona_colombia = timezone(timedelta(hours=-5))
@@ -186,6 +213,9 @@ with st.sidebar:
     if st.session_state.rol == "Admin": 
         opciones_menu.insert(1, "🛡️ Bitácora y Backup")
         opciones_menu.insert(1, "👑 Centro de Mando")
+    if st.session_state.rol == "Docente":
+        if "📜 Boletines" in opciones_menu: opciones_menu.remove("📜 Boletines")
+        
     menu = st.radio("SECCIONES:", opciones_menu)
     st.markdown("---")
 
@@ -206,15 +236,20 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
-df_temp = df_m.copy() if df_m is not None else pd.DataFrame()
-if curso_sel != "TODOS": df_temp = df_temp[df_temp['Grado'].astype(str) == str(curso_sel)]
-if materia_sel != "TODAS" and 'Materia' in df_temp.columns: df_temp = df_temp[df_temp['Materia'].astype(str) == str(materia_sel)]
-df_filtrado = df_temp.copy()
+# ⚡ OPTIMIZACIÓN EXTREMA DE FILTRADO (Evita lentitud al cambiar de menús)
+df_filtrado = df_m
+if df_filtrado is not None and not df_filtrado.empty:
+    if str(curso_sel) != "TODOS":
+        df_filtrado = df_filtrado[df_filtrado['Grado'].astype(str) == str(curso_sel)]
+    if str(materia_sel) != "TODAS" and 'Materia' in df_filtrado.columns:
+        df_filtrado = df_filtrado[df_filtrado['Materia'].astype(str) == str(materia_sel)]
+else:
+    df_filtrado = pd.DataFrame()
 
 st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h1></div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 🔀 6. ENRUTAMIENTO SQL (La plataforma real)
+# 🔀 6. ENRUTAMIENTO SQL RÁPIDO
 # ---------------------------------------------------------
 try:
     if menu == "🏠 Inicio": import modulos.m0_inicio as m0; m0.renderizar()
@@ -227,14 +262,9 @@ try:
     elif menu == "✍️ Digitar Notas": import modulos.m5_notas as m5; m5.renderizar(df_filtrado, periodo_sel, conn_sql)
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
+    elif menu == "📜 Boletines": import modulos.m8_boletines as m8; m8.renderizar(df_m, curso_sel, periodo_sel)
     elif menu == "📖 Manual de Usuario": import modulos.m9_manual as m9; m9.renderizar()
     elif menu == "📸 Eventos Institucionales": import modulos.m10_eventos as m10; m10.renderizar()
-    
-    # 🌟 EL MÓDULO BOLETINES VIP (MODULARIZADO Y ACELERADO)
-    elif menu == "📜 Boletines":
-        import modulos.m8_boletines as m8
-        m8.renderizar(df_m, curso_sel, periodo_sel)
 
-# ¡ESTE ES EL BLOQUE QUE FALTABA Y CAUSÓ EL ERROR EN LA FOTO!
 except Exception as e:
     st.error(f"🛠️ Sincronizando módulos... Detalle técnico: {e}")
