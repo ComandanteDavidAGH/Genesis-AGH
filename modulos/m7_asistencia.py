@@ -1,10 +1,19 @@
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
-import base64
 from datetime import datetime, timedelta, timezone
 
 zona_colombia = timezone(timedelta(hours=-5))
+
+# =========================================================
+# ⚡ MOTORES ACELERADORES (Caché y Listas)
+# =========================================================
+@st.cache_data(show_spinner=False)
+def obtener_lista_alumnos(df):
+    """ Extrae y ordena los nombres de los estudiantes en 0.01 segundos """
+    if df is not None and not df.empty and 'Nombre_Completo' in df.columns:
+        return sorted(df['Nombre_Completo'].dropna().unique())
+    return []
 
 def registrar_bitacora(usuario, rol, accion):
     st.session_state.bitacora.append({
@@ -15,16 +24,24 @@ def registrar_bitacora(usuario, rol, accion):
         "Acción": accion
     })
 
+# =========================================================
+# 👑 RENDERIZADO VISUAL
+# =========================================================
 def renderizar(df, conn):
     # 🚀 ENVOLTORIO EXTERNO PREMIUM PARA LAS TABLAS Y PANELES
     st.markdown("""
     <style>
+    /* Forzar contorno sólido en la tabla de Streamlit VIP */
     div[data-testid="stDataFrame"] {
-        border: 3px solid #0d1b2a !important;
-        border-radius: 8px !important;
+        border-left: 3px solid #0d1b2a !important;
+        border-right: 3px solid #0d1b2a !important;
+        border-bottom: 3px solid #0d1b2a !important;
+        border-top: none !important;
+        border-radius: 0 0 8px 8px !important;
         box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
-        padding: 2px !important;
+        padding: 0px !important;
         background-color: #f0f2f6 !important;
+        overflow: hidden !important;
     }
     div[data-testid="stDataFrame"] th {
         background-color: #0d1b2a !important;
@@ -47,6 +64,9 @@ def renderizar(df, conn):
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📝 Control de Novedades y Observador</h3>", unsafe_allow_html=True)
     
+    # ⚡ EXTRACCIÓN ULTRARRÁPIDA
+    lista_alumnos = obtener_lista_alumnos(df)
+    
     tab1, tab2 = st.tabs(["✍️ Registrar Novedad", "🖨️ Generar Observador Oficial"])
     
     with tab1:
@@ -54,8 +74,6 @@ def renderizar(df, conn):
         with st.form("form_novedad"):
             st.markdown("<p style='font-family:Arial Black; color:#0d1b2a; margin-top:0;'>NUEVA ENTRADA DISCIPLINARIA / ACADÉMICA:</p>", unsafe_allow_html=True)
             col1, col2, col3 = st.columns(3)
-            
-            lista_alumnos = sorted(df['Nombre_Completo'].dropna().unique()) if not df.empty and 'Nombre_Completo' in df.columns else []
             
             with col1: alum_sel = st.selectbox("👤 Estudiante:", lista_alumnos)
             with col2: fecha_sel = st.date_input("📅 Fecha de la Incidencia:")
@@ -81,7 +99,7 @@ def renderizar(df, conn):
                 try: 
                     st.session_state.df_asistencia.to_sql('db_asistencia', con=conn.engine, if_exists='replace', index=False)
                     st.toast(f"✅ Reporte asegurado en la Bóveda SQL.", icon="🛡️")
-                    st.cache_data.clear() # Limpia caché
+                    st.cache_data.clear() # Limpia caché para que el historial refresque
                     import time
                     time.sleep(1)
                     st.rerun()
@@ -92,7 +110,8 @@ def renderizar(df, conn):
         st.markdown("---")
         col_h1, col_h2 = st.columns([7, 3])
         with col_h1:
-            st.markdown("<h4 style='color:#000000; font-family:Arial Black;'>📜 Bitácora Histórica Institucional</h4>", unsafe_allow_html=True)
+            # 🎯 EL TÍTULO QUE SE FUNDE CON LA TABLA
+            st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-radius:8px 8px 0 0; position:relative; z-index:11; letter-spacing:1px;'>📜 BITÁCORA HISTÓRICA INSTITUCIONAL</div>", unsafe_allow_html=True)
         with col_h2:
             if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty:
                 if st.button("↩️ DESHACER ÚLTIMO REPORTE", help="Elimina el último registro guardado por error", use_container_width=True):
@@ -122,24 +141,19 @@ def renderizar(df, conn):
 
     with tab2:
         st.markdown("<p style='font-weight:bold;'>Seleccione un estudiante para inspeccionar e imprimir su Hoja de Vida:</p>", unsafe_allow_html=True)
-        lista_alumnos_obs = sorted(df['Nombre_Completo'].dropna().unique()) if not df.empty and 'Nombre_Completo' in df.columns else []
         
-        if lista_alumnos_obs:
+        if lista_alumnos:
             col_busq, col_esp = st.columns([5, 5])
             with col_busq:
-                alumno_obs = st.selectbox("👤 Buscar Estudiante:", lista_alumnos_obs, key="sel_obs")
+                alumno_obs = st.selectbox("👤 Buscar Estudiante:", lista_alumnos, key="sel_obs")
             
             if st.button("🖨️ PREPARAR OBSERVADOR OFICIAL", type="primary"):
                 if st.session_state.df_asistencia is not None and not st.session_state.df_asistencia.empty:
                     df_obs_alum = st.session_state.df_asistencia[st.session_state.df_asistencia['Nombre_Completo'] == alumno_obs]
                     if not df_obs_alum.empty:
                         
-                        try:
-                            with open("logo.png", "rb") as img_file:
-                                b64_string = base64.b64encode(img_file.read()).decode()
-                                URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
-                        except:
-                            URL_LOGO_OFICIAL = ""
+                        # 🎯 EL SALVAVIDAS SATELITAL: Usamos la URL directa para no congelar el servidor
+                        URL_LOGO_OFICIAL = "https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png"
                             
                         # 👑 ESTILOS VIP PARA EL DOCUMENTO IMPRESO
                         css_obs = """<style>
@@ -180,7 +194,6 @@ def renderizar(df, conn):
                                 <tr><th style="width:15%;">FECHA</th><th style="width:20%;">TIPO DE NOVEDAD</th><th>OBSERVACIÓN DETALLADA</th></tr>"""
                         
                         for _, row in df_obs_alum.iterrows():
-                            # Se pone en negrilla el estado para resaltar
                             html_observador += f"<tr><td>{row['FECHA']}</td><td><b>{row['ESTADO']}</b></td><td>{row['OBSERVACIONES']}</td></tr>"
                             
                         html_observador += """</table>
