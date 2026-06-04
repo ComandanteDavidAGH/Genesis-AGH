@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 zona_colombia = timezone(timedelta(hours=-5))
 
 def limpiar_texto(txt):
-    """ Estandariza cadenas para cruces perfectos en bases de datos """
     if pd.isna(txt): return ""
     txt_str = str(txt).strip().upper()
     return ''.join(c for c in unicodedata.normalize('NFD', txt_str) if unicodedata.category(c) != 'Mn')
@@ -41,21 +40,22 @@ def obtener_nivel(grado):
 def renderizar(df, periodo_sel, conn):
     key_editor = f"editor_notas_{periodo_sel}"
 
-    # 🚀 MOTOR VISUAL 3D, HUD Y FUSIÓN DE CONTORNOS
+    # 🚀 MOTOR VISUAL (BORDES FORZADOS)
     st.markdown("""
     <style>
-    /* Fusión perfecta entre el encabezado negro y la tabla */
-    div[data-testid="stDataEditor"] {
-        border: 3px solid #0d1b2a !important;
-        border-top: none !important; /* Para que encaje con la caja del título */
+    /* Forzar contorno sólido en la tabla de Streamlit */
+    [data-testid="stDataEditor"], [data-testid="stDataFrame"] {
+        border-left: 3px solid #0d1b2a !important;
+        border-right: 3px solid #0d1b2a !important;
+        border-bottom: 3px solid #0d1b2a !important;
+        border-top: none !important;
         border-radius: 0 0 8px 8px !important;
-        box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
-        margin-top: -15px !important; /* 🎯 TRUCO MAESTRO: Succiona la tabla hacia arriba */
-        position: relative;
-        z-index: 10;
+        margin-top: -10px !important; /* Ajuste suave para fusionar con el título */
+        box-shadow: 0px 5px 15px rgba(0,0,0,0.15) !important;
+        overflow: hidden !important;
     }
     
-    /* Eliminar el borde gris fantasma interno de Streamlit */
+    /* Eliminar doble borde interno */
     [data-testid="stDataFrameResizable"] {
         border: none !important;
     }
@@ -82,7 +82,6 @@ def renderizar(df, periodo_sel, conn):
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>✍️ Registro de Calificaciones</h3>", unsafe_allow_html=True)
 
-    # --- 🛡️ ESCUDO DE SEGURIDAD ---
     try:
         if 'df_config_seguridad' not in st.session_state:
             st.session_state.df_config_seguridad = conn.query("SELECT * FROM configuracion;", ttl=600)
@@ -104,7 +103,6 @@ def renderizar(df, periodo_sel, conn):
 
     df_render = df.copy()
     
-    # 1. Limpieza extrema: Aniquilación del "None" y valores nulos
     if 'LOGRO' in df_render.columns and 'LOGROS' not in df_render.columns:
         df_render = df_render.rename(columns={'LOGRO': 'LOGROS'})
     if 'LOGROS' not in df_render.columns:
@@ -117,9 +115,9 @@ def renderizar(df, periodo_sel, conn):
         df_render['PROMEDIO'] = pd.to_numeric(df_render['PROMEDIO'], errors='coerce').fillna(0.0)
         df_render['DESEMPEÑO'] = df_render['PROMEDIO'].apply(clasificar_desempeno)
 
-    # 📊 HUD DE RENDIMIENTO MATEMÁTICAMENTE CORREGIDO
     if 'PROMEDIO' in df_render.columns and 'Nombre_Completo' in df_render.columns:
         df_agrupado = df_render.groupby('Nombre_Completo')['PROMEDIO'].mean()
+        
         total_est = df_render['Nombre_Completo'].nunique()
         promedio_grupo = df_agrupado.mean() if not df_agrupado.empty else 0.0
         aprobados = len(df_agrupado[df_agrupado >= 6.0])
@@ -144,7 +142,6 @@ def renderizar(df, periodo_sel, conn):
         </div>
         """, unsafe_allow_html=True)
 
-    # 2. Carga Táctica del Diccionario de Logros
     diccionario_logros = {}
     if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
         df_l = st.session_state.df_logros
@@ -159,7 +156,6 @@ def renderizar(df, periodo_sel, conn):
     else:
         df_render['Nivel_Temp'] = "Bachillerato"
 
-    # 3. ⚡ INYECCIÓN DE DIAGNÓSTICO: Autocompletar o avisar del fallo
     for idx, row in df_render.iterrows():
         logro_actual = str(row['LOGROS']).strip().upper()
         if logro_actual in ["", "NONE", "NAN"]:
@@ -173,7 +169,6 @@ def renderizar(df, periodo_sel, conn):
 
     df_render = df_render.drop(columns=['Nivel_Temp'])
 
-    # 4. Motor de Pintura Semáforo
     def pintar_celdas(val):
         try:
             n = float(val)
@@ -198,7 +193,6 @@ def renderizar(df, periodo_sel, conn):
         'LOGROS': st.column_config.TextColumn("Logros (Autocompletado)", disabled=False, width="large")
     }
 
-    # Interfaz de Guardado alineada a la derecha
     col_vacia, col_btn = st.columns([7, 3])
     with col_btn:
         if st.button("💾 GUARDAR EN BASE DE DATOS", key=f"btn_guardar_{periodo_sel}", type="primary", use_container_width=True):
@@ -235,7 +229,7 @@ def renderizar(df, periodo_sel, conn):
             else:
                 st.toast("⚠️ No detecté cambios en la matriz para guardar.", icon="👀")
 
-    # 🎯 EL TÍTULO QUE SE FUNDE CON LA TABLA (position relative y z-index alto)
+    # Título enmarcado
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-radius:8px 8px 0 0; position:relative; z-index:11; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
     
     st.data_editor(df_pintado, use_container_width=True, height=450, key=key_editor, column_config=config_notas)
