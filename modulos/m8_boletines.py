@@ -3,7 +3,6 @@ import pandas as pd
 import streamlit.components.v1 as components
 import unicodedata
 import base64
-import time
 
 # --- 1. CACHÉ E INDEXACIÓN DE DATOS ---
 
@@ -32,7 +31,7 @@ def construir_mapa_logros(df_logros_raw):
                 dict_logros[clave] = val_logro
     return dict_logros
 
-# --- 2. MOTOR DE RENDERIZADO ULTRALIVIANO ---
+# --- 2. MOTOR DE RENDERIZADO ---
 
 def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, periodos_print, info_puesto):
     res = df_curso[df_curso['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
@@ -80,7 +79,7 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
         html_filas.append(f"<tr class='logro-row'><td colspan='{col_span_logro}'><b>LOGRO:</b> {logro_texto}</td></tr>")
 
     img_watermark = f'<img src="{URL_LOGO}" class="watermark">' if URL_LOGO else ""
-    img_logo = f'<img src="{URL_LOGO}" width="80">' if URL_LOGO else ""
+    img_logo = f'<img src="{URL_LOGO}" width="75">' if URL_LOGO else ""
 
     html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
     <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:12px; right:20px; z-index:99;">
@@ -90,13 +89,13 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
         {img_watermark}
         <table class="header-table">
             <tr>
-                <td style="width:15%; text-align:left;">{img_logo}</td>
+                <td style="width:12%; text-align:left;">{img_logo}</td>
                 <td style="text-align:center; vertical-align:middle;">
                     <h2 style="margin:0; color:#0d1b2a; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
                     <p style="margin:2px 0 0 0; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                 </td>
                 <td style="text-align:right; width:15%; vertical-align:middle;">
-                    <div style="border:2.5px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                    <div style="border:2px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
                         <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
                     </div>
                 </td>
@@ -129,7 +128,7 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     else:
         df_curso = df_base.copy()
 
-    # 🚀 PANEL DE CONTROL
+    # PANEL DE CONTROL
     st.markdown("<div class='no-print' style='background:#f8f9fa; padding:10px 15px; border-radius:8px; border: 2px solid #0d1b2a; border-left: 5px solid #d4af37; margin-bottom: 20px;'>", unsafe_allow_html=True)
     col_modo, col_per, col_vacia = st.columns([3, 3, 4])
     
@@ -157,22 +156,19 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     URL_LOGO_OFICIAL = obtener_logo_b64_cached("logo.png")
     dict_logros = construir_mapa_logros(st.session_state.get('df_logros', pd.DataFrame()))
 
-    # 🏆 CÁLCULO DE PUESTOS ACADÉMICOS
     df_curso[col_n] = pd.to_numeric(df_curso[col_n], errors='coerce')
     df_agrupado = df_curso.groupby(['Grado', 'Nombre_Completo'])[col_n].mean().reset_index()
     df_agrupado['Puesto'] = df_agrupado.groupby('Grado')[col_n].rank(ascending=False, method='min').fillna(0).astype(int)
     df_agrupado['Total_Grado'] = df_agrupado.groupby('Grado')['Nombre_Completo'].transform('count')
     dict_puestos = {row['Nombre_Completo']: f"{row['Puesto']} de {row['Total_Grado']}" for _, row in df_agrupado.iterrows()}
 
-    # 🎨 NÚCLEO CSS DE EXPANSIÓN FORZADA (Arreglo del tamaño microscópico)
+    # 🎨 NÚCLEO CSS - BALANCE DE IMPRESIÓN Y FIRMAS
     css_vip = """<style>
         body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
         
-        /* Contenedor en Pantalla */
-        .b-print { position: relative; padding: 25px; border: 3px solid #0d1b2a; border-radius: 10px; background: white; z-index: 1; margin-bottom: 25px; page-break-inside: avoid !important; }
+        .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 10px; background: white; z-index: 1; margin-bottom: 25px; page-break-inside: avoid !important; }
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 60%; z-index: -1; pointer-events: none; }
         
-        /* Tablas en Pantalla */
         .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; z-index: 2; position: relative; }
         .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 6px; font-family: 'Arial Black'; font-size: 11.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .table-custom td { border: 1px solid #000; padding: 6px; text-align: center; font-size: 11px; }
@@ -181,42 +177,37 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
         
         .header-table { width: 100%; border: none; margin-bottom: 10px; z-index: 2; position: relative; }
         .header-table td { border: none; padding: 0; }
-        .header-table h2 { font-size: 19px !important; }
-        .header-table p { font-size: 13px !important; }
+        .header-table h2 { font-size: 18px !important; }
+        .header-table p { font-size: 12px !important; }
         
-        .info-box { border: 2px solid #0d1b2a; padding: 8px 12px; background: #f8f9fa !important; display: flex; justify-content: space-between; margin-bottom: 10px; border-radius: 6px; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-shadow: 2px 2px 0px #0d1b2a; }
+        .info-box { border: 2px solid #0d1b2a; padding: 8px 12px; background: #f8f9fa !important; display: flex; justify-content: space-between; margin-bottom: 8px; border-radius: 5px; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         
-        .firmas-container { display: flex; justify-content: space-around; margin-top: 30px; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+        /* Espaciado en pantalla de las firmas */
+        .firmas-container { display: flex; justify-content: space-around; margin-top: 40px; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
         .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
         
-        /* 🚀 REGLAS DE IMPRESIÓN (EL ARREGLO DEFINITIVO) */
         @media print { 
-            @page { size: letter portrait; margin: 5mm !important; } 
-            
-            /* Forzamos al Iframe a usar el 100% de la hoja para que no se encoja */
-            html, body { width: 100% !important; min-width: 100% !important; margin: 0 !important; padding: 0 !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+            @page { size: letter portrait; margin: 10mm !important; } 
+            body, html { width: 100% !important; background: white; margin: 0; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
             .no-print { display: none !important; } 
-            
-            /* Box-sizing asegura que los padding no lo deformen */
-            .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; } 
+            .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; } 
             .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             
-            /* Tamaños calibrados para hoja Carta */
             .header-table { margin-bottom: 5px !important; }
-            .header-table h2 { font-size: 16px !important; margin: 0 !important; }
-            .header-table p { font-size: 11px !important; margin: 0 !important; }
+            .header-table h2 { font-size: 15px !important; margin: 0 !important; }
+            .header-table p { font-size: 10.5px !important; margin: 0 !important; }
             
-            .info-box { padding: 6px 10px !important; font-size: 11px !important; margin-bottom: 5px !important; border-width: 1.5px !important;}
+            .info-box { padding: 4px 8px !important; font-size: 11px !important; margin-bottom: 5px !important; border-width: 1.5px !important;}
             
-            .table-custom { margin-top: 0 !important; margin-bottom: 0 !important; width: 100% !important; }
-            .table-custom th { padding: 4px !important; font-size: 10.5px !important; }
-            .table-custom td { padding: 4px !important; font-size: 11px !important; }
-            .materia-title { font-size: 11px !important; }
+            .table-custom { margin-top: 0 !important; margin-bottom: 0 !important; }
+            .table-custom th { padding: 3px !important; font-size: 10px !important; }
+            .table-custom td { padding: 3px !important; font-size: 10px !important; }
+            .materia-title { font-size: 10px !important; }
+            .logro-row td { padding: 2px 6px !important; font-size: 9px !important; line-height: 1.15 !important; border-bottom: 1.5px solid #000 !important; }
             
-            .logro-row td { padding: 3px 8px !important; font-size: 9.5px !important; line-height: 1.1 !important; border-bottom: 1.5px solid #000 !important; }
-            
-            .firmas-container { margin-top: 25px !important; font-size: 11px !important; }
-            .firma-box { padding-top: 4px !important; }
+            /* SEPARACIÓN OBLIGATORIA DE LAS FIRMAS EN IMPRESIÓN */
+            .firmas-container { margin-top: 40px !important; font-size: 11px !important; }
+            .firma-box { padding-top: 5px !important; }
         }
     </style>"""
 
@@ -247,7 +238,7 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
                                "</div>"]
 
                 img_watermark = f'<img src="{URL_LOGO_OFICIAL}" class="watermark">' if URL_LOGO_OFICIAL else ""
-                img_logo = f'<img src="{URL_LOGO_OFICIAL}" width="80">' if URL_LOGO_OFICIAL else ""
+                img_logo = f'<img src="{URL_LOGO_OFICIAL}" width="75">' if URL_LOGO_OFICIAL else ""
 
                 total_alumnos = len(estudiantes)
                 th_masivo = "".join([f"<th>{p}</th>" for p in periodos_print])
@@ -277,7 +268,7 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
                                 <p style="margin:2px 0 0 0; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                             </td>
                             <td style="text-align:right; width:15%; vertical-align:middle;">
-                                <div style="border:2.5px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
+                                <div style="border:2px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px;">
                                     <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
                                 </div>
                             </td>
