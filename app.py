@@ -244,7 +244,10 @@ try:
     elif menu == "✍️ Digitar Notas": import modulos.m5_notas as m5; m5.renderizar(df_filtrado, periodo_sel, conn_sql)
     elif menu == "📚 Logros": import modulos.m6_logros as m6; m6.renderizar(conn_sql)
     elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
-    elif menu == "📜 Boletines": import modulos.m8_boletines as m8; m8.renderizar(df_filtrado, curso_sel, periodo_sel)
+    elif menu == "📜 Boletines":
+    import modulos.m8_boletines as m8
+    m8.renderizar(df, df_m, periodo_sel, col_n, diccionario_logros if 'diccionario_logros' in locals() else {})
+        
     elif menu == "📖 Manual de Usuario": import modulos.m9_manual as m9; m9.renderizar()
     elif menu == "📸 Eventos Institucionales": import modulos.m10_eventos as m10; m10.renderizar()
 except Exception as e:
