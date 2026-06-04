@@ -32,7 +32,6 @@ def construir_mapa_logros(df_logros_raw):
 # --- 2. MOTOR DE RENDERIZADO ULTRALIVIANO ---
 
 def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, periodos_print, info_puesto):
-    """ Función dedicada exclusivamente a procesar un solo alumno de forma aislada """
     res = df_curso[df_curso['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
     res = res[res['PROMEDIO'] > 0.0]
     
@@ -43,13 +42,11 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
     promedios = [float(x) for x in res[col_n] if pd.notna(x)]
     p_prom = sum(promedios) / len(promedios) if promedios else 0.0
 
-    # Construcción dinámica de cabeceras de columnas
     th = "".join([f"<th>{p}</th>" for p in periodos_print])
     col_span_logro = len(periodos_print) + 2
 
     html_filas = []
     for _, row in res.iterrows():
-        # El desempeño general se calcula con base al "col_n" evaluado (Periodo actual del Sidebar)
         nota_final = float(row.get(col_n, 0)) if pd.notna(row.get(col_n, 0)) else 0.0
         
         if nota_final >= 9.1: desp = "SUPERIOR"
@@ -59,7 +56,6 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
 
         color = "#155724" if nota_final >= 6.0 else "#721c24"
 
-        # Construcción dinámica de las celdas de notas
         td = ""
         for p in periodos_print:
             if p == "FINAL":
@@ -77,7 +73,6 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
         
         html_filas.append(f"<tr><td colspan='{col_span_logro}' style='text-align:left; font-size:10.5px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>")
 
-    # Blindaje de marca de agua y logo
     img_watermark = f'<img src="{URL_LOGO}" class="watermark">' if URL_LOGO else ""
     img_logo = f'<img src="{URL_LOGO}" width="80">' if URL_LOGO else ""
 
@@ -128,25 +123,28 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     else:
         df_curso = df_base.copy()
 
-    # 🚀 PANEL DE CONTROL MULTI-OPCIONES
-    st.markdown("<div class='no-print' style='background:#f8f9fa; padding:15px; border-radius:8px; border: 2px solid #0d1b2a; border-top: 5px solid #d4af37; margin-bottom: 20px;'>", unsafe_allow_html=True)
-    col_modo, col_per = st.columns([3, 7])
+    # 🚀 PANEL DE CONTROL MULTI-OPCIONES COMPACTO
+    st.markdown("<div class='no-print' style='background:#f8f9fa; padding:10px 15px; border-radius:8px; border: 2px solid #0d1b2a; border-left: 5px solid #d4af37; margin-bottom: 20px;'>", unsafe_allow_html=True)
+    
+    # Redujimos el espacio: 30% Modo, 30% Columnas, 40% Vacío (Para que no se vea gigante)
+    col_modo, col_per, col_vacia = st.columns([3, 3, 4])
     
     with col_modo:
-        modo_impresion = st.radio("🛠️ Modo de Generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
+        modo_impresion = st.radio("🛠️ Modo de Generación:", ["👤 Individual", "🖨️ Masiva"], horizontal=True)
     
     with col_per:
         opciones_p = ["P1", "P2", "P3", "P4", "FINAL"]
-        # Por defecto preselecciona el periodo del sidebar
         def_p = ["P1", "P2", "P3", "P4", "FINAL"] if "CONSOLID" in str(periodo_sel).upper() else [periodo_sel]
         def_p = [p for p in def_p if p in opciones_p]
         if not def_p: def_p = ["FINAL"]
         
-        periodos_print = st.multiselect("📊 Seleccione las columnas a imprimir en el documento:", opciones_p, default=def_p)
+        # Selector táctico
+        periodos_print = st.multiselect("📊 Columnas a Imprimir:", opciones_p, default=def_p)
+        
     st.markdown("</div>", unsafe_allow_html=True)
 
     if not periodos_print:
-        st.warning("⚠️ Debe seleccionar al menos un periodo para poder generar el boletín.")
+        st.warning("⚠️ Debe seleccionar al menos una columna para poder generar el boletín.")
         return
 
     col_n = "PROMEDIO" if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper() else periodo_sel
