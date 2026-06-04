@@ -15,18 +15,19 @@ def registrar_bitacora(usuario, rol, accion):
 def renderizar(conn):
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📚 Diccionario Oficial de Logros</h3>", unsafe_allow_html=True)
     
-    # 🚀 MOTOR VISUAL 3D Y FUSIÓN DE CONTORNOS
+    # 🚀 MOTOR VISUAL VIP (BORDES BLINDADOS FORZADOS)
     st.markdown("""
     <style>
-    /* Fusión perfecta entre el encabezado negro y la tabla */
-    div[data-testid="stDataEditor"], div[data-testid="stDataFrame"] {
-        border: 3px solid #0d1b2a !important;
+    /* Forzar contorno sólido en la tabla de Streamlit para evitar que quede flotando */
+    [data-testid="stDataEditor"], [data-testid="stDataFrame"] {
+        border-left: 3px solid #0d1b2a !important;
+        border-right: 3px solid #0d1b2a !important;
+        border-bottom: 3px solid #0d1b2a !important;
         border-top: none !important; /* Para que encaje con la caja del título */
         border-radius: 0 0 8px 8px !important;
-        box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
-        margin-top: -15px !important; /* 🎯 TRUCO MAESTRO: Succiona la tabla hacia arriba */
-        position: relative;
-        z-index: 10;
+        margin-top: -10px !important; 
+        box-shadow: 0px 5px 15px rgba(0,0,0,0.15) !important;
+        overflow: hidden !important;
     }
     
     /* Eliminar borde gris fantasma interno de Streamlit */
