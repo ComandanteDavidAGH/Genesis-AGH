@@ -3,12 +3,29 @@ import pandas as pd
 import plotly.express as px
 import unicodedata
 
+# =========================================================
+# ⚡ ACELERADOR DE MEMORIA (Descarga SQL de un solo viaje)
+# =========================================================
+@st.cache_data(ttl=600, show_spinner=False)
+def obtener_horarios_sql(_conn_sql):
+    """
+    Descarga la tabla de horarios de Supabase una sola vez y la mantiene 
+    en memoria RAM durante 10 minutos (600 seg) o hasta que se fuerce el borrado.
+    """
+    try:
+        return _conn_sql.query("SELECT * FROM db_horarios;")
+    except Exception as e:
+        return None
+
 def limpiar_caracteres(txt):
     """ Filtro extractor: Elimina tildes, espacios y estandariza a mayúsculas puras """
     if pd.isna(txt): return ""
     txt_str = str(txt).strip().upper()
     return ''.join(c for c in unicodedata.normalize('NFD', txt_str) if unicodedata.category(c) != 'Mn')
 
+# =========================================================
+# 👑 MOTOR PRINCIPAL DE RENDERIZADO
+# =========================================================
 def renderizar(conn_sql):
     # 👑 INYECTOR DE ESTILEMA 3D Y ANIMACIONES PARA TABLA Y GRÁFICOS
     st.markdown("""
@@ -60,15 +77,11 @@ def renderizar(conn_sql):
 
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>🕒 Horarios y Asignaciones Académicas</h3>", unsafe_allow_html=True)
     
-    # 🛡️ ESCUDO PROTECTOR SQL
-    try:
-        df_horarios = conn_sql.query("SELECT * FROM db_horarios;")
-    except Exception as e:
-        st.error(f"❌ Error crítico de enlace SQL: {e}")
-        return
+    # 🛡️ EXTRACCIÓN DESDE LA CACHÉ
+    df_horarios = obtener_horarios_sql(conn_sql)
         
     if df_horarios is None or df_horarios.empty:
-        st.warning("⚠️ **Base de datos de horarios no inicializada en Supabase.**")
+        st.warning("⚠️ **Base de datos de horarios no inicializada en Supabase o error de conexión.**")
         st.info("💡 *Nota de Rectoría:* Recuerde subir el archivo Excel de respaldo en la sección de 'Bitácora y Backup'.")
         return
 
