@@ -5,6 +5,10 @@ from datetime import datetime, timedelta, timezone
 
 zona_colombia = timezone(timedelta(hours=-5))
 
+# =========================================================
+# ⚡ MOTORES ACELERADORES (Caché y Funciones Ligeras)
+# =========================================================
+@st.cache_data(show_spinner=False)
 def limpiar_texto(txt):
     if pd.isna(txt): return ""
     txt_str = str(txt).strip().upper()
@@ -31,16 +35,32 @@ def clasificar_desempeno(nota):
     except:
         return 'BAJO'
 
+@st.cache_data(show_spinner=False)
 def obtener_nivel(grado):
     g_str = str(grado).upper()
     if any(k in g_str for k in ["1", "2", "3", "4", "5", "PRIMER", "SEGUND", "TERCER", "CUART", "QUINT"]) and not any(k in g_str for k in ["10", "11", "DECIMO", "ONCE"]):
         return "Primaria"
     return "Bachillerato"
 
+@st.cache_data(show_spinner=False)
+def procesar_diccionario(df_l):
+    """ Construye el diccionario de logros una sola vez y lo guarda en RAM """
+    diccionario = {}
+    if df_l is not None and not df_l.empty:
+        for _, l_row in df_l.iterrows():
+            try:
+                k = (limpiar_texto(l_row.iloc[0]), limpiar_texto(l_row.iloc[1]), limpiar_texto(l_row.iloc[2]))
+                diccionario[k] = str(l_row.iloc[3]).strip()
+            except: pass
+    return diccionario
+
+# =========================================================
+# 👑 MOTOR PRINCIPAL DE RENDERIZADO
+# =========================================================
 def renderizar(df, periodo_sel, conn):
     key_editor = f"editor_notas_{periodo_sel}"
 
-    # 🚀 MOTOR VISUAL (BORDES FORZADOS)
+    # 🚀 MOTOR VISUAL (BORDES FORZADOS VIP)
     st.markdown("""
     <style>
     /* Forzar contorno sólido en la tabla de Streamlit */
@@ -50,7 +70,7 @@ def renderizar(df, periodo_sel, conn):
         border-bottom: 3px solid #0d1b2a !important;
         border-top: none !important;
         border-radius: 0 0 8px 8px !important;
-        margin-top: -10px !important; /* Ajuste suave para fusionar con el título */
+        margin-top: -10px !important; 
         box-shadow: 0px 5px 15px rgba(0,0,0,0.15) !important;
         overflow: hidden !important;
     }
@@ -103,6 +123,7 @@ def renderizar(df, periodo_sel, conn):
 
     df_render = df.copy()
     
+    # 1. Limpieza Rápida Vectorizada
     if 'LOGRO' in df_render.columns and 'LOGROS' not in df_render.columns:
         df_render = df_render.rename(columns={'LOGRO': 'LOGROS'})
     if 'LOGROS' not in df_render.columns:
@@ -115,10 +136,11 @@ def renderizar(df, periodo_sel, conn):
         df_render['PROMEDIO'] = pd.to_numeric(df_render['PROMEDIO'], errors='coerce').fillna(0.0)
         df_render['DESEMPEÑO'] = df_render['PROMEDIO'].apply(clasificar_desempeno)
 
+    # 2. Renderizado Táctico del HUD
     if 'PROMEDIO' in df_render.columns and 'Nombre_Completo' in df_render.columns:
         df_agrupado = df_render.groupby('Nombre_Completo')['PROMEDIO'].mean()
         
-        total_est = df_render['Nombre_Completo'].nunique()
+        total_est = len(df_agrupado)
         promedio_grupo = df_agrupado.mean() if not df_agrupado.empty else 0.0
         aprobados = len(df_agrupado[df_agrupado >= 6.0])
         
@@ -142,33 +164,26 @@ def renderizar(df, periodo_sel, conn):
         </div>
         """, unsafe_allow_html=True)
 
-    diccionario_logros = {}
-    if 'df_logros' in st.session_state and not st.session_state.df_logros.empty:
-        df_l = st.session_state.df_logros
-        for _, l_row in df_l.iterrows():
-            try:
-                k = (limpiar_texto(l_row.iloc[0]), limpiar_texto(l_row.iloc[1]), limpiar_texto(l_row.iloc[2]))
-                diccionario_logros[k] = str(l_row.iloc[3]).strip()
-            except: pass
+    # 3. ⚡ AUTOCOMPLETADO VECTORIAL DE ALTA VELOCIDAD
+    diccionario_logros = procesar_diccionario(st.session_state.get('df_logros', pd.DataFrame()))
+    
+    df_render['Nivel_Temp'] = df_render['Grado'].apply(obtener_nivel) if 'Grado' in df_render.columns else "Bachillerato"
 
-    if 'Grado' in df_render.columns:
-        df_render['Nivel_Temp'] = df_render['Grado'].apply(obtener_nivel)
-    else:
-        df_render['Nivel_Temp'] = "Bachillerato"
-
-    for idx, row in df_render.iterrows():
-        logro_actual = str(row['LOGROS']).strip().upper()
+    # Esta función se aplica en bloque masivo a la matriz, es súper rápida
+    def asignar_logro_rapido(row):
+        logro_actual = str(row.get('LOGROS', '')).strip().upper()
         if logro_actual in ["", "NONE", "NAN"]:
-            nivel = str(row['Nivel_Temp'])
+            nivel = str(row.get('Nivel_Temp', 'Bachillerato'))
             materia = str(row.get('Materia', ''))
             desempeno = str(row.get('DESEMPEÑO', 'BAJO'))
-            
             llave = (limpiar_texto(nivel), limpiar_texto(materia), limpiar_texto(desempeno))
-            logro_sugerido = diccionario_logros.get(llave, f"⚠️ Configurar en Logros: {nivel} | {materia} | {desempeno}")
-            df_render.at[idx, 'LOGROS'] = logro_sugerido
+            return diccionario_logros.get(llave, f"⚠️ Configurar en Logros: {nivel} | {materia} | {desempeno}")
+        return row['LOGROS']
 
+    df_render['LOGROS'] = df_render.apply(asignar_logro_rapido, axis=1)
     df_render = df_render.drop(columns=['Nivel_Temp'])
 
+    # 4. Motor de Semáforo para Celdas
     def pintar_celdas(val):
         try:
             n = float(val)
@@ -193,6 +208,7 @@ def renderizar(df, periodo_sel, conn):
         'LOGROS': st.column_config.TextColumn("Logros (Autocompletado)", disabled=False, width="large")
     }
 
+    # 5. SINCRONIZACIÓN SQL ALINEADA A LA DERECHA
     col_vacia, col_btn = st.columns([7, 3])
     with col_btn:
         if st.button("💾 GUARDAR EN BASE DE DATOS", key=f"btn_guardar_{periodo_sel}", type="primary", use_container_width=True):
@@ -229,7 +245,7 @@ def renderizar(df, periodo_sel, conn):
             else:
                 st.toast("⚠️ No detecté cambios en la matriz para guardar.", icon="👀")
 
-    # Título enmarcado
+    # Título enmarcado VIP
     st.markdown("<div style='background-color:#0d1b2a; color:#d4af37; font-family:Arial Black; font-size:13px; text-align:center; padding:10px; border:3px solid #0d1b2a; border-radius:8px 8px 0 0; position:relative; z-index:11; letter-spacing:1px;'>MATRIZ OFICIAL DE CALIFICACIONES</div>", unsafe_allow_html=True)
     
     st.data_editor(df_pintado, use_container_width=True, height=450, key=key_editor, column_config=config_notas)
