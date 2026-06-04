@@ -137,7 +137,7 @@ def renderizar(df, periodo_sel):
         )
         fig1.update_layout(
             height=380, 
-            margin=dict(t=15, b=50, l=10, r=25), # Colchón de seguridad lateral derecho aumentado
+            margin=dict(t=15, b=50, l=10, r=25), 
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
             showlegend=False, coloraxis_showscale=False
         )
@@ -158,6 +158,8 @@ def renderizar(df, periodo_sel):
             hole=0.5, color='DESEMPEÑO_FILTRO', color_discrete_map=colores_vivos
         )
         
+        # 🎯 LA CORRECCIÓN TÁCTICA: Aquí inyectamos el dominio de forma correcta dentro de las trazas del gráfico.
+        # Le ordenamos a la dona que use solo del 15% al 85% del ancho del lienzo para no asfixiar el texto.
         fig2.update_traces(
             textposition='inside', 
             textinfo='percent+label', 
@@ -165,18 +167,16 @@ def renderizar(df, periodo_sel):
             pull=[0.02]*len(df_pie_counts), 
             marker=dict(line=dict(color='#000000', width=1.5)), 
             opacity=0.95,
-            hovertemplate="<b>Nivel %{label}</b><br>Alumnos: %{value}<br>Proporción: %{percent}<extra></extra>"
+            hovertemplate="<b>Nivel %{label}</b><br>Alumnos: %{value}<br>Proporción: %{percent}<extra></extra>",
+            domain=dict(x=[0.12, 0.88], y=[0.12, 0.88])
         )
         
-        # 🎯 AJUSTE MILIMÉTRICO DE CONTROL DE DOMINIO (Comprime el gráfico al centro un 15%)
         fig2.update_layout(
             height=380, 
-            margin=dict(t=20, b=50, l=25, r=25), # Colchón de amortiguación en los 4 puntos cardinales
+            margin=dict(t=20, b=50, l=25, r=25), 
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
             showlegend=False,
-            piecolorway=list(colores_vivos.values()),
-            # Forzamos a que el círculo se dibuje en un área reducida dejando un margen perimetral de seguridad
-            slices=[dict(domain=dict(x=[0.1, 0.9], y=[0.1, 0.9]))]
+            piecolorway=list(colores_vivos.values())
         )
         
         st.markdown('<div class="chart-wrapper-pie">', unsafe_allow_html=True)
