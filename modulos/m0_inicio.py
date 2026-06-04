@@ -81,16 +81,16 @@ def renderizar():
         
         st.markdown("<br><br>", unsafe_allow_html=True)
         
-        # --- ESCUDO CENTRAL CON MANEJO DE ERRORES Y ANIMACIÓN ---
-        # Ajustamos las columnas a [3, 4, 3] para que el logo se vea más elegante y centrado
+        # --- ESCUDO CENTRAL Y LOGO ULTRA-RÁPIDO ---
         col_img1, col_img2, col_img3 = st.columns([3, 4, 3])
         with col_img2:
-            try:
-                # Envolvemos el logo en un div con animación para que aparezca suavemente
-                st.markdown("""<div style="animation: fadeInUp 1s ease-out forwards; text-align:center;">""", unsafe_allow_html=True)
-                st.image("logo.png", use_container_width=True)
-                st.markdown("""</div>""", unsafe_allow_html=True)
-            except FileNotFoundError:
-                st.info("📌 Logo institucional no encontrado. Verifica que 'logo.png' se encuentre en el directorio raíz.")
-            except Exception as e:
-                st.error(f"⚠️ Error al cargar el logo: {e}")
+            # 🎯 EL SALVAVIDAS SATELITAL: Usamos la URL directa para no congelar el servidor
+            URL_LOGO_OFICIAL = "https://raw.githubusercontent.com/ComandanteDavidAGH/Genesis-AGH/main/logo.png"
+            
+            # HTML para centrar, escalar y animar la imagen en milisegundos
+            LOGO_HTML = f"""
+            <div style="animation: fadeInUp 1s ease-out forwards; text-align:center;">
+                <img src="{URL_LOGO_OFICIAL}" style="max-width: 100%; height: auto; object-fit: contain;">
+            </div>
+            """
+            st.markdown(LOGO_HTML, unsafe_allow_html=True)
