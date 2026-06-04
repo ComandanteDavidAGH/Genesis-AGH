@@ -31,7 +31,7 @@ def construir_mapa_logros(df_logros_raw):
 
 # --- 2. MOTOR DE RENDERIZADO ULTRALIVIANO ---
 
-def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, th, info_puesto):
+def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, periodos_print, info_puesto):
     """ Función dedicada exclusivamente a procesar un solo alumno de forma aislada """
     res = df_curso[df_curso['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
     res = res[res['PROMEDIO'] > 0.0]
@@ -42,10 +42,14 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
 
     promedios = [float(x) for x in res[col_n] if pd.notna(x)]
     p_prom = sum(promedios) / len(promedios) if promedios else 0.0
-    es_consolidado = "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper()
+
+    # Construcción dinámica de cabeceras de columnas
+    th = "".join([f"<th>{p}</th>" for p in periodos_print])
+    col_span_logro = len(periodos_print) + 2
 
     html_filas = []
     for _, row in res.iterrows():
+        # El desempeño general se calcula con base al "col_n" evaluado (Periodo actual del Sidebar)
         nota_final = float(row.get(col_n, 0)) if pd.notna(row.get(col_n, 0)) else 0.0
         
         if nota_final >= 9.1: desp = "SUPERIOR"
@@ -55,17 +59,15 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
 
         color = "#155724" if nota_final >= 6.0 else "#721c24"
 
-        if es_consolidado:
-            p1 = float(row.get('P1', 0)) if pd.notna(row.get('P1', 0)) else 0.0
-            p2 = float(row.get('P2', 0)) if pd.notna(row.get('P2', 0)) else 0.0
-            p3 = float(row.get('P3', 0)) if pd.notna(row.get('P3', 0)) else 0.0
-            p4 = float(row.get('P4', 0)) if pd.notna(row.get('P4', 0)) else 0.0
-            prom = float(row.get('PROMEDIO', 0)) if pd.notna(row.get('PROMEDIO', 0)) else 0.0
-            td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
-            col_span = 7
-        else:
-            td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
-            col_span = 3
+        # Construcción dinámica de las celdas de notas
+        td = ""
+        for p in periodos_print:
+            if p == "FINAL":
+                val = float(row.get('PROMEDIO', 0)) if pd.notna(row.get('PROMEDIO', 0)) else 0.0
+                td += f"<td style='color:{color}; font-weight:bold;'>{val:.1f}</td>"
+            else:
+                val = float(row.get(p, 0)) if pd.notna(row.get(p, 0)) else 0.0
+                td += f"<td>{val:.1f}</td>"
 
         html_filas.append(f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>")
         
@@ -73,7 +75,7 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
         clave_busqueda = (nivel_alumno, materia_limpia, desp)
         logro_texto = dict_logros.get(clave_busqueda, str(row.get('LOGRO', 'Sin registro')))
         
-        html_filas.append(f"<tr><td colspan='{col_span}' style='text-align:left; font-size:10.5px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>")
+        html_filas.append(f"<tr><td colspan='{col_span_logro}' style='text-align:left; font-size:10.5px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>")
 
     # Blindaje de marca de agua y logo
     img_watermark = f'<img src="{URL_LOGO}" class="watermark">' if URL_LOGO else ""
@@ -126,27 +128,40 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     else:
         df_curso = df_base.copy()
 
-    st.markdown("<div class='no-print'>", unsafe_allow_html=True)
-    c_modo, c_est = st.columns([3, 7])
-    with c_modo:
-        modo_impresion = st.radio("Generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True, label_visibility="collapsed")
+    # 🚀 PANEL DE CONTROL MULTI-OPCIONES
+    st.markdown("<div class='no-print' style='background:#f8f9fa; padding:15px; border-radius:8px; border: 2px solid #0d1b2a; border-top: 5px solid #d4af37; margin-bottom: 20px;'>", unsafe_allow_html=True)
+    col_modo, col_per = st.columns([3, 7])
+    
+    with col_modo:
+        modo_impresion = st.radio("🛠️ Modo de Generación:", ["👤 Individual", "🖨️ Masiva (Todo el Grado)"], horizontal=True)
+    
+    with col_per:
+        opciones_p = ["P1", "P2", "P3", "P4", "FINAL"]
+        # Por defecto preselecciona el periodo del sidebar
+        def_p = ["P1", "P2", "P3", "P4", "FINAL"] if "CONSOLID" in str(periodo_sel).upper() else [periodo_sel]
+        def_p = [p for p in def_p if p in opciones_p]
+        if not def_p: def_p = ["FINAL"]
+        
+        periodos_print = st.multiselect("📊 Seleccione las columnas a imprimir en el documento:", opciones_p, default=def_p)
     st.markdown("</div>", unsafe_allow_html=True)
+
+    if not periodos_print:
+        st.warning("⚠️ Debe seleccionar al menos un periodo para poder generar el boletín.")
+        return
 
     col_n = "PROMEDIO" if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper() else periodo_sel
     grado_str = str(curso_sel).upper()
     es_primaria = any(k in grado_str for k in ["1", "2", "3", "4", "5", "PRIMER", "SEGUND", "TERCER", "CUART", "QUINT"]) and not any(k in grado_str for k in ["10", "11", "DECIMO", "ONCE"])
     nivel_alumno = "PRIMARIA" if es_primaria else "BACHILLERATO"
-    th = "<th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>FINAL</th>" if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper() else f"<th>{periodo_sel}</th>"
     
     URL_LOGO_OFICIAL = obtener_logo_b64_cached("logo.png")
     dict_logros = construir_mapa_logros(st.session_state.get('df_logros', pd.DataFrame()))
 
-    # 🏆 CÁLCULO DE PUESTOS ACADÉMICOS (Algoritmo Vectorizado)
+    # 🏆 CÁLCULO DE PUESTOS ACADÉMICOS
     df_curso[col_n] = pd.to_numeric(df_curso[col_n], errors='coerce')
     df_agrupado = df_curso.groupby(['Grado', 'Nombre_Completo'])[col_n].mean().reset_index()
     df_agrupado['Puesto'] = df_agrupado.groupby('Grado')[col_n].rank(ascending=False, method='min').fillna(0).astype(int)
     df_agrupado['Total_Grado'] = df_agrupado.groupby('Grado')['Nombre_Completo'].transform('count')
-    # Diccionario veloz: { 'Nombre': '3 de 35' }
     dict_puestos = {row['Nombre_Completo']: f"{row['Puesto']} de {row['Total_Grado']}" for _, row in df_agrupado.iterrows()}
 
     css_vip = """<style>
@@ -172,113 +187,112 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     if modo_impresion == "👤 Individual":
         estudiantes = sorted(df_curso['Nombre_Completo'].dropna().unique())
         
-        with c_est:
+        col_esp1, col_est, col_esp2 = st.columns([1, 8, 1])
+        with col_est:
             alumno = st.selectbox("👤 Seleccione el Estudiante para Inspección:", estudiantes, key="sb_alumno_vip")
         
         if alumno:
             puesto_info = dict_puestos.get(alumno, "N/A")
-            render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO_OFICIAL, css_vip, th, puesto_info)
+            render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO_OFICIAL, css_vip, periodos_print, puesto_info)
 
     else:
         # --- MODO MASIVO CON BARRA DE PROGRESO TÁCTICA ---
         estudiantes = sorted(df_curso['Nombre_Completo'].dropna().unique())
-        with c_est:
-            st.warning(f"⚠️ Se compilarán {len(estudiantes)} boletines oficiales para el grado {curso_sel}.")
+        
+        col_esp1, col_est, col_esp2 = st.columns([1, 8, 1])
+        with col_est:
+            st.info(f"⚠️ Se compilarán {len(estudiantes)} boletines oficiales. El documento incluirá las siguientes columnas: **{', '.join(periodos_print)}**")
 
-        if st.button("🖨️ COMPILAR LOTE MASIVO VIP", type="primary", use_container_width=True):
-            
-            # Inicializamos la barra de progreso
-            progress_text = "Preparando motores de compilación..."
-            barra_progreso = st.progress(0, text=progress_text)
-            
-            html_masivo = [f"<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body>",
-                           "<div class=\"no-print\" style=\"position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;\">",
-                           "    <button onclick=\"imprimirLote()\" style=\"background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:8px 16px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black'; transition: 0.2s;\">🖨️ IMPRIMIR LOTE MASIVO COMPLETO</button>",
-                           "</div>"]
-
-            img_watermark = f'<img src="{URL_LOGO_OFICIAL}" class="watermark">' if URL_LOGO_OFICIAL else ""
-            img_logo = f'<img src="{URL_LOGO_OFICIAL}" width="80">' if URL_LOGO_OFICIAL else ""
-
-            total_alumnos = len(estudiantes)
-
-            for i, alum in enumerate(estudiantes):
-                # Actualizamos la barra de progreso
-                porcentaje = (i + 1) / total_alumnos
-                barra_progreso.progress(porcentaje, text=f"Compilando expediente: {alum} ({i+1}/{total_alumnos})")
+            if st.button("🖨️ INICIAR COMPILACIÓN MASIVA VIP", type="primary", use_container_width=True):
                 
-                res = df_curso[df_curso['Nombre_Completo'] == alum].drop_duplicates(subset=['Materia'])
-                res = res[res['PROMEDIO'] > 0.0]
-                if res.empty: continue
-
-                promedios = [float(x) for x in res[col_n] if pd.notna(x)]
-                p_prom = sum(promedios) / len(promedios) if promedios else 0.0
-                salto = "salto-pagina" if i < total_alumnos - 1 else ""
+                progress_text = "Preparando motores de compilación..."
+                barra_progreso = st.progress(0, text=progress_text)
                 
-                puesto_info = dict_puestos.get(alum, "N/A")
+                html_masivo = [f"<html><head><script>function imprimirLote() {{ window.print(); }}</script>{css_vip}</head><body>",
+                               "<div class=\"no-print\" style=\"position: sticky; top: 0; background: white; padding: 10px; z-index: 100; border-bottom: 2px solid #0d1b2a; text-align: right;\">",
+                               "    <button onclick=\"imprimirLote()\" style=\"background:#0d1b2a; color:#d4af37; border:2px solid #d4af37; padding:8px 16px; cursor:pointer; border-radius:6px; font-weight:bold; font-family:'Arial Black'; transition: 0.2s;\">🖨️ IMPRIMIR LOTE MASIVO COMPLETO</button>",
+                               "</div>"]
 
-                html_masivo.append(f"""<div class="b-print {salto}">
-                {img_watermark}
-                <table class="header-table">
-                    <tr>
-                        <td style="width:12%;">{img_logo}</td>
-                        <td style="text-align:center; vertical-align:middle;">
-                            <h2 style="margin:0; color:#0d1b2a; font-size:19px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
-                        </td>
-                        <td style="text-align:right; width:15%; vertical-align:middle;">
-                            <div style="border:2.5px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px; box-shadow: 2px 2px 0px #0d1b2a;">
-                                <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-                <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:6px; font-size:12px; box-shadow: 1px 1px 5px rgba(0,0,0,0.05);">
-                    <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span>
-                    <span><b style="color:#0d1b2a;">GRADO:</b> {curso_sel}</span>
-                    <span><b style="color:#0d1b2a;">PUESTO:</b> <span style="color:#cc0000; font-weight:bold;">{puesto_info}</span></span>
-                </div>
-                <table class="table-custom">
-                    <tr><th>MATERIA</th>{th}<th>DESEMPEÑO</th></tr>""")
+                img_watermark = f'<img src="{URL_LOGO_OFICIAL}" class="watermark">' if URL_LOGO_OFICIAL else ""
+                img_logo = f'<img src="{URL_LOGO_OFICIAL}" width="80">' if URL_LOGO_OFICIAL else ""
 
-                for _, row in res.iterrows():
-                    nota_final = float(row.get(col_n, 0)) if pd.notna(row.get(col_n, 0)) else 0.0
-                    if nota_final >= 9.1: desp = "SUPERIOR"
-                    elif nota_final >= 7.6: desp = "ALTO"
-                    elif nota_final >= 6.0: desp = "BÁSICO"
-                    else: desp = "BAJO"
+                total_alumnos = len(estudiantes)
+                th_masivo = "".join([f"<th>{p}</th>" for p in periodos_print])
+                col_span_logro = len(periodos_print) + 2
 
-                    color = "#155724" if nota_final >= 6.0 else "#721c24"
+                for i, alum in enumerate(estudiantes):
+                    porcentaje = (i + 1) / total_alumnos
+                    barra_progreso.progress(porcentaje, text=f"Compilando expediente: {alum} ({i+1}/{total_alumnos})")
+                    
+                    res = df_curso[df_curso['Nombre_Completo'] == alum].drop_duplicates(subset=['Materia'])
+                    res = res[res['PROMEDIO'] > 0.0]
+                    if res.empty: continue
 
-                    if "CONSOLID" in str(periodo_sel).upper() or "FINAL" in str(periodo_sel).upper():
-                        p1 = float(row.get('P1', 0)) if pd.notna(row.get('P1', 0)) else 0.0
-                        p2 = float(row.get('P2', 0)) if pd.notna(row.get('P2', 0)) else 0.0
-                        p3 = float(row.get('P3', 0)) if pd.notna(row.get('P3', 0)) else 0.0
-                        p4 = float(row.get('P4', 0)) if pd.notna(row.get('P4', 0)) else 0.0
-                        prom = float(row.get('PROMEDIO', 0)) if pd.notna(row.get('PROMEDIO', 0)) else 0.0
-                        td = f"<td>{p1:.1f}</td><td>{p2:.1f}</td><td>{p3:.1f}</td><td>{p4:.1f}</td><td style='color:{color}; font-weight:bold;'>{prom:.1f}</td>"
-                        col_span = 7
-                    else:
-                        td = f"<td style='color:{color}; font-weight:bold;'>{nota_final:.1f}</td>"
-                        col_span = 3
+                    promedios = [float(x) for x in res[col_n] if pd.notna(x)]
+                    p_prom = sum(promedios) / len(promedios) if promedios else 0.0
+                    salto = "salto-pagina" if i < total_alumnos - 1 else ""
+                    
+                    puesto_info = dict_puestos.get(alum, "N/A")
 
-                    html_masivo.append(f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>")
-
-                    materia_limpia = str(row['Materia']).strip().upper()
-                    clave_busqueda = (nivel_alumno, materia_limpia, desp)
-                    logro_texto = dict_logros.get(clave_busqueda, str(row.get('LOGRO', 'Sin registro')))
-
-                    html_masivo.append(f"<tr><td colspan='{col_span}' style='text-align:left; font-size:10.5px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>")
-
-                html_masivo.append("""</table>
-                    <div class='firmas-container'>
-                        <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
-                        <div class='firma-box'>Firma Director de Grupo</div>
+                    html_masivo.append(f"""<div class="b-print {salto}">
+                    {img_watermark}
+                    <table class="header-table">
+                        <tr>
+                            <td style="width:12%;">{img_logo}</td>
+                            <td style="text-align:center; vertical-align:middle;">
+                                <h2 style="margin:0; color:#0d1b2a; font-size:19px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
+                                <p style="margin:4px 0 0 0; font-size:13px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
+                            </td>
+                            <td style="text-align:right; width:15%; vertical-align:middle;">
+                                <div style="border:2.5px solid #0d1b2a; padding:6px; background:#f0f2f6; text-align:center; border-radius:8px; box-shadow: 2px 2px 0px #0d1b2a;">
+                                    <b style="font-size:10px; color:#000;">PROMEDIO</b><br><b style="font-size:18px; color:#d4af37;">{p_prom:.1f}</b>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="border:2px solid #0d1b2a; padding:10px; background:rgba(255,255,255,0.9); display:flex; justify-content:space-between; margin-bottom:10px; border-radius:6px; font-size:12px; box-shadow: 1px 1px 5px rgba(0,0,0,0.05);">
+                        <span><b style="color:#0d1b2a;">ESTUDIANTE:</b> {alum}</span>
+                        <span><b style="color:#0d1b2a;">GRADO:</b> {curso_sel}</span>
+                        <span><b style="color:#0d1b2a;">PUESTO:</b> <span style="color:#cc0000; font-weight:bold;">{puesto_info}</span></span>
                     </div>
-                </div>""")
+                    <table class="table-custom">
+                        <tr><th>MATERIA</th>{th_masivo}<th>DESEMPEÑO</th></tr>""")
 
-            html_masivo.append("</body></html>")
-            
-            # Ocultar barra al terminar y renderizar
-            barra_progreso.empty()
-            st.toast("✅ ¡Compilación Masiva Finalizada con Éxito!", icon="🚀")
-            components.html("".join(html_masivo), height=750, scrolling=True)
+                    for _, row in res.iterrows():
+                        nota_final = float(row.get(col_n, 0)) if pd.notna(row.get(col_n, 0)) else 0.0
+                        if nota_final >= 9.1: desp = "SUPERIOR"
+                        elif nota_final >= 7.6: desp = "ALTO"
+                        elif nota_final >= 6.0: desp = "BÁSICO"
+                        else: desp = "BAJO"
+
+                        color = "#155724" if nota_final >= 6.0 else "#721c24"
+
+                        td_masivo = ""
+                        for p in periodos_print:
+                            if p == "FINAL":
+                                val = float(row.get('PROMEDIO', 0)) if pd.notna(row.get('PROMEDIO', 0)) else 0.0
+                                td_masivo += f"<td style='color:{color}; font-weight:bold;'>{val:.1f}</td>"
+                            else:
+                                val = float(row.get(p, 0)) if pd.notna(row.get(p, 0)) else 0.0
+                                td_masivo += f"<td>{val:.1f}</td>"
+
+                        html_masivo.append(f"<tr><td style='text-align:left;'><b>{row['Materia']}</b></td>{td_masivo}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>")
+
+                        materia_limpia = str(row['Materia']).strip().upper()
+                        clave_busqueda = (nivel_alumno, materia_limpia, desp)
+                        logro_texto = dict_logros.get(clave_busqueda, str(row.get('LOGRO', 'Sin registro')))
+
+                        html_masivo.append(f"<tr><td colspan='{col_span_logro}' style='text-align:left; font-size:10.5px; font-style:italic; border-bottom:1.5px solid #000; background-color:#fafafa; padding:4px 8px; line-height:1.1;'><b>LOGRO:</b> {logro_texto}</td></tr>")
+
+                    html_masivo.append("""</table>
+                        <div class='firmas-container'>
+                            <div class='firma-box'>Firma Rectoría<br><span style='font-size:9px; font-weight:normal;'>Sello Institucional</span></div>
+                            <div class='firma-box'>Firma Director de Grupo</div>
+                        </div>
+                    </div>""")
+
+                html_masivo.append("</body></html>")
+                
+                barra_progreso.empty()
+                st.toast("✅ ¡Compilación Masiva Finalizada con Éxito!", icon="🚀")
+                components.html("".join(html_masivo), height=750, scrolling=True)
