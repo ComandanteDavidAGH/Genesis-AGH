@@ -5,6 +5,16 @@ import io
 from xhtml2pdf import pisa
 import base64
 
+# --- ACELERADOR DE MEMORIA PARA EL LOGO ---
+@st.cache_data
+def obtener_logo_b64():
+    try:
+        with open("logo.png", "rb") as img_file: 
+            b64_string = base64.b64encode(img_file.read()).decode()
+        return f"data:image/png;base64,{b64_string}"
+    except: 
+        return ""
+
 def generar_pdf(html_contenido):
     result = io.BytesIO()
     pdf = pisa.pisaDocument(io.BytesIO(html_contenido.encode("UTF-8")), result)
@@ -19,10 +29,10 @@ def nota_limpia(valor):
     except:
         return 0.0
 
-def renderizar(df, curso_sel, periodo_sel):
+def renderizar(df_m, curso_sel, periodo_sel):
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Central de Impresión VIP</h3>", unsafe_allow_html=True)
     
-    # Selector de Impresión Super-Compacto
+    # --- PANEL DE CONTROL ---
     st.markdown("<div class='no-print' style='background:#f8f9fa; padding:12px; border-radius:8px; border: 2px solid #0d1b2a; margin-bottom:15px;'>", unsafe_allow_html=True)
     c_print_1, c_print_2 = st.columns([4, 6])
     with c_print_1:
@@ -40,12 +50,12 @@ def renderizar(df, curso_sel, periodo_sel):
         st.warning("⚠️ Seleccione al menos un periodo para compilar.")
         st.stop()
 
-    # CSS ORIGINAL de su código intacto para tamaño LEGAL (Oficio)
     css_vip = """<style>body { font-family: Arial, sans-serif; background: white; color: black; } .b-print { position: relative; padding: 30px; border: 3px solid #0d1b2a; border-radius: 12px; font-size: 13px; font-weight: bold; background: white; z-index: 1; margin-bottom: 25px; box-shadow: 5px 5px 15px rgba(0,0,0,0.1); overflow: hidden; } .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; width: 60%; z-index: -1; pointer-events: none; } .table-custom { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; z-index: 2; position: relative; } .table-custom th { background-color: #0d1b2a; color: #d4af37; border: 1px solid #000; padding: 10px; font-family: 'Arial Black'; } .table-custom td { border: 1px solid #000; padding: 8px; background-color: rgba(255, 255, 255, 0.85); text-align: center; } .header-table { width: 100%; border: none; margin-bottom: 15px; z-index: 2; position: relative; } .header-table td { border: none; } .firmas-container { display: flex; justify-content: space-around; margin-top: 60px; font-size: 14px; z-index: 2; position: relative; page-break-inside: avoid; } .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; } @media print { @page { size: legal portrait; margin: 10mm; } body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } .b-print { border: none; box-shadow: none; padding: 0; } .salto-pagina { page-break-after: always; } }</style>"""   
 
-    df_boletines_base = df.copy() if df is not None else pd.DataFrame()
+    df_boletines_base = df_m.copy() if df_m is not None else pd.DataFrame()
+    if str(curso_sel) != "TODOS":
+        df_boletines_base = df_boletines_base[df_boletines_base['Grado'].astype(str) == str(curso_sel)]
     
-    # MOTOR DE PUESTOS ACADÉMICOS
     mapa_puestos = {}
     if not df_boletines_base.empty and col_n in df_boletines_base.columns:
         df_boletines_base[col_n] = pd.to_numeric(df_boletines_base[col_n], errors='coerce').fillna(0.0)
@@ -62,10 +72,7 @@ def renderizar(df, curso_sel, periodo_sel):
                 diccionario_logros[k] = str(l_row.iloc[3])
             except: pass
 
-    try:
-        with open("logo.png", "rb") as img_file: b64_string = base64.b64encode(img_file.read()).decode()
-        URL_LOGO_OFICIAL = f"data:image/png;base64,{b64_string}"
-    except: URL_LOGO_OFICIAL = ""
+    URL_LOGO_OFICIAL = obtener_logo_b64()
 
     th_dinamico = "".join([f"<th>{p}</th>" for p in periodos_print])
     col_span_logro = len(periodos_print) + 2
@@ -73,6 +80,7 @@ def renderizar(df, curso_sel, periodo_sel):
     if modo_impresion == "👤 Individual":
         estudiantes_lista = sorted(df_boletines_base['Nombre_Completo'].dropna().unique()) if 'Nombre_Completo' in df_boletines_base.columns else []
         alumno = st.selectbox("👤 Estudiante:", estudiantes_lista)
+        
         if alumno:
             res = df_boletines_base[df_boletines_base['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
             res = res[res['PROMEDIO'] > 0.0]
@@ -91,7 +99,7 @@ def renderizar(df, curso_sel, periodo_sel):
                     <tr>
                         <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="90"></td>
                         <td style="text-align:center;">
-                            <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">INSTITUCION EDUCATIVA GÉNESIS 2026</h2>
+                            <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
                             <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                         </td>
                         <td style="text-align:right; width:15%;">
@@ -137,11 +145,20 @@ def renderizar(df, curso_sel, periodo_sel):
             
             html_boletin += """</table><div class='firmas-container'><div class='firma-box'>Firma Rectoría<br><span style='font-size:10px; font-weight:normal;'>Sello Institucional</span></div><div class='firma-box'>Firma Director de Grupo</div></div></div></body></html>"""
             
-            pdf_data = generar_pdf(html_boletin)
-            if pdf_data:
-                col_espacio_vacio, col_boton_pequeno = st.columns([8, 2])
-                with col_boton_pequeno:
-                    st.download_button(label="📥 DESCARGAR PDF", data=pdf_data, file_name=f"Boletin_{alumno}_{periodo_sel}.pdf", mime="application/pdf", type="primary", use_container_width=True)
+            # 🚀 LA MAGIA DE LA VELOCIDAD: BOTÓN A DEMANDA
+            col_info, col_btn_prep, col_btn_down = st.columns([5, 3, 3])
+            
+            with col_info:
+                st.info("💡 Para impresión rápida y en máxima calidad, use el botón **'🖨️ IMPRIMIR REPORTE OFICIAL'** dentro del boletín.")
+                
+            with col_btn_prep:
+                if st.button("⚙️ Procesar Descarga PDF", use_container_width=True):
+                    with st.spinner("Construyendo el archivo PDF pesado..."):
+                        st.session_state[f'pdf_generado_{alumno}'] = generar_pdf(html_boletin)
+                        
+            with col_btn_down:
+                if f'pdf_generado_{alumno}' in st.session_state:
+                    st.download_button(label="📥 DESCARGAR PDF", data=st.session_state[f'pdf_generado_{alumno}'], file_name=f"Boletin_{alumno}_{periodo_sel}.pdf", mime="application/pdf", type="primary", use_container_width=True)
             
             components.html(html_boletin, height=750, scrolling=True)
 
@@ -168,7 +185,7 @@ def renderizar(df, curso_sel, periodo_sel):
                     <tr>
                         <td style="width:15%;"><img src="{URL_LOGO_OFICIAL}" width="90"></td>
                         <td style="text-align:center;">
-                            <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">INSTITUCION EDUCATIVA GÉNESIS 2026</h2>
+                            <h2 style="margin:0; color:#0d1b2a; font-size:20px; font-family:'Arial Black';">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h2>
                             <p style="margin:0; font-size:14px; color:#d4af37; font-family:'Arial Black'; text-transform:uppercase;">INFORME ACADÉMICO OFICIAL: {periodo_sel}</p>
                         </td>
                         <td style="text-align:right; width:15%;">
