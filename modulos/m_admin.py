@@ -5,28 +5,52 @@ from datetime import datetime, timedelta, timezone
 
 zona_colombia = timezone(timedelta(hours=-5))
 
-def registrar_bitacora(usuario, rol, accion):
-    if 'bitacora' not in st.session_state:
-        st.session_state.bitacora = []
-    st.session_state.bitacora.append({
-        "Fecha": datetime.now(zona_colombia).strftime("%Y-%m-%d"),
-        "Hora": datetime.now(zona_colombia).strftime("%I:%M:%S %p"),
-        "Usuario": usuario,
-        "Rol": rol,
-        "Acción": accion
-    })
+# =========================================================
+# ⚡ MOTOR DE INTELIGENCIA DIRECTIVA (Caché de Macro-Métricas)
+# =========================================================
+@st.cache_data(show_spinner=False)
+def calcular_metricas_mando(df, col_n):
+    """ Procesa los datos de toda la institución en tiempo récord """
+    if df.empty or col_n not in df.columns:
+        return 0, 0.0, 0, 100.0
+        
+    total_estudiantes = df['Nombre_Completo'].nunique() if 'Nombre_Completo' in df.columns else 0
+    
+    # Asegurar conversión numérica ultra-rápida
+    notas = pd.to_numeric(df[col_n], errors='coerce').fillna(0.0)
+    promedio_colegio = notas.mean()
+    
+    # Filtrado masivo de alumnos en riesgo bajo una sola máscara lógica
+    df_riesgo = df[pd.to_numeric(df[col_n], errors='coerce').fillna(0.0) < 6.0]
+    est_en_riesgo = df_riesgo['Nombre_Completo'].nunique() if 'Nombre_Completo' in df_riesgo.columns else 0
+    
+    porcentaje_riesgo = (est_en_riesgo / total_estudiantes * 100) if total_estudiantes > 0 else 0
+    eficiencia_interna = max(0.0, min(100.0, 100.0 - porcentaje_riesgo))
+    
+    return total_estudiantes, promedio_colegio, est_en_riesgo, eficiencia_interna
 
+# =========================================================
+# 👑 SUB-MÓDULO: CENTRO DE MANDO (RECTORÍA)
+# =========================================================
 def render_mando(df, periodo_sel, conn_sql):
+    # Inyector de estilos VIP para homogeneizar las tablas administrativas
+    st.markdown("""
+    <style>
+    div[data-testid="stDataFrame"] {
+        border: 3px solid #0d1b2a !important;
+        border-radius: 8px !important;
+        box-shadow: 4px 4px 15px rgba(0,0,0,0.1) !important;
+        overflow: hidden !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Mando | Nivel Rectoría</h3>", unsafe_allow_html=True)
     
     col_n = periodo_sel if periodo_sel != "CONSOLIDADO FINAL" else "PROMEDIO"
     
-    total_estudiantes = len(df['Nombre_Completo'].dropna().unique()) if not df.empty and 'Nombre_Completo' in df.columns else 0
-    promedio_colegio = df[col_n].mean() if not df.empty and col_n in df.columns else 0
-    
-    est_en_riesgo = df[df[col_n] < 6.0]['Nombre_Completo'].nunique() if not df.empty and col_n in df.columns else 0
-    porcentaje_riesgo = (est_en_riesgo / total_estudiantes * 100) if total_estudiantes > 0 else 0
-    eficiencia_interna = 100 - porcentaje_riesgo
+    # ⚡ EJECUCIÓN DEL MOTOR ACELERADO EN MEMORIA
+    total_estudiantes, promedio_colegio, est_en_riesgo, eficiencia_interna = calcular_metricas_mando(df, col_n)
     
     col1, col2, col3 = st.columns(3)
     with col1: st.markdown(f"<div class='metric-card'><p class='metric-label'>Total Estudiantes</p><p class='metric-value'>{total_estudiantes}</p></div>", unsafe_allow_html=True)
@@ -38,6 +62,7 @@ def render_mando(df, periodo_sel, conn_sql):
     st.markdown("---")
     st.subheader("🔐 Gestión de Seguridad de Periodos")
     
+    # Verificación e inicio de configuración de seguridad
     if 'df_config_seguridad' not in st.session_state or st.session_state.df_config_seguridad is None:
         try:
             st.session_state.df_config_seguridad = conn_sql.query("SELECT * FROM configuracion;")
@@ -51,20 +76,46 @@ def render_mando(df, periodo_sel, conn_sql):
     
     df_config = st.session_state.df_config_seguridad.copy()
     
+    # Mapeo dinámico e inteligente de nombres de columnas
+    col_p = 'periodo' if 'periodo' in df_config.columns else ('Periodo' if 'Periodo' in df_config.columns else df_config.columns[0])
+    col_e = 'estado' if 'estado' in df_config.columns else ('Estado' if 'Estado' in df_config.columns else df_config.columns[1])
+    
     col_1, col_2 = st.columns(2)
     nuevos_estados = []
 
     for i, fila in df_config.iterrows():
         with col_1 if i < 2 else col_2:
-            bloqueado = st.toggle(f"Cerrar {fila['Periodo']}", value=(fila['Estado'] == "Cerrado"))
+            bloqueado = st.toggle(f"Cerrar {fila[col_p]}", value=(str(fila[col_e]).strip().capitalize() == "Cerrado"))
             nuevos_estados.append("Cerrado" if bloqueado else "Abierto")
 
+    # =========================================================
+    # 💥 BOTÓN RE-INGENIERADO: PERSISTENCIA TOTAL
+    # =========================================================
     if st.button("🔴 APLICAR BLOQUEO GENERAL", type="primary"):
-        st.session_state.df_config_seguridad = df_config
-        st.success("✅ Protocolo actualizado en la sesión.")
-        registrar_bitacora(st.session_state.usuario_actual, st.session_state.rol, "🔐 Modificó la seguridad de periodos")
-        st.rerun()
+        # 1. Inyectamos los verdaderos estados en el DataFrame
+        df_config[col_e] = nuevos_estados
+        
+        try:
+            # 2. Transmitimos la orden directo a Supabase
+            df_config.to_sql('configuracion', con=conn_sql.engine, if_exists='replace', index=False)
+            
+            # 3. Sincronizamos la sesión local y limpiamos cachés de seguridad
+            st.session_state.df_config_seguridad = df_config
+            if 'df_config_seguridad' in st.session_state:
+                del st.session_state['df_config_seguridad']
+                
+            st.toast("✅ ¡Protocolo de Seguridad Sincronizado en la Nube Supabase!", icon="🛡️")
+            registrar_bitacora(st.session_state.get('usuario_actual', 'Admin'), st.session_state.get('rol', 'Admin'), "🔐 Sincronizó la seguridad de periodos en Supabase")
+            
+            import time
+            time.sleep(0.5)
+            st.rerun()
+        except Exception as e:
+            st.error(f"🚨 Error al transmitir bloqueo a Supabase: {e}")
 
+# =========================================================
+# 👑 SUB-MÓDULO: RESPALDO Y TRAZABILIDAD (BACKUP)
+# =========================================================
 def render_backup(conn_sql):
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>Centro de Respaldo y Trazabilidad</h3>", unsafe_allow_html=True)
     
@@ -92,7 +143,6 @@ def render_backup(conn_sql):
                     xls = pd.ExcelFile(archivo_excel)
                     pestanas = xls.sheet_names
                     
-                    # Buscador flexible de nombres por si hay variaciones de mayúsculas o S
                     tablas_mapeo = [
                         (['DATA_USUARIOS', 'Data_Usuarios', 'data_usuarios'], 'data_usuarios'), 
                         (['NOTAS_CONSOLIDADAS', 'NOTAS_CONSOLIDADA', 'Notas_Consolidadas'], 'notas_consolidadas'), 
@@ -112,19 +162,28 @@ def render_backup(conn_sql):
                         if p_encontrada:
                             try:
                                 df_origen = pd.read_excel(xls, p_encontrada)
-                                # ⚡ MOTOR TURBO MULTI-BLOQUE ACTIVADO ⚡
-                                df_origen.to_sql(t_destino, motor_sql, if_exists='replace', index=False, chunksize=500, method='multi')
+                                # ⚡ MOTOR INDUSTRIAL INTEGRADO POR LOTES (chunksize=1000 y method multi)
+                                df_origen.to_sql(
+                                    t_destino, 
+                                    motor_sql, 
+                                    if_exists='replace', 
+                                    index=False, 
+                                    chunksize=1000, 
+                                    method='multi'
+                                )
                                 st.success(f"✅ Tabla [{t_destino}] estructurada e inyectada desde pestaña '{p_encontrada}'.")
                             except Exception as e_tabla:
                                 st.error(f"❌ Error en pestaña '{p_encontrada}': {e_tabla}")
                         else:
                             st.warning(f"⚠️ No se encontró ninguna pestaña equivalente para la tabla [{t_destino}].")
                     
+                    # Inicialización limpia de la configuración por defecto tras migrar
                     df_conf_init = pd.DataFrame([{"Periodo": "P1", "Estado": "Abierto"}, {"Periodo": "P2", "Estado": "Abierto"}, {"Periodo": "P3", "Estado": "Abierto"}, {"Periodo": "P4", "Estado": "Abierto"}])
                     df_conf_init.to_sql('configuracion', motor_sql, if_exists='replace', index=False)
                     
                     st.success("🚀 ¡MIGRACIÓN COMPLETADA DE FORMA IMPECABLE! Todos los módulos están sincronizados.")
                     st.balloons()
+                    st.cache_data.clear() # Forzar re-lectura total del ecosistema
                 except Exception as e:
                     st.error(f"🚨 ERROR GENERAL EN LA INYECCIÓN SQL: {e}")
     st.markdown("</div>", unsafe_allow_html=True)
