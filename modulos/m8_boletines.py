@@ -31,7 +31,7 @@ def construir_mapa_logros(df_logros_raw):
                 dict_logros[clave] = val_logro
     return dict_logros
 
-# --- 2. MOTOR DE RENDERIZADO ULTRALIVIANO ---
+# --- 2. MOTOR DE RENDERIZADO ---
 
 def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, periodos_print, info_puesto):
     res = df_curso[df_curso['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
@@ -65,7 +65,7 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
                 td += f"<td style='color:{color}; font-weight:bold;'>{val:.1f}</td>"
             else:
                 val = float(row.get(p, 0)) if pd.notna(row.get(p, 0)) else 0.0
-                td += f"<td style='font-weight:bold;'>{val:.1f}</td>"
+                td += f"<td>{val:.1f}</td>"
 
         html_filas.append(f"<tr><td class='materia-title'><b>{row['Materia']}</b></td>{td}<td style='color:{color}; font-weight:bold;'>{desp}</td></tr>")
         
@@ -79,7 +79,7 @@ def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_a
         html_filas.append(f"<tr class='logro-row'><td colspan='{col_span_logro}'><b>LOGRO:</b> {logro_texto}</td></tr>")
 
     img_watermark = f'<img src="{URL_LOGO}" class="watermark">' if URL_LOGO else ""
-    img_logo = f'<img src="{URL_LOGO}" width="70">' if URL_LOGO else ""
+    img_logo = f'<img src="{URL_LOGO}" width="75">' if URL_LOGO else ""
 
     html_boletin = f"""<html><head><script>function imprimirBoletin() {{ window.print(); }}</script>{css_vip}</head><body>
     <div class="no-print" style="text-align:right; margin-bottom:10px; position:absolute; top:12px; right:20px; z-index:99;">
@@ -166,18 +166,18 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     df_agrupado['Total_Grado'] = df_agrupado.groupby('Grado')['Nombre_Completo'].transform('count')
     dict_puestos = {row['Nombre_Completo']: f"{row['Puesto']} de {row['Total_Grado']}" for _, row in df_agrupado.iterrows()}
 
-    # 🎨 RECALIBRACIÓN MAESTRA DE ESTILOS CSS - EXPANDIDO HORIZONTAL Y COMPACTO VERTICAL
+    # 🎨 ESTILOS CSS ESTABILIZADOS (Márgenes fijos equilibrados)
     css_vip = """<style>
         body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
         
-        .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 10px; background: white; z-index: 1; margin-bottom: 25px; page-break-inside: avoid !important; }
+        .b-print { position: relative; padding: 20px; border: 3px solid #0d1b2a; border-radius: 10px; background: white; z-index: 1; margin-bottom: 25px; box-sizing: border-box; }
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 60%; z-index: -1; pointer-events: none; }
         
-        .table-custom { width: 100% !important; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; z-index: 2; position: relative; }
-        .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 5px; font-family: 'Arial Black'; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; z-index: 2; position: relative; }
+        .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 6px; font-family: 'Arial Black'; font-size: 11.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .table-custom td { border: 1px solid #000; padding: 5px; text-align: center; font-size: 11px; }
         .materia-title { text-align: left !important; background-color: #f8f9fa !important; font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .logro-row td { text-align: justify !important; font-size: 10px !important; font-style: italic; border-bottom: 1px solid #000; background-color: #ffffff !important; padding: 3px 8px !important; font-weight: normal !important; line-height: 1.15 !important; }
+        .logro-row td { text-align: justify !important; font-size: 10.5px !important; font-style: italic; border-bottom: 1.5px solid #000; background-color: #ffffff !important; padding: 3px 8px !important; font-weight: normal !important; line-height: 1.25 !important; }
         
         .header-table { width: 100%; border: none; margin-bottom: 10px; z-index: 2; position: relative; }
         .header-table td { border: none; padding: 0; }
@@ -186,32 +186,30 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
         
         .info-box { border: 2px solid #0d1b2a; padding: 8px 12px; background: #f8f9fa !important; display: flex; justify-content: space-between; margin-bottom: 8px; border-radius: 5px; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         
-        .firmas-container { display: flex; justify-content: space-around; margin-top: 45px; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+        .firmas-container { display: flex; justify-content: space-around; margin-top: 50px; font-size: 12px; z-index: 2; position: relative; }
         .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
         
-        /* 🚀 REGLAS DE IMPRESIÓN RECALIBRADAS */
         @media print { 
-            @page { size: letter portrait; margin: 8mm 12mm 10mm 12mm !important; } 
+            @page { size: letter portrait; margin: 10mm 12mm 12mm 12mm !important; } 
             body, html { width: 100% !important; background: white; margin: 0; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
             .no-print { display: none !important; } 
             .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; } 
             .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             
-            .header-table { margin-bottom: 4px !important; }
+            .header-table { margin-bottom: 6px !important; }
             .header-table h2 { font-size: 15px !important; margin: 0 !important; }
             .header-table p { font-size: 11px !important; margin: 0 !important; }
             
-            .info-box { padding: 4px 8px !important; font-size: 11px !important; margin-bottom: 4px !important; border-width: 1.5px !important;}
+            .info-box { padding: 4px 8px !important; font-size: 11px !important; margin-bottom: 6px !important; border-width: 1.5px !important;}
             
-            /* Tabla extendida al 100% real pero con celdas compactas */
-            .table-custom { width: 100% !important; table-layout: fixed !important; margin-top: 0 !important; margin-bottom: 0 !important; }
-            .table-custom th { padding: 3px 2px !important; font-size: 10px !important; }
-            .table-custom td { padding: 2px 2px !important; font-size: 10px !important; }
-            .materia-title { font-size: 10px !important; width: 45% !important; } /* Asigna ancho base a materias */
-            .logro-row td { padding: 2px 6px !important; font-size: 8.5px !important; line-height: 1.1 !important; border-bottom: 1.5px solid #000 !important; }
+            .table-custom { width: 100% !important; margin-top: 0 !important; margin-bottom: 0 !important; }
+            .table-custom th { padding: 3px !important; font-size: 10px !important; }
+            .table-custom td { padding: 3px !important; font-size: 10px !important; }
+            .materia-title { font-size: 10px !important; }
+            .logro-row td { padding: 2px 6px !important; font-size: 9px !important; line-height: 1.15 !important; border-bottom: 1.5px solid #000 !important; }
             
-            /* REGLA DE ORO DE FIRMAS: Separación elegante asegurada */
-            .firmas-container { display: flex !important; justify-content: space-around !important; margin-top: 50px !important; font-size: 11px !important; }
+            /* EQUILIBRIO DE FIRMAS: Espacio controlado anti-desborde */
+            .firmas-container { margin-top: 45px !important; font-size: 11px !important; page-break-inside: avoid !important; }
             .firma-box { padding-top: 4px !important; border-top: 1.5px solid #0d1b2a !important; }
         }
     </style>"""
