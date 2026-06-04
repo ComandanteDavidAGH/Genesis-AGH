@@ -2,6 +2,45 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+# =========================================================
+# ⚡ MOTOR DE PROCESAMIENTO MATEMÁTICO (Caché de Alta Velocidad)
+# =========================================================
+@st.cache_data(show_spinner=False)
+def procesar_datos_inteligencia(df, col_n):
+    """ Realiza todos los cálculos pesados una sola vez y comprime los datos para Plotly """
+    
+    # 1. Filtro de Integridad Estricto
+    notas_convertidas = pd.to_numeric(df[col_n], errors='coerce')
+    filas_con_error = df[notas_convertidas.isna() & df[col_n].notna() & (df[col_n].astype(str).str.strip() != "")]
+
+    # 2. Limpieza y Seguridad
+    df_seguro = df.dropna(subset=[col_n]).copy()
+    df_seguro[col_n] = pd.to_numeric(df_seguro[col_n], errors='coerce').fillna(0.0)
+
+    if df_seguro.empty:
+        return filas_con_error, pd.DataFrame(), 0, 0.0, "N/A", pd.DataFrame()
+
+    # 3. Cálculos de KPIs Tácticos
+    df_promedios = df_seguro.groupby('Materia')[col_n].mean().reset_index().sort_values(by=col_n, ascending=True) 
+    total_evaluados = df_seguro['Nombre_Completo'].nunique() if 'Nombre_Completo' in df_seguro.columns else len(df_seguro)
+    promedio_global = df_seguro[col_n].mean()
+    mejor_materia = str(df_promedios.iloc[-1]['Materia']) if not df_promedios.empty else "N/A"
+
+    # 4. ⚡ COMPRESIÓN DE CARGA PARA PLOTLY (El secreto de la velocidad)
+    # En lugar de enviar miles de filas a la gráfica, le enviamos solo 4 datos pre-calculados.
+    limites = [-1, 6.0, 7.6, 9.1, 100.0]
+    etiquetas = ['BAJO', 'BÁSICO', 'ALTO', 'SUPERIOR']
+    
+    desempenos = pd.cut(df_seguro[col_n], bins=limites, labels=etiquetas, right=False)
+    df_pie_counts = desempenos.value_counts().reset_index()
+    df_pie_counts.columns = ['DESEMPEÑO_FILTRO', 'CONTEO']
+    df_pie_counts = df_pie_counts[df_pie_counts['CONTEO'] > 0] # Enviamos solo lo que existe
+
+    return filas_con_error, df_promedios, total_evaluados, promedio_global, mejor_materia, df_pie_counts
+
+# =========================================================
+# 👑 RENDERIZADO VISUAL
+# =========================================================
 def renderizar(df, periodo_sel):
     # 🚀 INYECCIÓN DEL MOTOR DE ANIMACIÓN Y ESTILOS 3D
     st.markdown("""
@@ -54,10 +93,10 @@ def renderizar(df, periodo_sel):
         st.error(f"La columna '{col_n}' no existe en la base de datos actual.")
         return
 
-    # 🛑 CONTROL ULTRA-ESTRICTO DE ERRORES DE USUARIO (Mantenido por su excelente lógica)
-    notas_convertidas = pd.to_numeric(df[col_n], errors='coerce')
-    filas_con_error = df[notas_convertidas.isna() & df[col_n].notna() & (df[col_n].astype(str).str.strip() != "")]
+    # ⚡ EJECUTAMOS EL MOTOR MATEMÁTICO ACELERADO
+    filas_con_error, df_promedios, total_evaluados, promedio_global, mejor_materia, df_pie_counts = procesar_datos_inteligencia(df, col_n)
 
+    # 🛑 CONTROL ULTRA-ESTRICTO DE ERRORES DE USUARIO
     if not filas_con_error.empty:
         st.error(f"🚨 **¡Falla de Integridad en Datos!** Se detectaron caracteres no numéricos (letras o símbolos) en la columna de calificaciones de **{periodo_sel}**.")
         with st.expander("🔍 Ver registros corrompidos para corrección inmediata:", expanded=True):
@@ -66,21 +105,11 @@ def renderizar(df, periodo_sel):
         st.info("💡 *Por favor, diríjase al módulo 'Digitar Notas' o a su archivo de respaldo y corrija las celdas afectadas.*")
         return  
 
-    # Limpiamos los nulos legítimos
-    df_seguro = df.dropna(subset=[col_n]).copy()
-    df_seguro[col_n] = df_seguro[col_n].astype(float)
-
-    if df_seguro.empty:
+    if df_promedios.empty:
         st.info("No hay calificaciones registradas para generar los gráficos en este periodo.")
         return
 
-    # 🚀 NUEVO: TARJETAS DE MANDO (KPIs)
-    df_promedios = df_seguro.groupby('Materia')[col_n].mean().reset_index().sort_values(by=col_n, ascending=True) 
-    
-    total_evaluados = df_seguro['Nombre_Completo'].nunique() if 'Nombre_Completo' in df_seguro.columns else len(df_seguro)
-    promedio_global = df_seguro[col_n].mean()
-    mejor_materia = str(df_promedios.iloc[-1]['Materia']) if not df_promedios.empty else "N/A"
-
+    # 🚀 RENDERIZAMOS TARJETAS DE MANDO (KPIs)
     col_k1, col_k2, col_k3 = st.columns(3)
     with col_k1:
         st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Alumnos Evaluados</p><p class='kpi-value'>{total_evaluados}</p></div>", unsafe_allow_html=True)
@@ -96,7 +125,7 @@ def renderizar(df, periodo_sel):
     with c1: 
         st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Rendimiento por Materia ({periodo_sel})</div>", unsafe_allow_html=True)
         
-        # ⚡ Gráfico de Barras con "Mapa de Calor" según el Promedio
+        # ⚡ Gráfico de Barras
         fig1 = px.bar(
             df_promedios, x=col_n, y='Materia', text_auto='.1f', 
             color=col_n, 
@@ -122,19 +151,22 @@ def renderizar(df, periodo_sel):
     with c2: 
         st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Distribución de Niveles ({periodo_sel})</div>", unsafe_allow_html=True)
         
-        limites = [-1, 6.0, 7.6, 9.1, 100.0]
-        etiquetas = ['BAJO', 'BÁSICO', 'ALTO', 'SUPERIOR']
-        
-        df_pie = df_seguro.copy()
-        df_pie['DESEMPEÑO_FILTRO'] = pd.cut(df_pie[col_n], bins=limites, labels=etiquetas, right=False)
         colores_vivos = {'BAJO': '#e63946', 'BÁSICO': '#f4a261', 'ALTO': '#2a9d8f', 'SUPERIOR': '#1d3557'}
         
-        fig2 = px.pie(df_pie, names='DESEMPEÑO_FILTRO', hole=0.45, color='DESEMPEÑO_FILTRO', color_discrete_map=colores_vivos)
+        # ⚡ Gráfico de Pastel (Usa los datos comprimidos)
+        fig2 = px.pie(
+            df_pie_counts, 
+            names='DESEMPEÑO_FILTRO', 
+            values='CONTEO', # Pasamos los valores matemáticos exactos en vez de miles de filas
+            hole=0.45, 
+            color='DESEMPEÑO_FILTRO', 
+            color_discrete_map=colores_vivos
+        )
         
         fig2.update_traces(
             textposition='inside', textinfo='percent+label', 
             textfont=dict(color="#000000", family="Arial Black", size=13), 
-            pull=[0.03]*4, 
+            pull=[0.03]*len(df_pie_counts), 
             marker=dict(line=dict(color='#000000', width=1.5)), 
             opacity=0.95,
             hovertemplate="<b>Nivel %{label}</b><br>Alumnos: %{value}<br>Proporción: %{percent}<extra></extra>" # Tooltip Detallado
