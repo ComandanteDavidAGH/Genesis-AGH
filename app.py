@@ -230,12 +230,11 @@ try:
     elif menu == "📖 Manual de Usuario": import modulos.m9_manual as m9; m9.renderizar()
     elif menu == "📸 Eventos Institucionales": import modulos.m10_eventos as m10; m10.renderizar()
     
-    # 🌟 EL MÓDULO BOLETINES VIP (INCRUSTADO DIRECTO PARA MAYOR ESTABILIDAD)
-    elif menu == "📝 Asistencias y Reportes": import modulos.m7_asistencia as m7; m7.renderizar(df_filtrado, conn_sql)
-    elif menu == "📖 Manual de Usuario": import modulos.m9_manual as m9; m9.renderizar()
-    elif menu == "📸 Eventos Institucionales": import modulos.m10_eventos as m10; m10.renderizar()
-    
     # 🌟 EL MÓDULO BOLETINES VIP (MODULARIZADO Y ACELERADO)
     elif menu == "📜 Boletines":
         import modulos.m8_boletines as m8
         m8.renderizar(df_m, curso_sel, periodo_sel)
+
+# ¡ESTE ES EL BLOQUE QUE FALTABA Y CAUSÓ EL ERROR EN LA FOTO!
+except Exception as e:
+    st.error(f"🛠️ Sincronizando módulos... Detalle técnico: {e}")
