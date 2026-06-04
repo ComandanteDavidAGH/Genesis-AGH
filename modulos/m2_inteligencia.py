@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 import pandas as pd
 import plotly.express as px
 
@@ -38,14 +38,19 @@ def procesar_datos_inteligencia(df, col_n):
     return filas_con_error, df_promedios, total_evaluados, promedio_global, mejor_materia, df_pie_counts
 
 # =========================================================
-# 👑 RENDERIZADO VISUAL PERFECTO
+# 👑 RENDERIZADO VISUAL EN MARCO PERFECTO
 # =========================================================
 def renderizar(df, periodo_sel):
     # 🚀 INYECCIÓN DEL MOTOR DE ANIMACIÓN Y ESTILOS 3D RESPONSIVOS
     st.markdown("""
     <style>
-    /* Caja contenedora protectora para evitar cortes visuales */
-    .chart-wrapper {
+    /* Contenedor flexible sin recortes agresivos abajo */
+    .chart-wrapper-bars {
+        width: 100% !important;
+        padding: 5px !important;
+    }
+    
+    .chart-wrapper-pie {
         width: 100% !important;
         overflow: hidden !important;
         padding: 5px !important;
@@ -127,13 +132,12 @@ def renderizar(df, periodo_sel):
     # --- CONFIGURACIÓN Y RENDERIZADO DE GRÁFICOS OPTIMIZADOS EN REPARTO ---
     config_espanol = {'locale': 'es', 'displaylogo': False, 'responsive': True}
     
-    # 🎯 CAMBIO CLAVE: Proporciones de columna asimétricas para darle aire al gráfico circular
     c1, c2 = st.columns([5.5, 4.5])
     
     with c1: 
         st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Rendimiento por Materia ({periodo_sel})</div>", unsafe_allow_html=True)
         
-        # ⚡ Gráfico de Barras Ajustado
+        # ⚡ Gráfico de Barras con más altura y margen inferior seguro (b=50)
         fig1 = px.bar(
             df_promedios, x=col_n, y='Materia', text_auto='.1f', 
             color=col_n, 
@@ -147,15 +151,15 @@ def renderizar(df, periodo_sel):
             hovertemplate="<b>%{y}</b><br>Promedio: %{x:.1f}<extra></extra>"
         )
         fig1.update_layout(
-            height=340, 
-            margin=dict(t=15, b=15, l=10, r=15), # Márgenes limpios
+            height=380, 
+            margin=dict(t=15, b=50, l=10, r=20), # 🎯 b=50 le da un colchón de aire abajo a la etiqueta
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
             showlegend=False, coloraxis_showscale=False
         )
         fig1.update_yaxes(title_text="", visible=True, tickmode='linear', dtick=1, tickfont=dict(size=11, color='#000000', family="Arial Black"), automargin=True) 
         fig1.update_xaxes(title_text="Promedio Ponderado", title_font=dict(color="#000", family="Arial Black", size=12), tickfont=dict(color="#000", family="Arial Black"))
         
-        st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
+        st.markdown('<div class="chart-wrapper-bars">', unsafe_allow_html=True)
         st.plotly_chart(fig1, use_container_width=True, config=config_espanol)
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -164,7 +168,6 @@ def renderizar(df, periodo_sel):
         
         colores_vivos = {'BAJO': '#e63946', 'BÁSICO': '#f4a261', 'ALTO': '#2a9d8f', 'SUPERIOR': '#1d3557'}
         
-        # ⚡ Gráfico de Dona con reducción de radio (domain) para blindar los bordes
         fig2 = px.pie(
             df_pie_counts, 
             names='DESEMPEÑO_FILTRO', 
@@ -177,22 +180,21 @@ def renderizar(df, periodo_sel):
         fig2.update_traces(
             textposition='inside', 
             textinfo='percent+label', 
-            textfont=dict(color="#ffffff", family="Arial Black", size=11), # Texto blanco sobre fondo oscuro para contraste
+            textfont=dict(color="#ffffff", family="Arial Black", size=11), 
             pull=[0.02]*len(df_pie_counts), 
             marker=dict(line=dict(color='#000000', width=1.5)), 
             opacity=0.95,
             hovertemplate="<b>Nivel %{label}</b><br>Alumnos: %{value}<br>Proporción: %{percent}<extra></extra>"
         )
         
-        # 🎯 AJUSTE MILIMÉTRICO: Reducimos márgenes internos y movemos la dona al centro absoluto
         fig2.update_layout(
-            height=340, 
-            margin=dict(t=20, b=20, l=20, r=20), 
+            height=380, # Nivelamos alturas
+            margin=dict(t=20, b=50, l=20, r=20), 
             plot_bgcolor='rgba(0,0,0,0)', 
             paper_bgcolor='rgba(0,0,0,0)', 
             showlegend=False
         )
         
-        st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
+        st.markdown('<div class="chart-wrapper-pie">', unsafe_allow_html=True)
         st.plotly_chart(fig2, use_container_width=True, config=config_espanol)
         st.markdown('</div>', unsafe_allow_html=True)
