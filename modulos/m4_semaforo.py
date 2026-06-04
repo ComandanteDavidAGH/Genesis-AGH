@@ -1,6 +1,27 @@
 import streamlit as st
 import pandas as pd
 
+# =========================================================
+# ⚡ MOTOR DE PROCESAMIENTO MATEMÁTICO (Caché de Agrupación)
+# =========================================================
+@st.cache_data(show_spinner=False)
+def clasificar_riesgo_academico(df, col_nombre, col_grado, col_nota):
+    """ Agrupa y clasifica a todos los estudiantes en un solo milisegundo """
+    # Agrupación Táctica por Estudiante
+    df_resumen = df.groupby(col_nombre).agg({col_nota: 'mean', col_grado: 'first'}).reset_index()
+    df_resumen = df_resumen.dropna(subset=[col_nota])
+    df_resumen = df_resumen.rename(columns={col_nota: "Promedio"})
+
+    # Clasificación Estratégica
+    criticos = df_resumen[df_resumen["Promedio"] < 6.0].sort_values(by="Promedio", ascending=True)
+    alertas = df_resumen[(df_resumen["Promedio"] >= 6.0) & (df_resumen["Promedio"] < 7.6)].sort_values(by="Promedio", ascending=True)
+    optimos = df_resumen[df_resumen["Promedio"] >= 7.6].sort_values(by="Promedio", ascending=False)
+    
+    return criticos, alertas, optimos
+
+# =========================================================
+# 👑 RENDERIZADO VISUAL
+# =========================================================
 def renderizar(df_notas, periodo_sel, conn_sql=None):
     # 👑 MOTOR VISUAL TÁCTICO: Animaciones, Levitación y Marcos VIP
     st.markdown("""
@@ -51,7 +72,7 @@ def renderizar(df_notas, periodo_sel, conn_sql=None):
         st.warning("⚠️ No hay datos disponibles para el Semáforo.")
         return
 
-    # Estandarización de columnas
+    # Estandarización de columnas (Operaciones ligeras)
     df_trabajo = df_notas.copy()
     df_trabajo.columns = [str(c).upper().strip() for c in df_trabajo.columns]
     
@@ -79,15 +100,8 @@ def renderizar(df_notas, periodo_sel, conn_sql=None):
     if grado_sel != "TODOS":
         df_trabajo = df_trabajo[df_trabajo[col_grado].astype(str) == grado_sel]
 
-    # Agrupación Táctica por Estudiante
-    df_resumen = df_trabajo.groupby(col_nombre).agg({col_nota: 'mean', col_grado: 'first'}).reset_index()
-    df_resumen = df_resumen.dropna(subset=[col_nota])
-    df_resumen = df_resumen.rename(columns={col_nota: "Promedio"})
-
-    # Clasificación Estratégica
-    criticos = df_resumen[df_resumen["Promedio"] < 6.0].sort_values(by="Promedio", ascending=True)
-    alertas = df_resumen[(df_resumen["Promedio"] >= 6.0) & (df_resumen["Promedio"] < 7.6)].sort_values(by="Promedio", ascending=True)
-    optimos = df_resumen[df_resumen["Promedio"] >= 7.6].sort_values(by="Promedio", ascending=False)
+    # ⚡ CÁLCULO ULTRARRÁPIDO DESDE LA CACHÉ
+    criticos, alertas, optimos = clasificar_riesgo_academico(df_trabajo, col_nombre, col_grado, col_nota)
 
     # 📊 PANELES SUPERIORES (KPIs)
     c1, c2, c3 = st.columns(3)
