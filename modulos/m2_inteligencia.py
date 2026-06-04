@@ -44,22 +44,17 @@ def renderizar(df, periodo_sel):
     # 🚀 INYECCIÓN DEL MOTOR DE ANIMACIÓN Y ESTILOS 3D RESPONSIVOS
     st.markdown("""
     <style>
-    /* Contenedor flexible sin recortes agresivos abajo */
-    .chart-wrapper-bars {
+    /* Forzar visibilidad total de los desbordes en los contenedores */
+    .chart-wrapper-bars, .chart-wrapper-pie {
         width: 100% !important;
         padding: 5px !important;
-    }
-    
-    .chart-wrapper-pie {
-        width: 100% !important;
-        overflow: hidden !important;
-        padding: 5px !important;
+        overflow: visible !important;
     }
 
-    /* Efecto 3D de los gráficos Plotly ajustado */
+    /* Efecto 3D de los gráficos Plotly con margen de respeto interno */
     div[data-testid="stPlotlyChart"] {
         background-color: #ffffff !important;
-        padding: 15px !important;
+        padding: 20px !important;
         border-radius: 14px !important;
         border: 3px solid #0d1b2a !important;
         box-shadow: 7px 7px 0px #0d1b2a, 12px 12px 25px rgba(0,0,0,0.15) !important;
@@ -67,25 +62,20 @@ def renderizar(df, periodo_sel):
         will-change: transform !important;
         z-index: 1;
         width: 100% !important;
+        overflow: visible !important;
     }
     
-    /* Efecto de Levitación Magnética al Hover */
     div[data-testid="stPlotlyChart"]:hover {
         transform: translateY(-6px) scale(1.01) !important;
         box-shadow: 9px 9px 0px #d4af37, 15px 15px 30px rgba(0,0,0,0.2) !important;
         border-color: #d4af37 !important;
     }
     
-    /* Tarjetas de KPI Tácticos */
     .kpi-card {
         background: linear-gradient(135deg, #0d1b2a 0%, #1a365d 100%);
         border-left: 5px solid #d4af37;
-        padding: 15px;
-        border-radius: 8px;
-        color: white;
-        text-align: center;
-        box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
-        margin-bottom: 20px;
+        padding: 15px; border-radius: 8px; color: white; text-align: center;
+        box-shadow: 3px 3px 10px rgba(0,0,0,0.2); margin-bottom: 20px;
     }
     .kpi-title { font-size: 12px; font-weight: bold; color: #d4af37; text-transform: uppercase; letter-spacing: 1px; margin:0; }
     .kpi-value { font-size: 24px; font-family: 'Arial Black', sans-serif; margin: 5px 0 0 0; }
@@ -122,14 +112,11 @@ def renderizar(df, periodo_sel):
 
     # 🚀 RENDERIZAMOS TARJETAS DE MANDO (KPIs)
     col_k1, col_k2, col_k3 = st.columns(3)
-    with col_k1:
-        st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Alumnos Evaluados</p><p class='kpi-value'>{total_evaluados}</p></div>", unsafe_allow_html=True)
-    with col_k2:
-        st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Promedio Global</p><p class='kpi-value'>{promedio_global:.1f}</p></div>", unsafe_allow_html=True)
-    with col_k3:
-        st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Materia Destacada</p><p class='kpi-value' style='font-size:16px; margin-top:12px;'>🏆 {mejor_materia}</p></div>", unsafe_allow_html=True)
+    with col_k1: st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Alumnos Evaluados</p><p class='kpi-value'>{total_evaluados}</p></div>", unsafe_allow_html=True)
+    with col_k2: st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Promedio Global</p><p class='kpi-value'>{promedio_global:.1f}</p></div>", unsafe_allow_html=True)
+    with col_k3: st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Materia Destacada</p><p class='kpi-value' style='font-size:16px; margin-top:12px;'>🏆 {mejor_materia}</p></div>", unsafe_allow_html=True)
 
-    # --- CONFIGURACIÓN Y RENDERIZADO DE GRÁFICOS OPTIMIZADOS EN REPARTO ---
+    # --- CONFIGURACIÓN DE LIENZOS ---
     config_espanol = {'locale': 'es', 'displaylogo': False, 'responsive': True}
     
     c1, c2 = st.columns([5.5, 4.5])
@@ -137,11 +124,9 @@ def renderizar(df, periodo_sel):
     with c1: 
         st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Rendimiento por Materia ({periodo_sel})</div>", unsafe_allow_html=True)
         
-        # ⚡ Gráfico de Barras con más altura y margen inferior seguro (b=50)
         fig1 = px.bar(
             df_promedios, x=col_n, y='Materia', text_auto='.1f', 
-            color=col_n, 
-            color_continuous_scale=['#cc0000', '#d4af37', '#0d1b2a'],
+            color=col_n, color_continuous_scale=['#cc0000', '#d4af37', '#0d1b2a'],
             orientation='h'
         )
         
@@ -152,7 +137,7 @@ def renderizar(df, periodo_sel):
         )
         fig1.update_layout(
             height=380, 
-            margin=dict(t=15, b=50, l=10, r=20), # 🎯 b=50 le da un colchón de aire abajo a la etiqueta
+            margin=dict(t=15, b=50, l=10, r=25), # Colchón de seguridad lateral derecho aumentado
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
             showlegend=False, coloraxis_showscale=False
         )
@@ -169,12 +154,8 @@ def renderizar(df, periodo_sel):
         colores_vivos = {'BAJO': '#e63946', 'BÁSICO': '#f4a261', 'ALTO': '#2a9d8f', 'SUPERIOR': '#1d3557'}
         
         fig2 = px.pie(
-            df_pie_counts, 
-            names='DESEMPEÑO_FILTRO', 
-            values='CONTEO', 
-            hole=0.5, 
-            color='DESEMPEÑO_FILTRO', 
-            color_discrete_map=colores_vivos
+            df_pie_counts, names='DESEMPEÑO_FILTRO', values='CONTEO', 
+            hole=0.5, color='DESEMPEÑO_FILTRO', color_discrete_map=colores_vivos
         )
         
         fig2.update_traces(
@@ -187,12 +168,15 @@ def renderizar(df, periodo_sel):
             hovertemplate="<b>Nivel %{label}</b><br>Alumnos: %{value}<br>Proporción: %{percent}<extra></extra>"
         )
         
+        # 🎯 AJUSTE MILIMÉTRICO DE CONTROL DE DOMINIO (Comprime el gráfico al centro un 15%)
         fig2.update_layout(
-            height=380, # Nivelamos alturas
-            margin=dict(t=20, b=50, l=20, r=20), 
-            plot_bgcolor='rgba(0,0,0,0)', 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            showlegend=False
+            height=380, 
+            margin=dict(t=20, b=50, l=25, r=25), # Colchón de amortiguación en los 4 puntos cardinales
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
+            showlegend=False,
+            piecolorway=list(colores_vivos.values()),
+            # Forzamos a que el círculo se dibuje en un área reducida dejando un margen perimetral de seguridad
+            slices=[dict(domain=dict(x=[0.1, 0.9], y=[0.1, 0.9]))]
         )
         
         st.markdown('<div class="chart-wrapper-pie">', unsafe_allow_html=True)
