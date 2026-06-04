@@ -1,8 +1,36 @@
 import streamlit as st
 
 def renderizar():
+    # 🚀 MOTOR VISUAL VIP: Estilización de Expanders y Contornos Institucionales
+    st.markdown("""
+    <style>
+    /* Homogeneidad en los componentes expandibles */
+    div[data-testid="stExpander"] {
+        border: 2px solid #0d1b2a !important;
+        border-radius: 8px !important;
+        box-shadow: 3px 3px 10px rgba(0,0,0,0.05) !important;
+        margin-bottom: 12px !important;
+        background-color: #ffffff !important;
+    }
+    
+    /* Resalte dorado elegante al pasar el mouse por un expander */
+    div[data-testid="stExpander"]:hover {
+        border-color: #d4af37 !important;
+        box-shadow: 0px 5px 15px rgba(212, 175, 55, 0.15) !important;
+    }
+
+    /* Ajuste del texto interno para máxima legibilidad */
+    div[data-testid="stExpander"] p {
+        color: #222222 !important;
+        font-size: 14.5px !important;
+        line-height: 1.6 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<h3 style='color:#000000; border-bottom:3px solid #d4af37; padding-bottom:5px; font-family:Arial Black;'>📖 Manual de Operaciones</h3>", unsafe_allow_html=True)
     
+    # 🛡️ PANELES INFORMATIVOS ENCAPSULADOS
     with st.expander("🔐 1. ACCESO Y SEGURIDAD", expanded=True):
         st.write("""
         * **Ingreso:** Utilice sus credenciales asignadas. El sistema registra cada ingreso en la bitácora de seguridad.
