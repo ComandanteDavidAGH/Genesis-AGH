@@ -26,43 +26,49 @@ def procesar_datos_inteligencia(df, col_n):
     promedio_global = df_seguro[col_n].mean()
     mejor_materia = str(df_promedios.iloc[-1]['Materia']) if not df_promedios.empty else "N/A"
 
-    # 4. ⚡ COMPRESIÓN DE CARGA PARA PLOTLY (El secreto de la velocidad)
-    # En lugar de enviar miles de filas a la gráfica, le enviamos solo 4 datos pre-calculados.
+    # 4. ⚡ COMPRESIÓN DE CARGA PARA PLOTLY
     limites = [-1, 6.0, 7.6, 9.1, 100.0]
     etiquetas = ['BAJO', 'BÁSICO', 'ALTO', 'SUPERIOR']
     
     desempenos = pd.cut(df_seguro[col_n], bins=limites, labels=etiquetas, right=False)
     df_pie_counts = desempenos.value_counts().reset_index()
     df_pie_counts.columns = ['DESEMPEÑO_FILTRO', 'CONTEO']
-    df_pie_counts = df_pie_counts[df_pie_counts['CONTEO'] > 0] # Enviamos solo lo que existe
+    df_pie_counts = df_pie_counts[df_pie_counts['CONTEO'] > 0]
 
     return filas_con_error, df_promedios, total_evaluados, promedio_global, mejor_materia, df_pie_counts
 
 # =========================================================
-# 👑 RENDERIZADO VISUAL
+# 👑 RENDERIZADO VISUAL PERFECTO
 # =========================================================
 def renderizar(df, periodo_sel):
-    # 🚀 INYECCIÓN DEL MOTOR DE ANIMACIÓN Y ESTILOS 3D
+    # 🚀 INYECCIÓN DEL MOTOR DE ANIMACIÓN Y ESTILOS 3D RESPONSIVOS
     st.markdown("""
     <style>
-    /* Efecto 3D de los gráficos Plotly */
-    [data-testid="stPlotlyChart"] {
+    /* Caja contenedora protectora para evitar cortes visuales */
+    .chart-wrapper {
+        width: 100% !important;
+        overflow: hidden !important;
+        padding: 5px !important;
+    }
+
+    /* Efecto 3D de los gráficos Plotly ajustado */
+    div[data-testid="stPlotlyChart"] {
         background-color: #ffffff !important;
-        padding: 18px !important;
+        padding: 15px !important;
         border-radius: 14px !important;
         border: 3px solid #0d1b2a !important;
         box-shadow: 7px 7px 0px #0d1b2a, 12px 12px 25px rgba(0,0,0,0.15) !important;
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         will-change: transform !important;
         z-index: 1;
+        width: 100% !important;
     }
     
     /* Efecto de Levitación Magnética al Hover */
-    [data-testid="stPlotlyChart"]:hover {
-        transform: translateY(-6px) scale(1.02) !important;
+    div[data-testid="stPlotlyChart"]:hover {
+        transform: translateY(-6px) scale(1.01) !important;
         box-shadow: 9px 9px 0px #d4af37, 15px 15px 30px rgba(0,0,0,0.2) !important;
         border-color: #d4af37 !important;
-        z-index: 999 !important;
     }
     
     /* Tarjetas de KPI Tácticos */
@@ -118,59 +124,75 @@ def renderizar(df, periodo_sel):
     with col_k3:
         st.markdown(f"<div class='kpi-card'><p class='kpi-title'>Materia Destacada</p><p class='kpi-value' style='font-size:16px; margin-top:12px;'>🏆 {mejor_materia}</p></div>", unsafe_allow_html=True)
 
-    # --- CONFIGURACIÓN Y RENDERIZADO DE GRÁFICOS ---
-    config_espanol = {'locale': 'es', 'displaylogo': False}
-    c1, c2 = st.columns(2)
+    # --- CONFIGURACIÓN Y RENDERIZADO DE GRÁFICOS OPTIMIZADOS EN REPARTO ---
+    config_espanol = {'locale': 'es', 'displaylogo': False, 'responsive': True}
+    
+    # 🎯 CAMBIO CLAVE: Proporciones de columna asimétricas para darle aire al gráfico circular
+    c1, c2 = st.columns([5.5, 4.5])
     
     with c1: 
         st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Rendimiento por Materia ({periodo_sel})</div>", unsafe_allow_html=True)
         
-        # ⚡ Gráfico de Barras
+        # ⚡ Gráfico de Barras Ajustado
         fig1 = px.bar(
             df_promedios, x=col_n, y='Materia', text_auto='.1f', 
             color=col_n, 
-            color_continuous_scale=['#cc0000', '#d4af37', '#0d1b2a'], # Semáforo de Riesgo a Éxito
+            color_continuous_scale=['#cc0000', '#d4af37', '#0d1b2a'],
             orientation='h'
         )
         
         fig1.update_traces(
             marker=dict(line=dict(color='#000000', width=1.5)), 
             opacity=0.95,
-            hovertemplate="<b>%{y}</b><br>Promedio: %{x:.1f}<extra></extra>" # Tooltip Limpio
+            hovertemplate="<b>%{y}</b><br>Promedio: %{x:.1f}<extra></extra>"
         )
         fig1.update_layout(
-            height=320, margin=dict(t=10, b=10, l=10, r=10), 
+            height=340, 
+            margin=dict(t=15, b=15, l=10, r=15), # Márgenes limpios
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
-            showlegend=False, coloraxis_showscale=False # Oculta la barra lateral para verse más limpio
+            showlegend=False, coloraxis_showscale=False
         )
-        fig1.update_yaxes(title_text="", visible=True, tickmode='linear', dtick=1, tickfont=dict(size=12, color='#000000', family="Arial Black"), automargin=True) 
-        fig1.update_xaxes(title_text="Promedio Ponderado", title_font=dict(color="#000", family="Arial Black"), tickfont=dict(color="#000", family="Arial Black"))
+        fig1.update_yaxes(title_text="", visible=True, tickmode='linear', dtick=1, tickfont=dict(size=11, color='#000000', family="Arial Black"), automargin=True) 
+        fig1.update_xaxes(title_text="Promedio Ponderado", title_font=dict(color="#000", family="Arial Black", size=12), tickfont=dict(color="#000", family="Arial Black"))
         
+        st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
         st.plotly_chart(fig1, use_container_width=True, config=config_espanol)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with c2: 
         st.markdown(f"<div style='background:#000000; color:white; padding:10px; border-radius:5px; text-align:center; font-family:Arial Black; font-weight:bold; margin-bottom:15px; border:2px solid #d4af37;'>Distribución de Niveles ({periodo_sel})</div>", unsafe_allow_html=True)
         
         colores_vivos = {'BAJO': '#e63946', 'BÁSICO': '#f4a261', 'ALTO': '#2a9d8f', 'SUPERIOR': '#1d3557'}
         
-        # ⚡ Gráfico de Pastel (Usa los datos comprimidos)
+        # ⚡ Gráfico de Dona con reducción de radio (domain) para blindar los bordes
         fig2 = px.pie(
             df_pie_counts, 
             names='DESEMPEÑO_FILTRO', 
-            values='CONTEO', # Pasamos los valores matemáticos exactos en vez de miles de filas
-            hole=0.45, 
+            values='CONTEO', 
+            hole=0.5, 
             color='DESEMPEÑO_FILTRO', 
             color_discrete_map=colores_vivos
         )
         
         fig2.update_traces(
-            textposition='inside', textinfo='percent+label', 
-            textfont=dict(color="#000000", family="Arial Black", size=13), 
-            pull=[0.03]*len(df_pie_counts), 
+            textposition='inside', 
+            textinfo='percent+label', 
+            textfont=dict(color="#ffffff", family="Arial Black", size=11), # Texto blanco sobre fondo oscuro para contraste
+            pull=[0.02]*len(df_pie_counts), 
             marker=dict(line=dict(color='#000000', width=1.5)), 
             opacity=0.95,
-            hovertemplate="<b>Nivel %{label}</b><br>Alumnos: %{value}<br>Proporción: %{percent}<extra></extra>" # Tooltip Detallado
+            hovertemplate="<b>Nivel %{label}</b><br>Alumnos: %{value}<br>Proporción: %{percent}<extra></extra>"
         )
-        fig2.update_layout(height=320, margin=dict(t=10, b=10, l=10, r=10), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
         
+        # 🎯 AJUSTE MILIMÉTRICO: Reducimos márgenes internos y movemos la dona al centro absoluto
+        fig2.update_layout(
+            height=340, 
+            margin=dict(t=20, b=20, l=20, r=20), 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            showlegend=False
+        )
+        
+        st.markdown('<div class="chart-wrapper">', unsafe_allow_html=True)
         st.plotly_chart(fig2, use_container_width=True, config=config_espanol)
+        st.markdown('</div>', unsafe_allow_html=True)
