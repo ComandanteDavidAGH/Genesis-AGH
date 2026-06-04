@@ -31,7 +31,7 @@ def construir_mapa_logros(df_logros_raw):
                 dict_logros[clave] = val_logro
     return dict_logros
 
-# --- 2. MOTOR DE RENDERIZADO OFICIAL ---
+# --- 2. MOTOR DE RENDERIZADO ACADÉMICO ---
 
 def render_individual(df_curso, alumno, periodo_sel, col_n, dict_logros, nivel_alumno, URL_LOGO, css_vip, periodos_print, info_puesto):
     res = df_curso[df_curso['Nombre_Completo'] == alumno].drop_duplicates(subset=['Materia'])
@@ -166,7 +166,7 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
     df_agrupado['Total_Grado'] = df_agrupado.groupby('Grado')['Nombre_Completo'].transform('count')
     dict_puestos = {row['Nombre_Completo']: f"{row['Puesto']} de {row['Total_Grado']}" for _, row in df_agrupado.iterrows()}
 
-    # 🎨 RECALIBRACIÓN NATURAL DEL CSS (Estructura base recuperada)
+    # 🎨 CALIBRACIÓN ESTRUCTURAL ORIGINAL PROTEGIDA (Sin posicionamiento absoluto errático)
     css_vip = """<style>
         body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
         
@@ -174,7 +174,7 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 60%; z-index: -1; pointer-events: none; }
         
         /* Tabla con ancho completo real */
-        .table-custom { width: 100% !important; border-collapse: collapse; margin-top: 12px; margin-bottom: 12px; z-index: 2; position: relative; table-layout: auto !important; }
+        .table-custom { width: 100% !important; border-collapse: collapse; margin-top: 12px; margin-bottom: 12px; z-index: 2; position: relative; }
         .table-custom th { background-color: #0d1b2a !important; color: white !important; border: 1px solid #000; padding: 6px; font-family: 'Arial Black'; font-size: 11.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .table-custom td { border: 1px solid #000; padding: 5px; text-align: center; font-size: 11px; }
         .materia-title { text-align: left !important; background-color: #f8f9fa !important; font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -187,33 +187,33 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
         
         .info-box { border: 2px solid #0d1b2a; padding: 8px 12px; background: #f8f9fa !important; display: flex; justify-content: space-between; margin-bottom: 10px; border-radius: 6px; font-size: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         
-        /* Contenedor de firmas en flujo natural abajo de la tabla */
-        .firmas-container { display: flex !important; justify-content: space-around !important; margin-top: 35px !important; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
+        /* Contenedor de firmas en flujo natural con protección anti-solapamiento */
+        .firmas-container { display: flex !important; justify-content: space-around !important; margin-top: 40px !important; font-size: 12px; z-index: 2; position: relative; page-break-inside: avoid !important; }
         .firma-box { text-align: center; width: 40%; border-top: 2px solid #0d1b2a; padding-top: 5px; font-weight: bold; color: #0d1b2a; }
         
-        /* 🚀 REGLAS DE IMPRESIÓN PROPORCIONALES (Cero saltos artificiales) */
+        /* 🚀 REGLAS DE IMPRESIÓN CALIBRADAS (Optimizadas exclusivamente para ganar el espacio vertical crítico) */
         @media print { 
-            @page { size: letter portrait; margin: 12mm 15mm 12mm 15mm !important; } 
+            @page { size: letter portrait; margin: 10mm 15mm 10mm 15mm !important; } 
             body, html { width: 100% !important; background: white; margin: 0; padding: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
             .no-print { display: none !important; } 
-            .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; } 
+            .b-print { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important; position: relative !important; height: auto !important; } 
             .salto-pagina { page-break-after: always !important; page-break-inside: avoid !important; } 
             
-            .header-table { margin-bottom: 5px !important; }
+            .header-table { margin-bottom: 4px !important; }
             .header-table h2 { font-size: 15px !important; margin: 0 !important; }
             .header-table p { font-size: 11px !important; margin: 0 !important; }
             
-            .info-box { padding: 4px 8px !important; font-size: 11px !important; margin-bottom: 5px !important; border-width: 1.5px !important;}
+            .info-box { padding: 4px 8px !important; font-size: 11px !important; margin-bottom: 4px !important; border-width: 1.5px !important;}
             
-            /* Reducción proporcional milimétrica para rescatar las firmas */
+            /* Ajuste milimétrico de celdas para rescatar el espacio vertical en lotes de alta densidad */
             .table-custom { width: 100% !important; margin-top: 0 !important; margin-bottom: 0 !important; }
-            .table-custom th { padding: 3px !important; font-size: 10px !important; }
-            .table-custom td { padding: 2.5px !important; font-size: 10px !important; }
+            .table-custom th { padding: 2.5px !important; font-size: 10px !important; }
+            .table-custom td { padding: 2px !important; font-size: 10px !important; }
             .materia-title { font-size: 10px !important; }
-            .logro-row td { padding: 2px 6px !important; font-size: 9px !important; line-height: 1.15 !important; border-bottom: 1.5px solid #000 !important; }
+            .logro-row td { padding: 1.5px 6px !important; font-size: 9px !important; line-height: 1.15 !important; border-bottom: 1.5px solid #000 !important; }
             
-            /* Separación perfecta de firmas respecto a la tabla */
-            .firmas-container { margin-top: 30px !important; font-size: 11px !important; }
+            /* Firmas en posición natural pero compactadas para consolidar una sola hoja */
+            .firmas-container { display: flex !important; position: relative !important; bottom: auto !important; left: auto !important; width: 100% !important; margin-top: 25px !important; font-size: 11px !important; }
             .firma-box { padding-top: 4px !important; border-top: 1.5px solid #0d1b2a !important; }
         }
     </style>"""
@@ -328,4 +328,8 @@ def renderizar(df_filtrado, curso_sel, periodo_sel):
                         </div>
                     </div>""")
 
-                html_masivo.append("---")
+                html_masivo.append("</body></html>")
+                
+                barra_progreso.empty()
+                st.toast("✅ ¡Compilación Masiva Finalizada con Éxito!", icon="🚀")
+                components.html("".join(html_masivo), height=800, scrolling=True)
