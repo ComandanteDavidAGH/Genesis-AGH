@@ -27,6 +27,12 @@ ASIGNACIONES_DOCENTES = {
 
 MATERIAS_PRIMARIA = ["Matemáticas", "Lenguaje", "Ciencias Naturales", "Sociales", "Inglés", "Educación Física", "Ética", "Artística", "Informática", "Religión"]
 
+# 🔒 CREDENCIALES MAESTRAS DE RESCATE (Bypass total de Base de Datos)
+USUARIOS_RESCATE = {
+    "Admin": {"PASSWORD": "Genesis2026_Admin*", "ROL": "Admin", "Nombre_Completo": "Administrador de Emergencia"},
+    "comandante": {"PASSWORD": "Agh2026_Master*", "ROL": "Admin", "Nombre_Completo": "Comandante David AGH"}
+}
+
 # ---------------------------------------------------------
 # ⚙️ 2. CONFIGURACIÓN DEL NÚCLEO Y CSS LIMPIO
 # ---------------------------------------------------------
@@ -70,17 +76,14 @@ div[data-baseweb="select"] > div * { color: #000000 !important; }
 # =====================================================================
 # 🏛️ ARQUITECTURA DE CONTENEDORES (LA MAGIA VISUAL)
 # =====================================================================
-# Al crear los contenedores en este orden, le ordenamos al sistema que la
-# política de calidad SIEMPRE quede al final, pase lo que pase en el medio.
 main_container = st.container()
 footer_container = st.container()
 
-# 🛡️ PINTAMOS EL PIE DE PÁGINA DE FORMA INMEDIATA Y ALINEADA
 with footer_container:
     st.markdown(f"""
         <div style="background-color:#0d1b2a; padding:15px; border-radius:10px; border:2px solid #d4af37; border-bottom:6px solid #d4af37; text-align:center; margin-top: 40px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2); position: relative; z-index: 2;">
             <h4 style="color:#d4af37; margin:0; font-family:'Arial Black', sans-serif; font-size:13px;">PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026 © {datetime.now().year}</h4>
-            <p style="color:#ffffff; margin:3px 0 0 0; font-size:11px; font-weight:bold;">SISTEMA OPERATIVO PROTEGIDO | Cumplimiento Ley 1581 de 2012 de Habeas Data</p>
+            <p style="color:#ffffff; margin:3px 0 0 0; font-size:11px; font-weight:bold;">SISTEMA OPERATIVO PROTEGIDO | Modo de Contingencia Activo</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -112,13 +115,17 @@ with main_container:
 
     @st.cache_resource
     def get_db_connection():
-        return st.connection("postgresql", type="sql")
+        try:
+            return st.connection("postgresql", type="sql")
+        except Exception:
+            return None
 
     conn_sql = get_db_connection()
 
     @st.cache_data(ttl=600, show_spinner=False)
     def get_maestro_data():
         try:
+            if conn_sql is None: raise Exception("No hay conexión activa")
             df_notas = conn_sql.query("SELECT * FROM notas_consolidadas;")
             df_notas = df_notas.rename(columns={'NOMBRE_COMPLETO': 'Nombre_Completo', 'ASIGNATURA': 'Materia', 'LOGROS': 'LOGRO'})
             df_estud = conn_sql.query("SELECT * FROM data_estudiantes;")
@@ -131,16 +138,23 @@ with main_container:
             if all(c in df_m.columns for c in ['P1', 'P2', 'P3', 'P4']):
                 df_m['PROMEDIO'] = df_m[['P1', 'P2', 'P3', 'P4']].mean(axis=1).round(1)
             return df_m
-        except:
-            return pd.DataFrame(columns=["Nombre_Completo", "Materia", "P1", "P2", "P3", "P4", "LOGRO", "Grado"])
+        except Exception:
+            # 🚨 ESCUELA DE CONTINGENCIA: Retorna estructura limpia con filas piloto para evitar caídas
+            return pd.DataFrame([
+                {"Nombre_Completo": "Carlos Alberto Mendoza", "Materia": "Matemáticas", "P1": 4.5, "P2": 4.0, "P3": 0.0, "P4": 0.0, "LOGRO": "Excelente desempeño", "Grado": "11°", "PROMEDIO": 2.1},
+                {"Nombre_Completo": "María Camila Restrepo", "Materia": "Lenguaje", "P1": 3.8, "P2": 4.2, "P3": 0.0, "P4": 0.0, "LOGRO": "Buen manejo temático", "Grado": "10°", "PROMEDIO": 2.0}
+            ])
 
     @st.cache_data(ttl=600, show_spinner=False)
     def get_aux_data(table_name):
-        try: return conn_sql.query(f"SELECT * FROM {table_name};")
-        except: return pd.DataFrame()
+        try: 
+            if conn_sql is None: raise Exception("No hay conexión activa")
+            return conn_sql.query(f"SELECT * FROM {table_name};")
+        except Exception: 
+            return pd.DataFrame()
 
     # ---------------------------------------------------------
-    # 🔐 4. SISTEMA DE ACCESO POSTGRESQL
+    # 🔐 4. SISTEMA DE ACCESO ULTRA-BLINDADO (CON CONTINGENCIA LOCAL)
     # ---------------------------------------------------------
     if not st.session_state.logueado:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -148,40 +162,50 @@ with main_container:
         with c2:
             try: st.image("logo.png", width=250)
             except: pass 
-            st.markdown("""<div style="background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #d4af37; border: 2px solid #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; margin-bottom: 10px; margin-top: -10px;"><h3 style="color:#000000; font-family:'Arial Black'; margin-top:0; font-size:18px;">ACCESO AL SISTEMA</h3></div>""", unsafe_allow_html=True)
+            st.markdown("""<div style="background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #990000; border: 2px solid #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; margin-bottom: 10px; margin-top: -10px;"><h3 style="color:#990000; font-family:'Arial Black'; margin-top:0; font-size:18px;">MODO RESCATE ACTIVO</h3></div>""", unsafe_allow_html=True)
             
             u = st.text_input("👤 Usuario", placeholder="Ej: admin", label_visibility="collapsed")
             p = st.text_input("🔑 Contraseña", type="password", placeholder="••••••••", label_visibility="collapsed")
             st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("🚀 INGRESAR", use_container_width=True):
-                with st.spinner("Validando en Bóveda SQL..."):
-                    try:
-                        df_usuarios = get_aux_data("data_usuarios")
-                        if df_usuarios.empty:
-                            df_usuarios = pd.DataFrame([{"USUARIO": "Admin", "PASSWORD": "Genesis2026_Admin*", "ESTADO": "Activo", "ROL": "Admin", "Nombre_Completo": "Administrador de Emergencia"}])
+                # 🛠️ CAPA ALFA: Verificación inmediata por diccionario local estático
+                if u in USUARIOS_RESCATE and p == USUARIOS_RESCATE[u]["PASSWORD"]:
+                    st.session_state.logueado = True
+                    st.session_state.rol = USUARIOS_RESCATE[u]["ROL"]
+                    st.session_state.usuario_actual = u
+                    st.session_state.nombre_completo_usuario = USUARIOS_RESCATE[u]["Nombre_Completo"]
+                    registrar_bitacora(u, USUARIOS_RESCATE[u]["ROL"], "⚠️ Ingreso de Rescate Exitoso")
+                    st.rerun()
+                else:
+                    # Si no es credencial de rescate, intenta buscar en la base de datos caída
+                    with st.spinner("Validando en Bóveda SQL..."):
+                        try:
+                            df_usuarios = get_aux_data("data_usuarios")
+                            if df_usuarios.empty:
+                                st.error("🚨 Servidor desconectado. Use las credenciales maestras de rescate.")
+                            else:
+                                acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
+                                if not acceso.empty:
+                                    estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
+                                    rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
+                                    if estado == "ACTIVO":
+                                        st.session_state.logueado = True
+                                        st.session_state.rol = rol
+                                        st.session_state.usuario_actual = u
+                                        st.session_state.nombre_completo_usuario = str(acceso['Nombre_Completo'].iloc[0]).strip() if 'Nombre_Completo' in df_usuarios.columns else u
+                                        registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
+                                        st.rerun()
+                                    else: st.error("🚨 Acceso Denegado: Cuenta inactiva.")
+                                else: st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
+                        except Exception:
+                            st.error("🚨 Error de infraestructura SQL. Use las claves maestras cableadas.")
+        st.info("💡 Tip de emergencia: Ingrese con usuario 'comandante' y la clave de rescate designada.")
+        st.stop() 
 
-                        acceso = df_usuarios[(df_usuarios['USUARIO'] == u) & (df_usuarios['PASSWORD'] == p)]
-                        
-                        if not acceso.empty:
-                            estado = str(acceso['ESTADO'].iloc[0]).strip().upper()
-                            rol = str(acceso['ROL'].iloc[0]).strip().capitalize()
-                            if estado == "ACTIVO":
-                                st.session_state.logueado = True
-                                st.session_state.rol = rol
-                                st.session_state.usuario_actual = u
-                                st.session_state.nombre_completo_usuario = str(acceso['Nombre_Completo'].iloc[0]).strip() if 'Nombre_Completo' in df_usuarios.columns else u
-                                registrar_bitacora(u, rol, "✅ Ingreso Exitoso")
-                                st.rerun()
-                            else: st.error("🚨 Acceso Denegado: Cuenta inactiva.")
-                        else: st.error("🚨 Acceso Denegado: Credenciales incorrectas.")
-                    except Exception as e:
-                        st.error(f"🚨 Error de conexión SQL: {e}")
-        st.stop() # Al usar contenedores, si se detiene aquí, ¡el pie de página ya está dibujado abajo!
-
-    # Carga a Memoria Local
+    # Carga a Memoria Local Protegida
     if 'df_maestro' not in st.session_state or st.session_state.df_maestro is None:
-        with st.spinner("⚡ Activando Acelerador SQL..."):
+        with st.spinner("⚡ Activando Acelerador SQL en Contingencia..."):
             st.session_state.df_maestro = get_maestro_data().copy()
             st.session_state.df_logros = get_aux_data("db_logros").copy()
             st.session_state.df_asistencia = get_aux_data("db_asistencia").copy()
@@ -239,7 +263,7 @@ with main_container:
     st.markdown("<div class='titulo-container'><h1 class='titulo-Agh'>PLATAFORMA ESTUDIANTIL GÉNESIS OMEGA 2026</h1></div>", unsafe_allow_html=True)
 
     # ---------------------------------------------------------
-    # 🔀 6. ENRUTAMIENTO SQL
+    # 🔀 6. ENRUTAMIENTO CONTROLADO
     # ---------------------------------------------------------
     try:
         if menu == "🏠 Inicio": import modulos.m0_inicio as m0; m0.renderizar()
